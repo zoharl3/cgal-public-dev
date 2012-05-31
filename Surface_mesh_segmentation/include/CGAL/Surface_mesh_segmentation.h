@@ -1,18 +1,18 @@
 #ifndef CGAL_SURFACE_MESH_SEGMENTATION_H
 #define CGAL_SURFACE_MESH_SEGMENTATION_H
-/* NEED TO BE DONE 
- * About implementation:
- * +) I am not using BGL, as far as I checked there is a progress on BGL redesign 
+/* NEED TO BE DONE */
+/* About implementation:
+/* +) I am not using BGL, as far as I checked there is a progress on BGL redesign 
       (https://cgal.geometryfactory.com/CGAL/Members/wiki/Features/BGL) which introduces some features
-      for face-based traversal / manipulation by FaceGraphs
- * +) Deciding on which parameters will be taken from user 
- * +) Make it more readable: calculate_sdf_value_of_facet function.
+      for face-based traversal / manipulation by FaceGraphs */
+/* +) Deciding on which parameters will be taken from user */
+/* +) Make it more readable: calculate_sdf_value_of_facet function.
 
- * About paper (and correctness / efficiency etc.):
- * +) Weighting ray distances with inverse of their angles: not sure how to weight exactly
- * +) Anisotropic smoothing: have no idea what it is exactly, should read some material (google search is not enough)
- * +) Deciding how to generate rays in cone: for now using "polar angle" and "generate in square then accept-reject" techniques
- */
+/* About paper (and correctness / efficiency etc.):
+/* +) Weighting ray distances with inverse of their angles: not sure how to weight exactly */
+/* +) Anisotropic smoothing: have no idea what it is exactly, should read some material (google search is not enough)  */
+/* +) Deciding how to generate rays in cone: for now using "polar angle" and "accept-reject (square)" and "concentric mapping" techniques */
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -21,7 +21,9 @@
 #include <utility>
 
 //#include "Expectation_maximization.h"
+//#include "K_means_clustering.h"
 #include <CGAL/internal/Surface_mesh_segmentation/Expectation_maximization.h>
+#include <CGAL/internal/Surface_mesh_segmentation/K_means_clustering.h>
 
 #include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_traits.h>
@@ -54,7 +56,7 @@ protected:
     typedef std::map<Facet_handle, int>    Face_center_map;
     /*Sampled points from disk, t1 = coordinate-x, t2 = coordinate-y, t3 = angle with cone-normal. */
     typedef CGAL::Triple<double, double, double> Disk_sample;
-    typedef std::vector<CGAL::Triple<double, double, double> > Disk_samples_list;
+    typedef std::vector<CGAL::Triple<double, double, double>> Disk_samples_list;
     
     template <typename ValueTypeName> 
     struct compare_pairs
@@ -66,7 +68,7 @@ protected:
     template <typename ValueTypeName> 
     struct compare_pairs_using_first
     {
-        bool operator()(const ValueTypeName& v1, const ValueTypeName& v2) 
+        bool operator()(ValueTypeName& v1, ValueTypeName& v2) 
         { return v1.first < v2.first; }
     };
 //member variables
@@ -83,11 +85,13 @@ public:
     Disk_samples_list disk_samples;
     
     std::ofstream log_file;
+    
+    //std::vector<int> center_memberships_temp;
       
 //member functions
 public:
 Surface_mesh_segmentation(Polyhedron* mesh, 
-    int number_of_rays_sqrt = 6, double cone_angle = (2.0 / 3.0) * CGAL_PI, int number_of_centers = 1);
+    int number_of_rays_sqrt = 9, double cone_angle = (2.0 / 3.0) * CGAL_PI, int number_of_centers = 2);
 
 void calculate_sdf_values();
 
@@ -108,6 +112,8 @@ void normalize_sdf_values();
 void smooth_sdf_values();
 
 void apply_GMM_fitting();
+void apply_K_means_clustering();
+void apply_GMM_fitting_with_K_means_init();
 
 void write_sdf_values(const char* file_name);
 void read_sdf_values(const char* file_name);
@@ -122,9 +128,8 @@ inline Surface_mesh_segmentation<Polyhedron>::Surface_mesh_segmentation(
 {
     disk_sampling_concentric_mapping();
     calculate_sdf_values();
-    //write_sdf_values("sdf_values_2.txt");
-    //read_sdf_values("sdf_values.txt");
-    //apply_GMM_fitting();
+    //write_sdf_values("sdf_values_sample_9_p.txt");
+    //read_sdf_values("sdf_values_sample_9_p.txt");
 }
 
 template <class Polyhedron>
@@ -157,12 +162,14 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
     Vector v2 = plane.base2();
     v1 = v1 / CGAL::sqrt(v1.squared_length());
     v2 = v2 / CGAL::sqrt(v2.squared_length());
-    
+     
     int ray_count = number_of_rays_sqrt * number_of_rays_sqrt;
+       
     std::vector<double> ray_distances, ray_weights;
     ray_distances.reserve(ray_count);
     ray_weights.reserve(ray_count);
-    double angle_st_dev = cone_angle / 4; //Not sure what to use here.
+    
+    double angle_st_dev = cone_angle / 3; //Not sure what to use here.
     double length_of_normal = 1.0 / tan(cone_angle / 2);
     Vector normal = normal_const * length_of_normal;
     
@@ -184,6 +191,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
     }
     return calculate_sdf_value_from_rays_with_trimmed_mean(ray_distances, ray_weights);  
 }
+
 template <class Polyhedron>
 void Surface_mesh_segmentation<Polyhedron>::cast_and_return_minimum(const Ray& ray, const Tree& tree, const Facet_handle& facet,
                                 bool& is_found, double& min_distance) const
@@ -234,8 +242,8 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
     double total_weights = 0.0, total_distance = 0.0;
     double median_sdf = 0.0, mean_sdf = 0.0, st_dev = 0.0;
     /* Calculate mean sdf */
-    std::vector<double>::iterator w_it = ray_weights.begin();
-    for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end();
+    typename std::vector<double>::iterator w_it = ray_weights.begin();
+    for(typename std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end();
         ++dist_it, ++w_it)
     {
         total_distance += (*dist_it) * (*w_it);
@@ -258,7 +266,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
         median_sdf = ray_distances[half_ray_count];
     }
     /* Calculate st dev using mean_sdf as mean */
-    for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it)
+    for(typename std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it)
     {
         double dif = (*dist_it) - mean_sdf;
         st_dev += dif * dif;
@@ -266,7 +274,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
     st_dev = CGAL::sqrt(st_dev / (ray_distances.size()));
     /* Calculate sdf, accept rays : ray_dist - median < st dev */
     w_it = ray_weights.begin();
-    for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end();
+    for(typename std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end();
          ++dist_it, ++w_it)
     {
         if(fabs((*dist_it) - median_sdf) > st_dev * 0.5) { continue; }
@@ -282,8 +290,8 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
 {
     double total_weights = 0.0, total_distance = 0.0;
     double mean_sdf = 0.0, st_dev = 0.0;
-    std::vector<double>::iterator w_it = ray_weights.begin();
-    for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it, ++w_it)
+    typename std::vector<double>::iterator w_it = ray_weights.begin();
+    for(typename std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it, ++w_it)
     {
         total_distance += (*dist_it) * (*w_it);
         total_weights += (*w_it);
@@ -291,7 +299,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
     mean_sdf = total_distance / total_weights;
     total_weights = 0.0; 
     total_distance = 0.0;
-    for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it)
+    for(typename std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it)
     {
         double dif = (*dist_it) - mean_sdf;
         st_dev += dif * dif;
@@ -299,7 +307,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
     st_dev = CGAL::sqrt(st_dev / (ray_distances.size()));
     
     w_it = ray_weights.begin();
-    for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it, ++w_it)
+    for(typename std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it, ++w_it)
     {
         if(fabs((*dist_it) - mean_sdf) > st_dev) { continue; }
         total_distance += (*dist_it) * (*w_it);
@@ -312,15 +320,15 @@ template <class Polyhedron>
 inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_rays_with_trimmed_mean( std::vector<double>& ray_distances,
     std::vector<double>& ray_weights) const
 {
-    std::vector<std::pair<double, double> > distances_with_weights;
+    std::vector<std::pair<double, double>> distances_with_weights;
     distances_with_weights.reserve(ray_distances.size());
     typename std::vector<double>::iterator w_it = ray_weights.begin();
-    for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it, ++w_it)
+    for(typename std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it, ++w_it)
     {
         distances_with_weights.push_back(std::pair<double, double>((*dist_it), (*w_it)));
     }
     std::sort(distances_with_weights.begin(), distances_with_weights.end(), 
-        compare_pairs_using_first<std::pair<double, double> >());
+        compare_pairs_using_first<std::pair<double, double>>());
     int b = floor(distances_with_weights.size() / 20.0 + 0.5); // Eliminate %5.
     int e = distances_with_weights.size() - b;                 // Eliminate %5.
     
@@ -336,7 +344,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
     
     total_weights = 0.0; 
     total_distance = 0.0;
-    for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it)
+    for(typename std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it)
     {
         double dif = (*dist_it) - trimmed_mean;
         st_dev += dif * dif;
@@ -470,12 +478,53 @@ inline void Surface_mesh_segmentation<Polyhedron>::apply_GMM_fitting()
     Expectation_maximization fitter(number_of_centers, sdf_vector);
     std::vector<int> center_memberships;
     fitter.fill_with_center_ids(center_memberships);
-    std::vector<int>::iterator center_it = center_memberships.begin();
+    typename std::vector<int>::iterator center_it = center_memberships.begin();
     for(Facet_iterator facet_it = mesh->facets_begin(); facet_it != mesh->facets_end(); ++facet_it, ++center_it)
     {
         centers.insert(std::pair<Facet_handle, int>(facet_it, (*center_it)));
     }
-    
+}
+
+template <class Polyhedron>
+inline void Surface_mesh_segmentation<Polyhedron>::apply_K_means_clustering()
+{
+    centers.clear();
+    std::vector<double> sdf_vector;
+    for(Facet_iterator facet_it = mesh->facets_begin(); facet_it != mesh->facets_end(); ++facet_it)
+    {
+        sdf_vector.push_back(sdf_values[facet_it]);
+    }
+    K_means_clustering clusterer(number_of_centers, sdf_vector);
+    std::vector<int> center_memberships;
+    clusterer.fill_with_center_ids(center_memberships);
+    typename std::vector<int>::iterator center_it = center_memberships.begin();
+    for(Facet_iterator facet_it = mesh->facets_begin(); facet_it != mesh->facets_end(); ++facet_it, ++center_it)
+    {
+        centers.insert(std::pair<Facet_handle, int>(facet_it, (*center_it)));
+    }
+    //center_memberships_temp = center_memberships; //remove
+}
+template <class Polyhedron>
+inline void Surface_mesh_segmentation<Polyhedron>::apply_GMM_fitting_with_K_means_init()
+{
+    centers.clear();
+    std::vector<double> sdf_vector;
+    for(Facet_iterator facet_it = mesh->facets_begin(); facet_it != mesh->facets_end(); ++facet_it)
+    {
+        sdf_vector.push_back(sdf_values[facet_it]);
+    }
+    K_means_clustering clusterer(number_of_centers, sdf_vector);
+    std::vector<int> center_memberships;
+    clusterer.fill_with_center_ids(center_memberships);
+    //std::vector<int> center_memberships = center_memberships_temp;
+    Expectation_maximization fitter(number_of_centers, sdf_vector, center_memberships);
+    center_memberships.clear();
+    fitter.fill_with_center_ids(center_memberships);
+    typename std::vector<int>::iterator center_it = center_memberships.begin();
+    for(Facet_iterator facet_it = mesh->facets_begin(); facet_it != mesh->facets_end(); ++facet_it, ++center_it)
+    {
+        centers.insert(std::pair<Facet_handle, int>(facet_it, (*center_it)));
+    }
 }
 
 template <class Polyhedron>
