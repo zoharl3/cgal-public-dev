@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <utility>
 
+//#include "Timer.h"
 //#include "Expectation_maximization.h"
 //#include "K_means_clustering.h"
 #include <CGAL/Simple_cartesian.h>
@@ -94,7 +95,7 @@ public:
 //member functions
 public:
 Surface_mesh_segmentation(Polyhedron* mesh, 
-    int number_of_rays_sqrt = 9, double cone_angle = (2.0 / 3.0) * CGAL_PI, int number_of_centers = 2);
+    int number_of_rays_sqrt = 7, double cone_angle = (2.0 / 3.0) * CGAL_PI, int number_of_centers = 2);
 
 void calculate_sdf_values();
 
@@ -120,7 +121,7 @@ void apply_GMM_fitting_with_K_means_init();
 
 void write_sdf_values(const char* file_name);
 void read_sdf_values(const char* file_name);
-
+void read_center_ids(const char* file_name);
 };
 
 template <class Polyhedron>
@@ -129,11 +130,13 @@ inline Surface_mesh_segmentation<Polyhedron>::Surface_mesh_segmentation(
 : mesh(mesh), cone_angle(cone_angle), number_of_rays_sqrt(number_of_rays_sqrt), 
     number_of_centers(number_of_centers), log_file("log_file.txt")
 {
+    //Timer t;
     disk_sampling_concentric_mapping();
     calculate_sdf_values();
+    //std::cout << t;
     apply_GMM_fitting_with_K_means_init();
-    //write_sdf_values("sdf_values_sample_cactus.txt");
-    //read_sdf_values("sdf_values_sample_cactus.txt");
+    //write_sdf_values("sdf_values_sample_dino_2.txt");
+    //read_sdf_values("sdf_values_sample_camel.txt");
 }
 
 template <class Polyhedron>
@@ -211,7 +214,7 @@ void Surface_mesh_segmentation<Polyhedron>::cast_and_return_minimum(const Ray& r
         if(id == facet)                    { continue; } //Since center is located on related facet, we should skip it if there is an intersection with it.
         if(!CGAL::assign(i_point, object)) { continue; } //What to do here (in case of intersection object is a segment), I am not sure ???
         Vector i_ray = (ray.source() - i_point);
-        double new_distance = CGAL::sqrt(i_ray.squared_length());
+        double new_distance = i_ray.squared_length();
         if(!is_found || new_distance < min_distance)
         {                 
             min_distance = new_distance;
@@ -221,6 +224,7 @@ void Surface_mesh_segmentation<Polyhedron>::cast_and_return_minimum(const Ray& r
         }
     }
     if(!is_found) { return; }
+    min_distance = sqrt(min_distance);
     Point min_v1 = min_id->halfedge()->vertex()->point();
     Point min_v2 = min_id->halfedge()->next()->vertex()->point();
     Point min_v3 = min_id->halfedge()->next()->next()->vertex()->point();
@@ -272,7 +276,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
         double dif = (*dist_it) - mean_sdf;
         st_dev += dif * dif;
     }
-    st_dev = CGAL::sqrt(st_dev / (ray_distances.size()));
+    st_dev = sqrt(st_dev / ray_distances.size());
     /* Calculate sdf, accept rays : ray_dist - median < st dev */
     w_it = ray_weights.begin();
     for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end();
@@ -305,7 +309,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
         double dif = (*dist_it) - mean_sdf;
         st_dev += dif * dif;
     }
-    st_dev = CGAL::sqrt(st_dev / (ray_distances.size()));
+    st_dev = sqrt(st_dev / ray_distances.size());
     
     w_it = ray_weights.begin();
     for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it, ++w_it)
@@ -350,7 +354,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
         double dif = (*dist_it) - trimmed_mean;
         st_dev += dif * dif;
     }
-    st_dev = CGAL::sqrt(st_dev / (ray_distances.size()));
+    st_dev = sqrt(st_dev / ray_distances.size());
     
     w_it = ray_weights.begin();
     for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end(); ++dist_it, ++w_it)
@@ -566,6 +570,22 @@ inline void Surface_mesh_segmentation<Polyhedron>::read_sdf_values(const char* f
         input >> sdf_value;
         sdf_values.insert(std::pair<Facet_handle, double>(facet_it, sdf_value));
     }  
+}
+
+template <class Polyhedron>
+inline void Surface_mesh_segmentation<Polyhedron>::read_center_ids(const char* file_name)
+{
+    std::ifstream input(file_name);
+    centers.clear();
+    int max_center = 0;
+    for(Facet_iterator facet_it = mesh->facets_begin(); facet_it != mesh->facets_end(); ++facet_it)
+    {
+        int center_id;
+        input >> center_id;
+        centers.insert(std::pair<Facet_handle, int>(facet_it, center_id));
+        if(center_id > max_center) { max_center = center_id; }       
+    }  
+    number_of_centers = max_center + 1;
 }
 } //namespace CGAL
 #undef ANGLE_ST_DEV_DIVIDER

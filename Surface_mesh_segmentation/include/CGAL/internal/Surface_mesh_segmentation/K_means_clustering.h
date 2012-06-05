@@ -77,9 +77,14 @@ public:
     std::vector<K_means_point>  points;
     int  maximum_iteration;
     bool is_converged;
+protected:
+    int seed;
+    
+public:
     K_means_clustering(int number_of_centers, const std::vector<double>& data, int number_of_run = 50, int maximum_iteration = 100)
-        : points(data.begin(), data.end()), maximum_iteration(maximum_iteration), is_converged(false)
-    {
+        : points(data.begin(), data.end()), maximum_iteration(maximum_iteration), is_converged(false), seed(time(NULL))
+    {       
+        srand(seed);
         calculate_clustering_with_multiple_run(number_of_centers, number_of_run);
     }
     
@@ -91,27 +96,26 @@ public:
             data_centers.push_back(point_it->center_id);
         }
     } 
-      
-    void initiate_centers(int number_of_centers, bool randomly = false)
+    
+    void initiate_centers_uniformly(int number_of_centers)
     {
         centers.clear();
-        if(!randomly)
+        for(int i = 0; i < number_of_centers; ++i)
         {
-            for(int i = 0; i < number_of_centers; ++i)
-            {
-                double initial_mean = (i + 1.0) / (number_of_centers + 1.0);
-                centers.push_back(K_means_center(initial_mean));
-            }
+            double initial_mean = (i + 1.0) / (number_of_centers + 1.0);
+            centers.push_back(K_means_center(initial_mean));
         }
-        else
+        sort(centers.begin(), centers.end());
+    }
+    /* Forgy method */
+    void initiate_centers_randomly(int number_of_centers)
+    {
+		centers.clear();
+        for(int i = 0; i < number_of_centers; ++i)
         {
-            srand(time(NULL));
-            for(int i = 0; i < number_of_centers; ++i)
-            {
-                double initial_mean = points[rand() % points.size()].data;
-                centers.push_back(K_means_center(initial_mean));
-            }
-        }
+            double initial_mean = points[rand() % points.size()].data;
+            centers.push_back(K_means_center(initial_mean));
+        } 
         sort(centers.begin(), centers.end());
     }
     
@@ -135,7 +139,7 @@ public:
             }
         }
         is_converged = !any_center_changed;
-        //std::cout << iteration_count << std::endl;
+        //std::cout << iteration_count << " " << is_converged << std::endl;
     }
 
     void calculate_clustering_with_multiple_run(int number_of_centers, int number_of_run)
@@ -146,7 +150,7 @@ public:
         {
             clear_center_ids();
             
-            initiate_centers(number_of_centers, true);            
+            initiate_centers_randomly(number_of_centers);            
             calculate_clustering();
             double new_error = sum_of_squares();
             if(error > new_error)
