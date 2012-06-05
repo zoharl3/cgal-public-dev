@@ -33,7 +33,7 @@ public:
         new_mean = 0;
         new_number_of_points = 0;
     }
-    bool operator < (const K_means_center& center)
+    bool operator < (const K_means_center& center) const
     {
         return mean < center.mean;
     }
@@ -47,13 +47,13 @@ public:
     K_means_point(double data, int center_id = -1) : data(data), center_id(center_id)
     { }
     /* Finds closest center to point, 
-    /* Adds itself to the closest center's mean,
-    /* Returns true if center is changed.*/
+     * Adds itself to the closest center's mean,
+     * Returns true if center is changed.*/
     bool calculate_new_center(std::vector<K_means_center>& centers)
     {
         int new_center_id = 0;
         double min_distance = fabs(centers[0].mean - data);
-        for(int i = 1; i < centers.size(); ++i)
+        for(std::size_t i = 1; i < centers.size(); ++i)
         {
             double new_distance = fabs(centers[i].mean - data);
             if(new_distance < min_distance)
