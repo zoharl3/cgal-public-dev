@@ -15,6 +15,7 @@
 #endif
 
 namespace CGAL {
+namespace internal{
 
 class K_means_point;
 
@@ -85,11 +86,12 @@ public:
     int  maximum_iteration;
     bool is_converged;
 protected:
-    int seed;
+    unsigned int seed;
     
 public:
     K_means_clustering(int number_of_centers, const std::vector<double>& data, int number_of_run = 50, int maximum_iteration = 100)
-        : points(data.begin(), data.end()), maximum_iteration(maximum_iteration), is_converged(false), seed(time(NULL))
+        : points(data.begin(), data.end()), maximum_iteration(maximum_iteration), is_converged(false), 
+          seed(static_cast<unsigned int>(time(NULL)))
     {       
         srand(seed);
         calculate_clustering_with_multiple_run(number_of_centers, number_of_run);
@@ -199,6 +201,7 @@ public:
         }
     }
 };
+}//namespace internal
 }//namespace CGAL
 #ifdef SEG_DEBUG
 #undef SEG_DEBUG
