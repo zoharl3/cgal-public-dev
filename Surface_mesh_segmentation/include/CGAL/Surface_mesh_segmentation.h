@@ -450,7 +450,7 @@ void Surface_mesh_segmentation<Polyhedron>::arrange_center_orientation(const Pla
     
     //Option-3 
     Ray ray(center, unit_normal);
-    Kernel::Do_intersect_3 intersector = Kernel().do_intersect_3_object();
+    typename Kernel::Do_intersect_3 intersector = Kernel().do_intersect_3_object();
     if(!intersector(ray, plane)) { return; }
     
     Vector epsilon_normal = unit_normal * epsilon;
