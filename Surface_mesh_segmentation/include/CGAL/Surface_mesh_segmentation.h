@@ -13,21 +13,20 @@
  * +) Deciding how to generate rays in cone: for now using "polar angle" and "accept-reject (square)" and "concentric mapping" techniques 
  */
 
-//AF: just remove the next 3 lines
-//IOY: Done
 
 #include <CGAL/internal/Surface_mesh_segmentation/Expectation_maximization.h>
 #include <CGAL/internal/Surface_mesh_segmentation/K_means_clustering.h>
 
 //AF: This files does not use Simple_cartesian
-//IOY: Yes, not sure where it came from, I guess it is put by Sebastien (to stop a warning in gcc) and came with update, 
-// (not sure again), I am going to ask about it.
+//IOY: Yes, not sure where it came from (with update may be),  I am going to ask about it.
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_traits.h>
 #include <CGAL/AABB_polyhedron_triangle_primitive.h>
 #include <CGAL/utility.h>
+#include <CGAL/Timer.h>
 #include <CGAL/internal/Surface_mesh_segmentation/AABB_traversal_traits.h>
+
 #include <boost/optional.hpp>
 
 #include <iostream>
@@ -62,22 +61,23 @@ public:
     typedef typename Polyhedron::Facet  Facet;
     typedef typename Kernel::Vector_3   Vector;
     typedef typename Kernel::Point_3    Point;
-    typedef typename Polyhedron::Facet_iterator Facet_iterator;
-    typedef typename Polyhedron::Facet_handle   Facet_handle;
+    typedef typename Polyhedron::Facet_iterator  Facet_iterator;
+    typedef typename Polyhedron::Facet_handle    Facet_handle;
     typedef typename Polyhedron::Halfedge_handle Halfedge_handle;
     typedef typename Polyhedron::Edge_iterator   Edge_iterator;
     typedef typename Polyhedron::Vertex_handle   Vertex_handle; 
 protected:
     typedef typename Kernel::Ray_3   Ray;
     typedef typename Kernel::Plane_3 Plane;
+    typedef typename Kernel::Segment_3 Segment;
     
     typedef typename CGAL::AABB_polyhedron_triangle_primitive<Kernel, Polyhedron> Primitive;
     typedef typename CGAL::AABB_tree<CGAL::AABB_traits<Kernel, Primitive> >       Tree;
     typedef typename Tree::Object_and_primitive_id                                Object_and_primitive_id;
     typedef typename Tree::Primitive_id                                           Primitive_id;
     
-    typedef std::map<Facet_handle, double> Face_value_map;
-    typedef std::map<Facet_handle, int>    Face_center_map;
+    typedef std::map<Facet_handle, double>    Face_value_map;
+    typedef std::map<Facet_handle, int>       Face_center_map;
     typedef std::map<Halfedge_handle, double> Edge_angle_map;
     /*Sampled points from disk, t1 = coordinate-x, t2 = coordinate-y, t3 = angle with cone-normal (weight). */
     typedef CGAL::Triple<double, double, double>               Disk_sample;
@@ -116,7 +116,8 @@ Surface_mesh_segmentation(Polyhedron* mesh,
 void calculate_sdf_values();
 
 double calculate_sdf_value_of_facet (const Facet_handle& facet, const Tree& tree) const;
-boost::optional<double> cast_and_return_minimum(const Ray& ray, const Tree& tree, const Facet_handle& facet) const;
+template <class Query>
+boost::optional<double> cast_and_return_minimum(const Query& ray, const Tree& tree, const Facet_handle& facet) const;
 boost::optional<double> cast_and_return_minimum_use_closest(const Ray& ray, const Tree& tree, const Facet_handle& facet) const;  
     
 double calculate_sdf_value_from_rays (std::vector<double>& ray_distances, std::vector<double>& ray_weights) const;
@@ -149,12 +150,12 @@ inline Surface_mesh_segmentation<Polyhedron>::Surface_mesh_segmentation(
 : mesh(mesh), cone_angle(cone_angle), number_of_rays_sqrt(number_of_rays_sqrt), 
     number_of_centers(number_of_centers), log_file("log_file.txt")
 {
-    SEG_DEBUG(Timer t)
-    
+    SEG_DEBUG(CGAL::Timer t)
+    SEG_DEBUG(t.start())
     disk_sampling_concentric_mapping();
     calculate_sdf_values();
-    SEG_DEBUG(std::cout << t)
-    apply_GMM_fitting();
+    SEG_DEBUG(std::cout << t.time() << std::endl)
+    //apply_GMM_fitting();
     //write_sdf_values("sdf_values_sample_dino_ws.txt");
     //read_sdf_values("sdf_values_sample_camel.txt");
     //calculate_dihedral_angles();
@@ -188,7 +189,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
 	//IOY: Done
     const Point& p3 = facet->halfedge()->prev()->vertex()->point();
     Point center  = CGAL::centroid(p1, p2, p3);
-    Vector normal = CGAL::unit_normal(p1, p2, p3) * -1.0; //Assuming triangles are CCW oriented.
+    Vector normal = CGAL::unit_normal(p2, p1, p3); //Assuming triangles are CCW oriented.
       
     Plane plane(center, normal);
     Vector v1 = plane.base1();
@@ -206,17 +207,45 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
     
     double length_of_normal = 1.0 / tan(cone_angle / 2);
     normal = normal * length_of_normal;
- 
+    // stores segment length, 
+    // making it too large might cause a non-filtered bboxes in traversal,
+    // making it too small might cause a miss and consecutive ray casting.
+    // for now storing maximum found distance so far.
+    boost::optional<double> segment_distance;
     for(Disk_samples_list::const_iterator sample_it = disk_samples.begin(); 
         sample_it != disk_samples.end(); ++sample_it)
     {
+        boost::optional<double> min_distance;
         Vector disk_vector = v1 * sample_it->first + v2 * sample_it->second;
-        Ray ray(center, normal + disk_vector);
-
-        boost::optional<double> min_distance = cast_and_return_minimum(ray, tree, facet);
-        //boost::optional<double> min_distance = cast_and_return_minimum_use_closest(ray, tree, facet);
-        if(!min_distance) { continue; }        
-
+        Vector ray_direction = normal + disk_vector;
+        // at first cast ray
+        if(!segment_distance)
+        {
+            Ray ray(center, ray_direction);
+            min_distance = cast_and_return_minimum(ray, tree, facet);
+            if(!min_distance) { continue; } 
+            segment_distance = min_distance; //first assignment of the segment_distance
+        }
+        else // use segment_distance to limit rays as segments
+        {
+            // there will be no need for this normalization, will be handled in disk_sampling_...functions.
+            ray_direction =  ray_direction / sqrt(ray_direction.squared_length());
+            
+            ray_direction = ray_direction * (*segment_distance * 2); 
+            Segment segment(center, CGAL::operator+(center, ray_direction));
+            min_distance = cast_and_return_minimum(segment, tree, facet);
+            if(!min_distance)
+            { 
+                //continue; // for utopia case - just continue on miss
+                Ray ray(center, ray_direction);
+                min_distance = cast_and_return_minimum(ray, tree, facet);
+                if(!min_distance) { continue; } 
+            }
+            if(*min_distance > *segment_distance) // update segment_distance (minimum / maximum)
+            {
+                *segment_distance = *min_distance; 
+            }
+        }
         ray_weights.push_back(sample_it->third);
         ray_distances.push_back(*min_distance); 
     }
@@ -224,18 +253,19 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
 }
 
 template <class Polyhedron>
+template <class Query> // just for Ray and Segment
 boost::optional<double> Surface_mesh_segmentation<Polyhedron>::cast_and_return_minimum(
-    const Ray& ray, const Tree& tree, const Facet_handle& facet) const
+    const Query& query, const Tree& tree, const Facet_handle& facet) const
 {   
     boost::optional<double> min_distance;
     std::list<Object_and_primitive_id> intersections;
     #if 1
     //SL: the difference with all_intersections is that in the traversal traits, we do do_intersect before calling intersection.
     typedef  std::back_insert_iterator< std::list<Object_and_primitive_id> > Output_iterator;
-    Listing_intersection_traits_ray_or_segment_triangle<typename Tree::AABB_traits,Ray,Output_iterator> traversal_traits(std::back_inserter(intersections));
-		tree.traversal(ray,traversal_traits);
+    Listing_intersection_traits_ray_or_segment_triangle<typename Tree::AABB_traits,Query,Output_iterator> traversal_traits(std::back_inserter(intersections));
+		tree.traversal(query,traversal_traits);
     #else
-    tree.all_intersections(ray, std::back_inserter(intersections)); 
+    tree.all_intersections(query, std::back_inserter(intersections)); 
     #endif
     Vector min_i_ray;
     Primitive_id min_id;
@@ -246,12 +276,14 @@ boost::optional<double> Surface_mesh_segmentation<Polyhedron>::cast_and_return_m
         Primitive_id id     = op_it->second;               
         if(id == facet) { continue; } //Since center is located on related facet, we should skip it if there is an intersection with it.
         
-        Point i_point; 
-
+        const Point* i_point; 
+        //Point i_point;
         //AF: Use object_cast as it is faster than assign
-        if(!CGAL::assign(i_point, object)) { continue; } //What to do here (in case of intersection object is a segment), I am not sure ???
+        //IOY: ok, also using pointer-returning version to get rid of copying
+        if(!(i_point = CGAL::object_cast<Point>(&object))) { continue; }
+        //if(!CGAL::assign(i_point, object)) { continue; } //What to do here (in case of intersection object is a segment), I am not sure ???
         
-        Vector i_ray = (ray.source() - i_point);
+        Vector i_ray = (query.source() - *i_point);
         double new_distance = i_ray.squared_length();
         if(!min_distance || new_distance < min_distance)
         {                 
@@ -645,7 +677,6 @@ inline void Surface_mesh_segmentation<Polyhedron>::smooth_sdf_values()
 template <class Polyhedron>
 inline void Surface_mesh_segmentation<Polyhedron>::apply_GMM_fitting()
 {
-    SEG_DEBUG(Timer tg)
     centers.clear();
     std::vector<double> sdf_vector;
     sdf_vector.reserve(sdf_values.size());
@@ -654,10 +685,11 @@ inline void Surface_mesh_segmentation<Polyhedron>::apply_GMM_fitting()
     {
         sdf_vector.push_back(pair_it->second);
     }
-    SEG_DEBUG(Timer t)
+    SEG_DEBUG(CGAL::Timer t)
+    SEG_DEBUG(t.start())
     // apply em with 5 runs, number of runs might become a parameter.
     internal::Expectation_maximization fitter(number_of_centers, sdf_vector, 5);
-    SEG_DEBUG(std::cout << t)
+    SEG_DEBUG(std::cout << t.time() << std::endl)
     std::vector<int> center_memberships;
     fitter.fill_with_center_ids(center_memberships);
     std::vector<int>::iterator center_it = center_memberships.begin();
@@ -666,7 +698,6 @@ inline void Surface_mesh_segmentation<Polyhedron>::apply_GMM_fitting()
     {
         centers.insert(std::pair<Facet_handle, int>(pair_it->first, (*center_it)));
     }
-    SEG_DEBUG(std::cout << tg)
 }
 
 template <class Polyhedron>
