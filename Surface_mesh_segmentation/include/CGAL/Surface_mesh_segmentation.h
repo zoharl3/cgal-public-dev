@@ -44,14 +44,14 @@
 #define CGAL_ANGLE_ST_DEV_DIVIDER 3.0
 
 //IOY: these are going to be removed at the end (no CGAL_ pref)
-#define ACTIVATE_SEGMENTATION_DEBUG
+//#define ACTIVATE_SEGMENTATION_DEBUG
 #ifdef ACTIVATE_SEGMENTATION_DEBUG
 #define SEG_DEBUG(x) x;
 #else
 #define SEG_DEBUG(x) 
 #endif
 // If defined then profile function becomes active, and called from constructor.
-#define SEGMENTATION_PROFILE
+//#define SEGMENTATION_PROFILE
 
 namespace CGAL {
 
@@ -130,7 +130,8 @@ void calculate_sdf_values();
 double calculate_sdf_value_of_facet (const Facet_handle& facet, const Tree& tree) const;
 template <class Query>
 boost::optional<double> cast_and_return_minimum(const Query& ray, const Tree& tree, const Facet_handle& facet) const;
-boost::optional<double> cast_and_return_minimum_use_closest(const Ray& ray, const Tree& tree, const Facet_handle& facet) const;  
+template <class Query> 
+boost::optional<double> cast_and_return_minimum_use_closest(const Query& ray, const Tree& tree, const Facet_handle& facet) const;  
     
 double calculate_sdf_value_from_rays (std::vector<double>& ray_distances, std::vector<double>& ray_weights) const;
 double calculate_sdf_value_from_rays_with_mean (std::vector<double>& ray_distances, std::vector<double>& ray_weights) const;
@@ -225,7 +226,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
     v1 = v1 / sqrt(v1.squared_length());
     v2 = v2 / sqrt(v2.squared_length());
     
-    //arrange_center_orientation(plane, normal, center);
+    arrange_center_orientation(plane, normal, center);
 
     int ray_count = number_of_rays_sqrt * number_of_rays_sqrt;
        
@@ -239,7 +240,9 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
     // making it too large might cause a non-filtered bboxes in traversal,
     // making it too small might cause a miss and consecutive ray casting.
     // for now storing maximum found distance so far.
-     #ifndef SHOOT_ONLY_RAYS
+    
+    //#define SHOOT_ONLY_RAYS
+    #ifndef SHOOT_ONLY_RAYS
     boost::optional<double> segment_distance;
     #endif
     for(Disk_samples_list::const_iterator sample_it = disk_samples.begin(); 
@@ -267,13 +270,13 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
             ray_direction =  ray_direction / sqrt(ray_direction.squared_length());
             
             ray_direction = ray_direction * (*segment_distance * multiplier_for_segment); 
-            Segment segment(center, CGAL::operator+(center, ray_direction));
+            Segment segment(center, CGAL::operator+(center, ray_direction));            
             min_distance = cast_and_return_minimum(segment, tree, facet);
             if(!min_distance)
             { 
                 //continue; // for utopia case - just continue on miss
                 ++miss_counter;
-                Ray ray(center, ray_direction);
+                Ray ray(segment.target(), ray_direction);
                 min_distance = cast_and_return_minimum(ray, tree, facet);
                 if(!min_distance) { continue; } 
             }
@@ -350,11 +353,12 @@ boost::optional<double> Surface_mesh_segmentation<Polyhedron>::cast_and_return_m
     {
         return boost::optional<double>();
     }
-    return (min_distance = sqrt(*min_distance));
+    return (*min_distance = sqrt(*min_distance));
 }
 
 template <class Polyhedron>
-boost::optional<double> Surface_mesh_segmentation<Polyhedron>::cast_and_return_minimum_use_closest (const Ray& ray, const Tree& tree, 
+template <class Query> 
+boost::optional<double> Surface_mesh_segmentation<Polyhedron>::cast_and_return_minimum_use_closest (const Query& ray, const Tree& tree, 
     const Facet_handle& facet) const
 {
     //static double dist = 0.1;
@@ -362,7 +366,7 @@ boost::optional<double> Surface_mesh_segmentation<Polyhedron>::cast_and_return_m
     //return min_distance_2;
     boost::optional<double> min_distance;
     #if 1
-		Closest_intersection_traits<typename Tree::AABB_traits, Ray> traversal_traits;
+		Closest_intersection_traits<typename Tree::AABB_traits, Query> traversal_traits;
 		tree.traversal(ray, traversal_traits);
 		boost::optional<Object_and_primitive_id> intersection = traversal_traits.result();
     #else
@@ -375,10 +379,10 @@ boost::optional<double> Surface_mesh_segmentation<Polyhedron>::cast_and_return_m
     
     if(min_id == facet) { CGAL_error(); } // There should be no such case, after center-facet arrangments.
     
-    Point i_point; 
-    if(!CGAL::assign(i_point, object)) { return min_distance; }
+    const Point* i_point; 
+    if(!(i_point = CGAL::object_cast<Point>(&object))) { return min_distance; }
 
-    Vector min_i_ray = ray.source() - i_point;
+    Vector min_i_ray = ray.source() - *i_point;
     const Point& min_v1 = min_id->halfedge()->vertex()->point();
     const Point& min_v2 = min_id->halfedge()->next()->vertex()->point();
     const Point& min_v3 = min_id->halfedge()->prev()->vertex()->point();
@@ -490,7 +494,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
     }
     std::sort(distances_with_weights.begin(), distances_with_weights.end(), 
         Compare_second_element<std::pair<double, double> >());
-    int b = floor(distances_with_weights.size() / 20.0 + 0.5); // Eliminate %5.
+    int b = static_cast<int>(distances_with_weights.size() / 20.0 + 0.5); // Eliminate %5.
     int e = distances_with_weights.size() - b;                 // Eliminate %5.
     
     double total_weights = 0.0, total_distance = 0.0;
@@ -616,15 +620,16 @@ double Surface_mesh_segmentation<Polyhedron>::calculate_dihedral_angle_of_edge_2
     const Point& b = edge->prev()->vertex()->point();
     const Point& c = edge->next()->vertex()->point();
     const Point& d = edge->opposite()->next()->vertex()->point();
-    
+    // As far as I check: if, say, dihedral angle is 5, this returns 175,
+    // if dihedral angle is -5, this returns -175.
     double n_angle = CGAL::Mesh_3::dihedral_angle(a, b, c, d) / 180.0;
     bool n_concave = n_angle > 0;
-    double mapped_angle = 1 + ((n_concave ? -1 : +1) * n_angle);
-    mapped_angle = (CGAL::max)(mapped_angle, epsilon);
+    double folded_angle = 1 + ((n_concave ? -1 : +1) * n_angle);
+    folded_angle = (CGAL::max)(folded_angle, epsilon);
     
     if(!n_concave) { return epsilon; } // we may want to also penalize convex angles as well...
-    return mapped_angle;
-    //
+    return folded_angle;
+    
     //Facet_handle f1 = edge->facet();
     //Facet_handle f2 = edge->opposite()->facet();
     //    
@@ -643,21 +648,22 @@ double Surface_mesh_segmentation<Polyhedron>::calculate_dihedral_angle_of_edge_2
     ////if(!concave) { return epsilon; } // So no penalties for convex dihedral angle ? Not sure... 
 
     //const Point& f1_v1 = f1->halfedge()->vertex()->point();
-    //const Point& f1_v2 = f1->halfedge()->next()->vertex()->point();
+    //const Point& f1_v2 = f1->halfedge()->next()->vertex()->point(); 
     //const Point& f1_v3 = f1->halfedge()->prev()->vertex()->point();
     //Vector f1_normal = CGAL::unit_normal(f1_v1, f1_v2, f1_v3);
-    //Vector f2_normal = CGAL::unit_normal(f2_v1, f2_v2, f2_v3);
+    //Vector f2_normal = CGAL::unit_normal(f2_v1, f2_v2, f2_v3); 
     //
     //double dot = f1_normal * f2_normal;
     //if(dot > 1.0)       { dot = 1.0;  }
     //else if(dot < -1.0) { dot = -1.0; }
     //double angle = acos(dot) / CGAL_PI; // [0-1] normalize
-    //if(fabs(angle - mapped_angle) > 1e-6)
+    //std::cout << angle << " " << n_angle << " " << (concave ? "concave": "convex") << std::endl;
+    //if(fabs(angle - folded_angle) > 1e-6)
     //{
-    //    std::cout << angle << " " << mapped_angle << std::endl;
+    //    
     //}
     //if(angle < epsilon) { angle = epsilon; } 
-    //return angle; 
+    //return angle;  
 }
 
 template <class Polyhedron>
