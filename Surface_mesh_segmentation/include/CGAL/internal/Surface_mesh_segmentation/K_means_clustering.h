@@ -164,7 +164,11 @@ public:
             
             initiate_centers_randomly(number_of_centers);            
             calculate_clustering();
+            #if 0
             double new_error = sum_of_squares();
+            #else
+            double new_error = within_cluster_sum_of_squares();
+            #endif
             if(error > new_error)
             {
                 error = new_error;
@@ -188,6 +192,17 @@ public:
             {
                 sum += pow(center_it->mean - point_it->data, 2);
             }
+        }
+        return sum;
+    }
+    
+    double within_cluster_sum_of_squares() const
+    {
+        double sum = 0;
+        for(std::vector<K_means_point>::const_iterator point_it = points.begin();
+            point_it != points.end(); ++point_it)
+        {   
+            sum += pow(centers[point_it->center_id].mean - point_it->data, 2);
         }
         return sum;
     }
