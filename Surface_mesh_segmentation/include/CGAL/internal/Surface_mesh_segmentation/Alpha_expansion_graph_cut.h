@@ -39,11 +39,11 @@ public:
     typedef Traits::edge_iterator Edge_iterator;
     
     Alpha_expansion_graph_cut(const std::vector<std::pair<int, int> >& edges,
-        const std::vector<double>& edge_weights, std::vector<int>& labels,
-        const std::vector<std::vector<double> >& probability_matrix, std::vector<int>& center_ids)
+        const std::vector<double>& edge_weights,
+        const std::vector<std::vector<double> >& probability_matrix, std::vector<int>& labels, double* result = NULL)
     {
-        apply_alpha_expansion_2(edges, edge_weights, probability_matrix, labels);
-        center_ids = labels;
+        double min_cut = apply_alpha_expansion_2(edges, edge_weights, probability_matrix, labels);
+        if(result != NULL) { *result = min_cut; }
     }
     
     boost::tuple<Edge_descriptor, Edge_descriptor> 
@@ -67,7 +67,7 @@ public:
         return boost::make_tuple(v1_v2, v2_v1);
     } 
     
-    void apply_alpha_expansion_2(const std::vector<std::pair<int, int> >& edges,
+    double apply_alpha_expansion_2(const std::vector<std::pair<int, int> >& edges,
         const std::vector<double>& edge_weights, const std::vector<std::vector<double> >& probability_matrix, 
         std::vector<int>& labels)
     {
@@ -126,7 +126,7 @@ public:
                 }
                 
                 double flow = boost::boykov_kolmogorov_max_flow(graph, cluster_source, cluster_sink);
-                if(min_cut - flow < flow * 1e-5) { continue; }
+                if(min_cut - flow < flow * 1e-10) { continue; }
                 std::cout << "prev flow: " << min_cut << " new flow: " << flow << std::endl;
                 min_cut = flow;
                 success = true;
@@ -142,6 +142,7 @@ public:
                 
             }
         } while(success);
+        return min_cut;
     }
     
     #if 0
