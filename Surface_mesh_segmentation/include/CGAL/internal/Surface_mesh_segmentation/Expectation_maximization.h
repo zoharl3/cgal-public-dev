@@ -160,7 +160,7 @@ public:
             for(std::size_t point_i = 0; point_i < points.size(); ++point_i)
             {
                 double probability = probabilities[center_i][point_i] / sum;
-                probability = (CGAL::max)(probability, epsilon);
+                probability = (std::max)(probability, epsilon);
                 probabilities[center_i][point_i] = -log(probability);
             }
             #else

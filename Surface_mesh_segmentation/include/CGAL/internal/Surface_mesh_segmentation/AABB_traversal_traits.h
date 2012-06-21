@@ -95,7 +95,7 @@ private:
         min_bbox[0] = m_bbox.xmin(); max_bbox[0] = m_bbox.xmax();
         min_bbox[1] = m_bbox.ymin(); max_bbox[1] = m_bbox.ymax();
         min_bbox[2] = m_bbox.zmin(); max_bbox[2] = m_bbox.zmax();
-        const GeomTraits::Point_3& source = query.source();
+        const typename GeomTraits::Point_3& source = query.source();
         origin[0] = source.x();
         origin[1] = source.y();
         origin[2] = source.z();
