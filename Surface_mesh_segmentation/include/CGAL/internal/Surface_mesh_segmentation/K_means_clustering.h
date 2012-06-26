@@ -89,7 +89,7 @@ protected:
     unsigned int seed;
     
 public:
-    K_means_clustering(int number_of_centers, const std::vector<double>& data, int number_of_run = 50, int maximum_iteration = 100)
+    K_means_clustering(int number_of_centers, const std::vector<double>& data, int number_of_run = 100, int maximum_iteration = 100)
         : points(data.begin(), data.end()), maximum_iteration(maximum_iteration), is_converged(false), 
           seed(static_cast<unsigned int>(time(NULL)))
     {       
@@ -158,7 +158,7 @@ public:
     {        
         std::vector<K_means_center> min_centers;
         double error = (std::numeric_limits<double>::max)();
-        while(--number_of_run > 0)
+        while(number_of_run-- > 0)
         {
             clear_center_ids();
             
