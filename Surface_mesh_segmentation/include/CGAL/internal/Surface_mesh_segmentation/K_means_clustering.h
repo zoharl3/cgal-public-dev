@@ -91,10 +91,10 @@ protected:
     unsigned int seed;
     
 public:
-    K_means_clustering(int number_of_centers, const std::vector<double>& data, int number_of_run = 10, int maximum_iteration = 10)
+    K_means_clustering(int number_of_centers, const std::vector<double>& data, int number_of_run = 30, int maximum_iteration = 15)
         : points(data.begin(), data.end()), maximum_iteration(maximum_iteration), is_converged(false), 
           seed(static_cast<unsigned int>(time(NULL)))
-    {     
+    {             
         #if 0  
         srand(seed);
         #else
