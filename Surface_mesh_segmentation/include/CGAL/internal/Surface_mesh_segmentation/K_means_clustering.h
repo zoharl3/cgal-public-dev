@@ -91,7 +91,7 @@ protected:
     unsigned int seed;
     
 public:
-    K_means_clustering(int number_of_centers, const std::vector<double>& data, int number_of_run = 30, int maximum_iteration = 15)
+    K_means_clustering(int number_of_centers, const std::vector<double>& data, int number_of_run = 20, int maximum_iteration = 15)
         : points(data.begin(), data.end()), maximum_iteration(maximum_iteration), is_converged(false), 
           seed(static_cast<unsigned int>(time(NULL)))
     {             
@@ -130,7 +130,9 @@ public:
         for(int i = 0; i < number_of_centers; ++i)
         {
             double initial_mean = points[rand() % points.size()].data;
-            centers.push_back(K_means_center(initial_mean));
+            K_means_center new_center(initial_mean);
+            if(is_already_center(new_center)) { --i; }
+            else                              { centers.push_back(new_center); }
         } 
         sort(centers.begin(), centers.end());
     }
@@ -158,9 +160,20 @@ public:
             int selection_index = lower_bound(distance_square_cumulative.begin(), distance_square_cumulative.end(), random_ds) 
                 - distance_square_cumulative.begin();
             double initial_mean = points[selection_index].data; 
-            centers.push_back(K_means_center(initial_mean));
+            K_means_center new_center(initial_mean);
+            if(is_already_center(new_center)) { --i; }
+            else                              { centers.push_back(new_center); }
         }
         sort(centers.begin(), centers.end());
+    }
+    
+    bool is_already_center(const K_means_center& center) const
+    {
+        for(std::vector<K_means_center>::const_iterator it = centers.begin(); it != centers.end(); ++it)
+        {
+            if(it->mean == center.mean) { return true; }
+        }
+        return false;
     }
     
     void calculate_clustering()
