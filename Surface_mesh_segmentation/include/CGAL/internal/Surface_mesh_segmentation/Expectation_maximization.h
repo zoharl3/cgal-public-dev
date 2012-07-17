@@ -47,7 +47,7 @@ public:
     { }
     double probability(double x) const
     {
-        double e_over = -0.5 * pow((x - mean) / deviation, 2); 
+        double e_over = -0.5 * std::pow((x - mean) / deviation, 2); 
         return exp(e_over) / deviation;
     }
     double probability_with_coef(double x) const
@@ -57,7 +57,7 @@ public:
     double log_probability_with_coef(double x) const
     {
         return  log(mixing_coefficient) - log(deviation)
-        -0.5 * pow((x - mean) / deviation, 2);
+        -0.5 * std::pow((x - mean) / deviation, 2);
     }
     bool operator < (const Gaussian_center& center) const
     {
@@ -93,6 +93,7 @@ public:
     {
         initiate_centers_uniformly(number_of_centers);
         fit(); 
+        sort(centers.begin(), centers.end());
     }
     /* For initialization with provided center ids per point, with one run */
     Expectation_maximization(int number_of_centers, const std::vector<double>& data, std::vector<int>& initial_center_ids,
@@ -103,7 +104,7 @@ public:
         number_of_centers = initiate_centers_from_memberships(number_of_centers, initial_center_ids);
         membership_matrix = std::vector<std::vector<double> >(number_of_centers, std::vector<double>(points.size()));
         fit();
-        //write_center_parameters("centers_param.txt");
+        sort(centers.begin(), centers.end());
     }
     /* For initialization with random center selection (Forgy), with multiple run */ 
     Expectation_maximization(int number_of_centers, const std::vector<double>& data, int number_of_runs, 
@@ -119,6 +120,7 @@ public:
         srand(DEF_SEED);
         #endif
         fit_with_multiple_run(number_of_centers, number_of_runs); 
+        sort(centers.begin(), centers.end());
         //write_center_parameters("centers_param.txt");   
     }
     
@@ -146,9 +148,9 @@ public:
              point_it != points.end(); ++point_it)
         {
             double max_likelihood = 0.0;
-            int max_center = 0, center_counter = 0;
+            int max_center = -1, center_counter = 0;
             for(std::vector<Gaussian_center>::iterator center_it = centers.begin(); 
-                center_it != centers.end(); ++center_it, center_counter++)
+                center_it != centers.end(); ++center_it, ++center_counter)
             {
                 double likelihood = center_it->probability_with_coef(*point_it);     
                 if(max_likelihood < likelihood)
@@ -179,6 +181,8 @@ public:
             {
                 double probability = probabilities[center_i][point_i] / total_probability;
                 probability = (std::max)(probability, epsilon);
+                //probability += epsilon;
+                //probability = (std::min)(probability, 1.0);
                 probability = -log(probability);
                 probabilities[center_i][point_i] = (std::max)(probability, std::numeric_limits<double>::epsilon());
             }
@@ -220,12 +224,12 @@ public:
         {
             int center_id = initial_center_ids[i];
             double data = points[i];
-            centers[center_id].deviation += pow(data - centers[center_id].mean, 2);
+            centers[center_id].deviation += std::pow(data - centers[center_id].mean, 2);
         }    
         for(int i = 0; i < number_of_centers; ++i)
         {
             if(!cluster_exist[i]) { continue; }
-            centers[i].deviation = sqrt(centers[i].deviation / member_count[i]);
+            centers[i].deviation = std::sqrt(centers[i].deviation / member_count[i]);
         }
         
         double epsilon = 1e-5; // this epsilon should be consistent with epsilon in calculate_dihedral_angle_of_edge!
@@ -294,7 +298,7 @@ public:
             double distance = (centers[closest_center].mean - *it) / centers[closest_center].deviation;
             distortion += distance * distance;
         }           
-        return sqrt(distortion / points.size());
+        return std::sqrt(distortion / points.size());
     }
     
 protected:
@@ -322,7 +326,7 @@ protected:
         for(std::size_t i = 0; i < centers.size(); ++i)
         {
             CGAL_assertion(member_count[i] != 0); // There shouldn't be such case, unless same point is selected as a center twice (it is checked!)    
-            centers[i].deviation = sqrt(centers[i].deviation / member_count[i]);
+            centers[i].deviation = std::sqrt(centers[i].deviation / member_count[i]);
         }
     }
     // Initialization functions for centers.
@@ -342,8 +346,6 @@ protected:
             else                              { centers.push_back(new_center); }
         }
         calculate_initial_deviations();
-        sort(centers.begin(), centers.end());
-        //write_random_centers("center_indexes.txt");
     }
     
     void initiate_centers_uniformly(int number_of_centers)
@@ -358,7 +360,6 @@ protected:
             centers.push_back(Gaussian_center(initial_mean, initial_deviation, initial_mixing_coefficient));
         }
         calculate_initial_deviations();
-        sort(centers.begin(), centers.end());
     }
     
     void initiate_centers_plus_plus(int number_of_centers)
@@ -377,7 +378,7 @@ protected:
             double cumulative_distance_square = 0.0;
             for(std::size_t j = 0; j < points.size(); ++j)
             {
-                double new_distance = pow(centers.back().mean - points[j], 2);
+                double new_distance = std::pow(centers.back().mean - points[j], 2);
                 if(new_distance < distance_square[j]) { distance_square[j] = new_distance; }
                 cumulative_distance_square += distance_square[j];
                 distance_square_cumulative[j] = cumulative_distance_square;
@@ -392,7 +393,6 @@ protected:
             else                              { centers.push_back(new_center); }
         }
         calculate_initial_deviations();
-        sort(centers.begin(), centers.end());
     }
     
     bool is_already_center(const Gaussian_center& center) const
@@ -447,13 +447,12 @@ protected:
         for(int i = 0; i < number_of_points; ++i)
         {
             int center_id = initial_center_ids[i];
-            centers[center_id].deviation += pow(points[i] - centers[center_id].mean, 2);
+            centers[center_id].deviation += std::pow(points[i] - centers[center_id].mean, 2);
         }    
         for(int i = 0; i < number_of_centers; ++i)
         {
-            centers[i].deviation = sqrt(centers[i].deviation / member_count[i]);
+            centers[i].deviation = std::sqrt(centers[i].deviation / member_count[i]);
         }
-        sort(centers.begin(), centers.end());
         return number_of_centers;
     }
     
@@ -478,9 +477,9 @@ protected:
             for(std::size_t point_i = 0; point_i < points.size(); ++point_i)
             {
                 double membership = membership_matrix[center_i][point_i];
-                new_deviation += membership * pow(points[point_i] - new_mean, 2);
+                new_deviation += membership * std::pow(points[point_i] - new_mean, 2);
             }
-            new_deviation = sqrt(new_deviation/total_membership);
+            new_deviation = std::sqrt(new_deviation/total_membership);
             // Assign new parameters 
             centers[center_i].mixing_coefficient = total_membership / points.size();
             centers[center_i].deviation = new_deviation;

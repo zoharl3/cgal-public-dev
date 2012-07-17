@@ -42,9 +42,10 @@
 
 //AF: macros must be prefixed with "CGAL_"
 //IOY: done
-#define CGAL_NORMALIZATION_ALPHA 6.0
+#define CGAL_NORMALIZATION_ALPHA 5.0
 #define CGAL_ANGLE_ST_DEV_DIVIDER 2.0
 #define CGAL_ST_DEV_MULTIPLIER 0.75
+#define CGAL_ACCEPTANCE_RATE_THRESHOLD 0.5
 
 //IOY: these are going to be removed at the end (no CGAL_ pref)
 #define ACTIVATE_SEGMENTATION_DEBUG
@@ -95,14 +96,14 @@ protected:
     template <typename ValueTypeName> 
     struct Compare_second_element
     {
-        bool operator()(const ValueTypeName& v1,const ValueTypeName& v2) const
+        bool operator()(const ValueTypeName& v1, const ValueTypeName& v2) const
         { return v1.second < v2.second; }
     };
     
     template <typename ValueTypeName> 
     struct Compare_third_element
     {
-        bool operator()(const ValueTypeName& v1,const ValueTypeName& v2) const
+        bool operator()(const ValueTypeName& v1, const ValueTypeName& v2) const
         { return v1.third > v2.third; } //descending
     }; 
     
@@ -121,8 +122,8 @@ public:
     double smoothing_lambda;
        
     /*Store sampled points from disk, just for once */
-    Disk_samples_list disk_samples;
-    
+    Disk_samples_list disk_samples_sparse;
+    Disk_samples_list disk_samples_dense;
     //these are going to be removed...
     std::ofstream log_file;
     
@@ -139,23 +140,20 @@ Surface_mesh_segmentation(Polyhedron* mesh,
 
 void calculate_sdf_values();
 
-double calculate_sdf_value_of_facet (const Facet_handle& facet, const Tree& tree) const;
+double calculate_sdf_value_of_facet (const Facet_handle& facet, const Tree& tree, const Disk_samples_list& samples) const;
 template <class Query>
 boost::tuple<bool, bool, double> cast_and_return_minimum(const Query& ray, const Tree& tree, const Facet_handle& facet) const;
 template <class Query> 
 boost::tuple<bool, bool, double> cast_and_return_minimum_use_closest(const Query& ray, const Tree& tree, const Facet_handle& facet) const;  
     
-double calculate_sdf_value_from_rays(std::vector<double>& ray_distances, std::vector<double>& ray_weights) const;
+boost::tuple<double, double> calculate_sdf_value_from_rays(std::vector<double>& ray_distances, std::vector<double>& ray_weights) const;
 
 void arrange_center_orientation(const Plane& plane, const Vector& unit_normal, Point& center) const;
 void calculate_dihedral_angles();
 double calculate_dihedral_angle_of_edge(const Halfedge_handle& edge) const;
 double calculate_dihedral_angle_of_edge_2(const Halfedge_handle& edge) const;
 
-void disk_sampling_rejection();
-void disk_sampling_polar_mapping();
-void disk_sampling_concentric_mapping();
-void disk_sampling_vogel_method();
+void disk_sampling_vogel_method(Disk_samples_list& samples, int ray_count);
 
 void select_cluster_number();
 
@@ -200,7 +198,11 @@ inline Surface_mesh_segmentation<Polyhedron>::Surface_mesh_segmentation(
     number_of_centers(number_of_centers), log_file("log_file.txt"), use_minimum_segment(false), multiplier_for_segment(1), smoothing_lambda(23.0)
 {
     //disk_sampling_concentric_mapping();
-    disk_sampling_vogel_method();
+    int sparse_ray_count = number_of_rays_sqrt * number_of_rays_sqrt;
+    int dense_ray_count = sparse_ray_count * 2;
+    disk_sampling_vogel_method(disk_samples_sparse, sparse_ray_count);
+    disk_sampling_vogel_method(disk_samples_dense, dense_ray_count);
+    
     #ifdef SEGMENTATION_PROFILE
     profile("profile.txt");
     #else
@@ -228,7 +230,7 @@ inline void Surface_mesh_segmentation<Polyhedron>::calculate_sdf_values()
     {
         CGAL_precondition(facet_it->is_triangle()); //Mesh should contain triangles.
          
-        double sdf = calculate_sdf_value_of_facet(facet_it, tree);        
+        double sdf = calculate_sdf_value_of_facet(facet_it, tree, disk_samples_sparse);        
         sdf_values.insert(std::pair<Facet_handle, double>(facet_it, sdf));
     }
     check_zero_sdf_values();
@@ -237,7 +239,7 @@ inline void Surface_mesh_segmentation<Polyhedron>::calculate_sdf_values()
 }
 
 template <class Polyhedron>
-inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_facet(const Facet_handle& facet, const Tree& tree) const
+inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_facet(const Facet_handle& facet, const Tree& tree, const Disk_samples_list& samples) const
 {
   // AF: Use const Point&
   //IOY: Done, and I am going to change other places (where it is approprite) like this.
@@ -252,8 +254,8 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
     Plane plane(center, normal);
     Vector v1 = plane.base1();
     Vector v2 = plane.base2();
-    v1 = v1 / sqrt(v1.squared_length());
-    v2 = v2 / sqrt(v2.squared_length());
+    v1 = v1 / std::sqrt(v1.squared_length());
+    v2 = v2 / std::sqrt(v2.squared_length());
     
     //arrange_center_orientation(plane, normal, center);
 
@@ -274,8 +276,8 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
     #ifndef SHOOT_ONLY_RAYS
     boost::optional<double> segment_distance;
     #endif
-    for(Disk_samples_list::const_iterator sample_it = disk_samples.begin(); 
-        sample_it != disk_samples.end(); ++sample_it)
+    for(Disk_samples_list::const_iterator sample_it = samples.begin(); 
+        sample_it != samples.end(); ++sample_it)
     {
         bool is_intersected, intersection_is_acute;
         double min_distance;
@@ -297,7 +299,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
         }
         else // use segment_distance to limit rays as segments
         {
-            ray_direction =  ray_direction / sqrt(ray_direction.squared_length());
+            ray_direction =  ray_direction / std::sqrt(ray_direction.squared_length());
             ray_direction = ray_direction * (*segment_distance * multiplier_for_segment); 
             
             Segment segment(center, CGAL::operator+(center, ray_direction));            
@@ -308,7 +310,7 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
                 Ray ray(segment.target(), ray_direction);
                 boost::tie(is_intersected, intersection_is_acute, min_distance) = cast_and_return_minimum(ray, tree, facet);
                 if(!intersection_is_acute) { continue; } 
-                min_distance += CGAL::sqrt(segment.squared_length()); // since our source is segment.target()
+                min_distance += std::sqrt(segment.squared_length()); // since our source is segment.target()
             }
             else if(!intersection_is_acute) // intersection is found, but it is not acceptable (so, do not continue ray-segment casting)
             {
@@ -334,7 +336,11 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_of_face
         ray_weights.push_back(sample_it->third);
         ray_distances.push_back(min_distance); 
     }
-    return calculate_sdf_value_from_rays(ray_distances, ray_weights);  
+    double sdf_result, acceptance_rate;
+    boost::tie(sdf_result, acceptance_rate) = calculate_sdf_value_from_rays(ray_distances, ray_weights);
+    
+    if(acceptance_rate > CGAL_ACCEPTANCE_RATE_THRESHOLD || samples.size() == disk_samples_dense.size()) { return sdf_result; }
+    return calculate_sdf_value_of_facet(facet, tree, disk_samples_dense);  
 }
 
 
@@ -390,7 +396,7 @@ inline boost::tuple<bool, bool, double> Surface_mesh_segmentation<Polyhedron>::c
         return min_distance;
     }
     min_distance.get<1>() = true; // founded intersection is acceptable.
-    min_distance.get<2>() = sqrt(min_distance.get<2>());
+    min_distance.get<2>() = std::sqrt(min_distance.get<2>());
     return min_distance;
 }
 
@@ -432,14 +438,16 @@ inline boost::tuple<bool, bool, double> Surface_mesh_segmentation<Polyhedron>::c
         return min_distance;
     }
     min_distance.get<1>() = true;
-    min_distance.get<2>() = sqrt(min_i_ray.squared_length());
+    min_distance.get<2>() = std::sqrt(min_i_ray.squared_length());
     return min_distance;
 }
 
 template <class Polyhedron>
-inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_rays( std::vector<double>& ray_distances,
+inline boost::tuple<double, double> Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_rays( std::vector<double>& ray_distances,
     std::vector<double>& ray_weights) const
-{
+{    
+    // get<0> : sdf value
+    // get<1> : not outlier ray count / total ray count
     int accepted_ray_count = ray_distances.size();
     if(accepted_ray_count == 0)      { return 0.0; }
     else if(accepted_ray_count == 1) { return ray_distances[0]; }
@@ -475,8 +483,9 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
         double dif = (*dist_it) - mean_sdf;
         st_dev += dif * dif;
     }
-    st_dev = sqrt(st_dev / ray_distances.size());
+    st_dev = std::sqrt(st_dev / ray_distances.size());
     /* Calculate sdf, accept rays : ray_dist - median < st dev */
+    int not_outlier_count = 0;
     w_it = ray_weights.begin();
     for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end();
          ++dist_it, ++w_it)
@@ -485,9 +494,13 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_sdf_value_from_ra
         if(CGAL::abs((*dist_it) - median_sdf) > (st_dev * CGAL_ST_DEV_MULTIPLIER)) { continue; }
         total_distance += (*dist_it) * (*w_it);
         total_weights += (*w_it);
+        not_outlier_count++;
     }
+
     if(total_distance == 0.0) { return median_sdf; } // no ray is accepted, return median.
-    return total_distance / total_weights;  
+    double sdf_res = total_distance / total_weights;
+    double acceptance_rate = not_outlier_count / static_cast<double>(accepted_ray_count);
+    return boost::tuple<double, double>(sdf_res, acceptance_rate);  
 }
 
 /* Slightly move center towards inverse normal of facet.
@@ -572,15 +585,16 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_dihedral_angle_of
     if(dot > 1.0)       { dot = 1.0;  }
     else if(dot < -1.0) { dot = -1.0; }
     double angle = acos(dot) / CGAL_PI; // [0-1] normalize
+    if(!concave) { angle *= 0.08; }
+    
     if(angle < epsilon) { angle = epsilon; } 
-    if(!concave) { angle *= 0.05; }
     return angle; 
 }
 
 template <class Polyhedron>
 inline double Surface_mesh_segmentation<Polyhedron>::calculate_dihedral_angle_of_edge_2(const Halfedge_handle& edge) const
 {
-    double epsilon = 1e-8; // not sure but should not return zero for log(angle)...
+    double epsilon = 1e-5; // not sure but should not return zero for log(angle)...
     const Point& a = edge->vertex()->point();
     const Point& b = edge->prev()->vertex()->point();
     const Point& c = edge->next()->vertex()->point();
@@ -588,12 +602,12 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_dihedral_angle_of
     // As far as I check: if, say, dihedral angle is 5, this returns 175,
     // if dihedral angle is -5, this returns -175.
     double n_angle = CGAL::Mesh_3::dihedral_angle(a, b, c, d) / 180.0;
-    bool n_concave = n_angle > 0;
-    double folded_angle = 1 + ((n_concave ? -1 : +1) * n_angle);
-    folded_angle = (std::max)(folded_angle, epsilon);
-    
-    if(!n_concave) { return epsilon; } // we may want to also penalize convex angles as well...
-    return folded_angle;
+    bool concave = n_angle > 0;
+    double angle = 1 + ((concave ? -1 : +1) * n_angle); 
+           
+    if(!concave) { angle *= 0.05; }
+    if(angle < epsilon) { angle = epsilon; } 
+    return angle; 
     
     //Facet_handle f1 = edge->facet();
     //Facet_handle f2 = edge->opposite()->facet();
@@ -632,108 +646,28 @@ inline double Surface_mesh_segmentation<Polyhedron>::calculate_dihedral_angle_of
 }
 
 template <class Polyhedron>
-inline void Surface_mesh_segmentation<Polyhedron>::disk_sampling_rejection()
-{
-    int number_of_points_sqrt = number_of_rays_sqrt;
-    double length_of_normal = 1.0 / tan(cone_angle / 2);
-    double mid_point = (number_of_points_sqrt-1) / 2.0;
-    double angle_st_dev = cone_angle / CGAL_ANGLE_ST_DEV_DIVIDER; 
-    
-    for(int i = 0; i < number_of_points_sqrt; ++i)
-    for(int j = 0; j < number_of_points_sqrt; ++j)
-    {
-        double w1 = (i - mid_point)/(mid_point);
-        double w2 = (j - mid_point)/(mid_point);
-        double R = sqrt(w1*w1 + w2*w2);
-        if(R > 1.0) { continue; }
-        double angle = atan(R / length_of_normal);
-        angle =  exp(-0.5 * (pow(angle / angle_st_dev, 2))); // weight
-        disk_samples.push_back(Disk_sample(w1, w2, angle));
-    }
-}
-
-template <class Polyhedron>
-inline void Surface_mesh_segmentation<Polyhedron>::disk_sampling_polar_mapping()
-{
-    int number_of_points_sqrt = number_of_rays_sqrt;
-    double length_of_normal = 1.0 / tan(cone_angle / 2);
-    double angle_st_dev = cone_angle / CGAL_ANGLE_ST_DEV_DIVIDER; 
-    
-    for(int i = 0; i < number_of_points_sqrt; ++i)
-    for(int j = 0; j < number_of_points_sqrt; ++j)
-    {
-        double w1 = i / (double) (number_of_points_sqrt-1);
-        double w2 = j / (double) (number_of_points_sqrt-1);
-        double R = w1;
-        double Q = 2 * w1 * CGAL_PI;
-        double angle = atan(R / length_of_normal);
-        angle =  exp(-0.5 * (pow(angle / angle_st_dev, 2))); // weight
-        disk_samples.push_back(Disk_sample(R * cos(Q), R * sin(Q), angle));
-    }
-}
-
-template <class Polyhedron>
-inline void Surface_mesh_segmentation<Polyhedron>::disk_sampling_concentric_mapping()
-{
-    int number_of_points_sqrt = number_of_rays_sqrt;
-    double length_of_normal = 1.0 / tan(cone_angle / 2);
-    double fraction = 2.0 / (number_of_points_sqrt -1);
-    double angle_st_dev = cone_angle / CGAL_ANGLE_ST_DEV_DIVIDER; 
-    
-    for(int i = 0; i < number_of_points_sqrt; ++i)
-    for(int j = 0; j < number_of_points_sqrt; ++j)
-    {
-		double w1 = -1 + i * fraction;
-        double w2 = -1 + j * fraction;
-        double R, Q;
-        if(w1 == 0 && w2 == 0) { R = 0; Q = 0; }
-        else if(w1 > -w2)
-        {
-            if(w1 > w2) { R = w1; Q = (w2 / w1); }
-            else        { R = w2; Q = (2 - w1 / w2); }
-        }
-        else 
-        {
-            if(w1 < w2) { R = -w1; Q = (4 + w2 / w1); }
-            else        { R = -w2; Q = (6 - w1 / w2); }
-        }
-        Q *= (0.25 * CGAL_PI);
-        double angle = atan(R / length_of_normal);
-        angle =  exp(-0.5 * (pow(angle / angle_st_dev, 2))); // weight
-        disk_samples.push_back(Disk_sample(R * cos(Q), R * sin(Q), angle));
-    }
-    //Sorting sampling
-    //The sampling that are closer to center comes first.
-    //More detailed: weights are inverse proportional with distance to center,
-    //use weights to sort in descending order.
-    std::sort(disk_samples.begin(), disk_samples.end(), 
-    Compare_third_element<CGAL::Triple<double, double, double> >());
-}
-
-template <class Polyhedron>
-inline void Surface_mesh_segmentation<Polyhedron>::disk_sampling_vogel_method()
+inline void Surface_mesh_segmentation<Polyhedron>::disk_sampling_vogel_method(Disk_samples_list& samples, int ray_count)
 {
     double length_of_normal = 1.0 / tan(cone_angle / 2);
     double angle_st_dev = cone_angle / CGAL_ANGLE_ST_DEV_DIVIDER; 
     
-    int number_of_points = number_of_rays_sqrt * number_of_rays_sqrt;
-    double golden_ratio = 3.0 - sqrt(5.0);
+    double golden_ratio = 3.0 - std::sqrt(5.0);
     #if 0
     for(int i = 0; i < number_of_points; ++i)
     {
         double Q = i * golden_ratio * CGAL_PI;
-        double R = sqrt(static_cast<double>(i)) / number_of_rays_sqrt;
+        double R = std::sqrt(static_cast<double>(i) / ray_count);
         double angle = atan(R / length_of_normal);
-        angle =  exp(-0.5 * (pow(angle / angle_st_dev, 2))); // weight
-        disk_samples.push_back(Disk_sample(R * cos(Q), R * sin(Q), angle));
+        angle =  exp(-0.5 * (std::pow(angle / angle_st_dev, 2))); // weight
+        samples.push_back(Disk_sample(R * cos(Q), R * sin(Q), angle));
     }
     #else
     double custom_power = 8.0 / 8.0;  
-    for(int i = 0; i < number_of_points; ++i)
+    for(int i = 0; i < ray_count; ++i)
     {
         double Q = i * golden_ratio * CGAL_PI;
-        double R = pow(static_cast<double>(i) / number_of_points, custom_power);
-        disk_samples.push_back(Disk_sample(R * cos(Q), R * sin(Q), 1.0));
+        double R = std::pow(static_cast<double>(i) / ray_count, custom_power);
+        samples.push_back(Disk_sample(R * cos(Q), R * sin(Q), 1.0));
     }
     #endif
 }
@@ -796,7 +730,7 @@ inline void Surface_mesh_segmentation<Polyhedron>::smooth_sdf_values_with_gaussi
             double total_weight = 0.0;
             for(std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
-                double weight =  exp(-0.5 * (pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma
+                double weight =  exp(-0.5 * (std::pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma
                 total_sdf_value += sdf_values[it->first] * weight;
                 total_weight += weight;
             }        
@@ -874,14 +808,14 @@ inline void Surface_mesh_segmentation<Polyhedron>::smooth_sdf_values_with_bilate
             double deviation = 0.0;
             for(std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
-                deviation += pow(sdf_values[it->first] - current_sdf_value, 2);
+                deviation += std::pow(sdf_values[it->first] - current_sdf_value, 2);
             }            
             deviation = std::sqrt(deviation / neighbors.size()); 
             if(deviation == 0.0) { deviation = std::numeric_limits<double>::epsilon(); } //this might happen       
             for(std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
-                double spatial_weight =  exp(-0.5 * (pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma                
-                double domain_weight  =  exp(-0.5 * (pow((sdf_values[it->first] - current_sdf_value) / (2*deviation), 2)));
+                double spatial_weight =  exp(-0.5 * (std::pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma                
+                double domain_weight  =  exp(-0.5 * (std::pow((sdf_values[it->first] - current_sdf_value) / (std::sqrt(2.0)*deviation), 2)));
                 double weight = spatial_weight * domain_weight;            
                 total_sdf_value += sdf_values[it->first] * weight;
                 total_weight += weight;
@@ -1331,7 +1265,7 @@ inline void Surface_mesh_segmentation<Polyhedron>::select_cluster_number()
         number_of_centers = i;
         apply_GMM_fitting_with_K_means_init();
         double distortion = fitter.calculate_distortion();
-        distortions[i-(min_cluster_count -1)] = pow(distortion, -0.5);    
+        distortions[i-(min_cluster_count -1)] = std::pow(distortion, -0.5);    
     }
     double max_jump = 0.0;
     for(int i = 1; i < range+1; ++i)
