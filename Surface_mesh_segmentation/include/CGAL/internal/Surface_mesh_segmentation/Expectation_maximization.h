@@ -34,56 +34,80 @@
 namespace CGAL {
 namespace internal {
 
-class Gaussian_center
-{
-public:
-    double mean;
-    double deviation;
-    double mixing_coefficient;
-    
-    Gaussian_center(): mean(0), deviation(0), mixing_coefficient(1.0)
-    { }
-    Gaussian_center(double mean, double deviation, double mixing_coefficient)
-        : mean(mean), deviation(deviation), mixing_coefficient(mixing_coefficient)
-    { }
-    double probability(double x) const
-    {
-        double e_over = -0.5 * std::pow((x - mean) / deviation, 2); 
-        return exp(e_over) / deviation;
-    }
-    double probability_with_coef(double x) const
-    {
-        return probability(x) * mixing_coefficient;
-    }
-    bool operator < (const Gaussian_center& center) const
-    {
-        return mean < center.mean;
-    }
-};
-    
-
 class Expectation_maximization
 {
+protected:
+    /**
+     * Represents centers in Expectation Maximization algorithm.
+     * @see Expectation_maximization
+     */
+    class Gaussian_center
+    {
+    public:
+        double mean;
+        double deviation;
+        double mixing_coefficient;
+        
+        Gaussian_center(): mean(0), deviation(0), mixing_coefficient(1.0)
+        { }
+        Gaussian_center(double mean, double deviation, double mixing_coefficient)
+            : mean(mean), deviation(deviation), mixing_coefficient(mixing_coefficient)
+        { }
+        /**
+         * Probability density function (pdf).
+         * Note that result is not devided to sqrt(2*pi), since it does not effect EM algorithm.
+         * @param x data
+         * @return pdf result (without dividing sqrt(2*pi))
+         */
+        double probability(double x) const
+        {
+            double e_over = -0.5 * std::pow((x - mean) / deviation, 2); 
+            return exp(e_over) / deviation;
+        }
+        /**
+         * Multiplies pdf result and mixing coefficient of the center.
+         * @param x data
+         * @return result of the multiplication.
+         */
+        double probability_with_coef(double x) const
+        {
+            return probability(x) * mixing_coefficient;
+        }
+        /** A comparator for sorting centers in ascending order. */
+        bool operator < (const Gaussian_center& center) const
+        {
+            return mean < center.mean;
+        }
+    };
 public:
+    /** Types of algorithms for random center selection. */
     enum Initialization_types { RANDOM_INITIALIZATION, PLUS_INITIALIZATION, K_MEANS_INITIALIZATION };
-    
+
+    double final_likelihood;
+protected:  
     std::vector<Gaussian_center> centers;
     std::vector<double>  points;
 
     double threshold;
-    int    maximum_iteration;
-    
-    bool   is_converged;
-    double final_likelihood;
-    
-protected:
-    std::vector<std::vector<double> > membership_matrix;
+    int    maximum_iteration;    
+        
+    std::vector<std::vector<double> > responsibility_matrix;
     unsigned int seed; /**< Seed for random initializations */
     Initialization_types init_type;
-public:
-    // these two constructors will be removed!
-    Expectation_maximization() { }    
     
+public:
+    /** Going to be removed */
+    Expectation_maximization() { }    
+    /**
+     * Constructs structures and runs the algorithm. 
+     * EM algorithm is repeated number_of_run times, and the result which has maximum likelihood is kept.
+     * @param number_of_centers
+     * @param data 
+     * @param init_type initialization type for random center selection
+     * @param number_of_run number of times to repeat EM algorithm
+     * @param threshold minimum allowed improvement on likelihood between iterations 
+     * @param maximum_iteration number of maximum iteration in a single EM algorithm call
+     */
     Expectation_maximization(int number_of_centers, 
         const std::vector<double>& data, 
         Initialization_types init_type = PLUS_INITIALIZATION,
@@ -92,10 +116,10 @@ public:
         int maximum_iteration = CGAL_DEFAULT_MAXIMUM_ITERATION )
         :
         points(data), threshold(threshold), maximum_iteration(maximum_iteration), init_type(init_type),
-        membership_matrix(std::vector<std::vector<double> >(number_of_centers, std::vector<double>(points.size()))),
-        is_converged(false), final_likelihood(-(std::numeric_limits<double>::max)()), seed(CGAL_DEFAULT_SEED)
+        responsibility_matrix(std::vector<std::vector<double> >(number_of_centers, std::vector<double>(points.size()))),
+        final_likelihood(-(std::numeric_limits<double>::max)()), seed(CGAL_DEFAULT_SEED)
     {
-        /* For initialization with provided center ids per point, with one run */
+        // For initialization with k-means, with one run
         if(init_type == K_MEANS_INITIALIZATION)
         {
             K_means_clustering k_means(number_of_centers, data);
@@ -103,17 +127,21 @@ public:
             k_means.fill_with_center_ids(initial_center_ids);
             
             initiate_centers_from_memberships(number_of_centers, initial_center_ids);
-            fit();        
+            calculate_clustering();        
         }
-        /* For initialization with random center selection, with multiple run */
+        // For initialization with random center selection, with multiple run
         else
         {
             srand(seed);
-            fit_with_multiple_run(number_of_centers, number_of_runs);             
+            calculate_clustering_with_multiple_run(number_of_centers, number_of_runs);             
         }
         sort(centers.begin(), centers.end());
     }
     
+    /**
+     * Fills data_center by the id of the center which has maximum responsibility. 
+     * @param[out] data_centers should be empty
+     */
     void fill_with_center_ids(std::vector<int>& data_centers)
     {
         data_centers.reserve(points.size());        
@@ -134,8 +162,12 @@ public:
             }
             data_centers.push_back(max_center);
         }
-    }   
-    
+    }
+       
+    /**
+     * Fills probabilities[center][point] by responsibility of the center on the point. 
+     * @param[out] probabilities should be empty
+     */
     void fill_with_probabilities(std::vector<std::vector<double> >& probabilities)
     {
         probabilities = std::vector<std::vector<double> >
@@ -156,7 +188,7 @@ public:
         }                       
     } 
 
-    //Experimental!
+    /** Going to be removed */
     double calculate_distortion()
     {
         double distortion = 0.0;
@@ -181,7 +213,10 @@ public:
     }
     
 protected:
-
+    /**
+     * Calculates deviation for each center.
+     * Initial deviation for a center is equal to deviation of the points whose closest center is the current center.
+     */
     void calculate_initial_deviations()
     {        
         std::vector<int> member_count(centers.size(), 0);
@@ -203,16 +238,19 @@ protected:
         }
         for(std::size_t i = 0; i < centers.size(); ++i)
         {
-            CGAL_assertion(member_count[i] != 0); // There shouldn't be such case, unless same point is selected as a center twice (it is checked!)    
+            // There shouldn't be such case, unless same point is selected as a center twice (it is checked!) 
+            CGAL_assertion(member_count[i] != 0); 
             centers[i].deviation = std::sqrt(centers[i].deviation / member_count[i]);
         }
     }
-    // Initialization functions for centers.
- 
+    
+    /**
+     * Initializes centers by choosing random points from data.
+     * @param number_of_centers
+     */
     void initiate_centers_randomly(int number_of_centers)
     {
-        centers.clear();
-        /* Randomly generate means of centers */
+        centers.clear();        
         double initial_mixing_coefficient = 1.0 / number_of_centers;
         double initial_deviation = 0.0;  
         for(int i = 0; i < number_of_centers; ++i)
@@ -226,6 +264,11 @@ protected:
         calculate_initial_deviations();
     }
     
+    /**
+     * Initializes centers by using K-means++ algorithm.
+     * Probability of a point to become a center is proportional to its squared distance to the closest center.
+     * @param number_of_centers
+     */
     void initiate_centers_plus_plus(int number_of_centers)
     {
         centers.clear();
@@ -262,18 +305,14 @@ protected:
         calculate_initial_deviations();
     }
     
-    bool is_already_center(const Gaussian_center& center) const
-    {
-        for(std::vector<Gaussian_center>::const_iterator it = centers.begin(); it != centers.end(); ++it)
-        {
-            if(it->mean == center.mean) { return true; }
-        }
-        return false;
-    }
-    
-    void initiate_centers_from_memberships(int number_of_centers, std::vector<int>& initial_center_ids)
+    /**
+     * Uses initial_center_ids to determine parameters for each center.
+     * @param number_of_centers
+     * @param initial_center_ids includes center_id for each point.
+     */
+    void initiate_centers_from_memberships(int number_of_centers, const std::vector<int>& initial_center_ids)
     {  
-        /* Calculate mean */
+        // Calculate mean
         int number_of_points = initial_center_ids.size();
         centers = std::vector<Gaussian_center>(number_of_centers);
         std::vector<int> member_count(number_of_centers, 0);
@@ -284,13 +323,13 @@ protected:
             centers[center_id].mean += points[i];
             member_count[center_id] += 1;
         }
-        /* Assign mean, and mixing coef */
+        // Assign mean, and mixing coef
         for(int i = 0; i < number_of_centers; ++i)
         {               
             centers[i].mean /= member_count[i];
             centers[i].mixing_coefficient =  member_count[i] / static_cast<double>(number_of_points);
         }
-        /* Calculate deviation */
+        // Calculate deviation
         for(int i = 0; i < number_of_points; ++i)
         {
             int center_id = initial_center_ids[i];
@@ -303,9 +342,26 @@ protected:
         }
     }
     
-    //Main steps of EM
+    /**
+     * Checks whether the parameter center is previosly included in the center list.
+     * @param center to be checked against existent centers
+     * @return true if there is any center in the center list which has same mean with the parameter center
+     */
+    bool is_already_center(const Gaussian_center& center) const
+    {
+        for(std::vector<Gaussian_center>::const_iterator it = centers.begin(); it != centers.end(); ++it)
+        {
+            if(it->mean == center.mean) { return true; }
+        }
+        return false;
+    }
     
-    // M step 
+    //Main steps of EM algorithm
+
+    /**
+     * Corresponds to M step.
+     * Recalculates parameters of the centers according to current responsibility matrix.
+     */ 
     void calculate_parameters()
     {
         for(std::size_t center_i = 0; center_i < centers.size(); ++center_i)
@@ -314,7 +370,7 @@ protected:
             double new_mean = 0.0, total_membership = 0.0;
             for(std::size_t point_i = 0; point_i < points.size(); ++point_i)
             {
-                double membership = membership_matrix[center_i][point_i];
+                double membership = responsibility_matrix[center_i][point_i];
                 new_mean += membership * points[point_i];
                 total_membership += membership;
             }
@@ -323,7 +379,7 @@ protected:
             double new_deviation = 0.0;
             for(std::size_t point_i = 0; point_i < points.size(); ++point_i)
             {
-                double membership = membership_matrix[center_i][point_i];
+                double membership = responsibility_matrix[center_i][point_i];
                 new_deviation += membership * std::pow(points[point_i] - new_mean, 2);
             }
             new_deviation = std::sqrt(new_deviation/total_membership);
@@ -334,14 +390,16 @@ protected:
         }
     }
     
-    // Both for E step, and likelihood step
+    /**
+     * Corresponds to both E step and likelihood step. 
+     * Calculates log-likelihood, and responsibility matrix according to current center parameters.
+     * @return log-likelihood
+     */ 
     double calculate_likelihood()
     {
-        /** 
-         * Calculate Log-likelihood 
-         * The trick (merely a trick) is while calculating log-likelihood, we also store probability results into matrix,
-         * so that in next iteration we do not have to calculate them again.
-         */
+        // The trick (merely a trick) is while calculating log-likelihood, we also refresh responsibility matrix,
+        // so that in next iteration we do not have to calculate matrix again.
+                  
         double likelihood = 0.0;
         for(std::size_t point_i = 0; point_i < points.size(); ++point_i)
         {
@@ -350,48 +408,68 @@ protected:
             {
                 double membership = centers[center_i].probability_with_coef(points[point_i]);
                 total_membership += membership;
-                membership_matrix[center_i][point_i] = membership;
+                responsibility_matrix[center_i][point_i] = membership;
             }
             for(std::size_t center_i = 0; center_i < centers.size(); ++center_i)
             {
-                membership_matrix[center_i][point_i] /= total_membership;
+                responsibility_matrix[center_i][point_i] /= total_membership;
             }
             likelihood += log(total_membership);
         }
         return likelihood;
     }
     
-    // One iteration of EM
+    /**
+     * One iteration of EM algorithm. Includes E-step, M-step and likelihood calculation.
+     * @param first_iteration 
+     * @return log-likelihood
+     * @see calculate_likelihood() for E-step and likelihood calculation, calculate_parameters() for M-step
+     */ 
     double iterate(bool first_iteration)
     {
         // E-step
-        if(first_iteration) { calculate_likelihood(); }
+        // we call calculate_likelihood for E-step in first iteration because
+        // at first iteration, E-step is not done since calculate_likelihood() is not called yet.
+        if(first_iteration) { calculate_likelihood(); } 
+        
         // M-step 
         calculate_parameters();
+        
         // Likelihood step 
-        return calculate_likelihood();
+        return calculate_likelihood(); // calculates likelihood and refreshes responsibility matrix,
+                                       // so that we do not have to calculate it in next iteration.
     }
     
-    // Fitting function, iterates until convergence occurs or maximum iteration limit is reached
-    double fit()
+    /**
+     * Main entry point for EM algorithm.
+     * Iterates until convergence occurs (i.e. likelihood - prev_likelihood < threshold * abs(likelihood)) 
+     * or maximum iteration limit is reached.
+     * @see iterate()
+     */
+    double calculate_clustering()
     {
          double likelihood = -(std::numeric_limits<double>::max)(), prev_likelihood;
          int iteration_count = 0;
-         is_converged = false;
+         double is_converged = false;
          while(!is_converged && iteration_count++ < maximum_iteration) 
          {            
              prev_likelihood = likelihood;
              likelihood = iterate(iteration_count == 1);
              double progress = likelihood - prev_likelihood;
              is_converged = progress < threshold * std::fabs(likelihood);             
-         }
-         SEG_DEBUG(std::cout << "likelihood: " <<  likelihood << "iteration: " << iteration_count << std::endl)
+         }         
          if(final_likelihood < likelihood) { final_likelihood = likelihood; }
          return likelihood;
     }
     
-    // Calls fit() number_of_run times, and stores best found centers
-    void fit_with_multiple_run(int number_of_centers, int number_of_run)
+    /**
+     * Calls calculate_clustering() number_of_run times, 
+     * and keeps the result which has maximum likelihood.  
+     * @param number_of_centers
+     * @param number_of_run
+     * @see calculate_clustering()
+     */
+    void calculate_clustering_with_multiple_run(int number_of_centers, int number_of_run)
     {
         std::vector<Gaussian_center> max_centers;
         
@@ -400,14 +478,13 @@ protected:
             init_type == RANDOM_INITIALIZATION ? initiate_centers_randomly(number_of_centers) 
                                                : initiate_centers_plus_plus(number_of_centers);
             
-            double likelihood = fit();
+            double likelihood = calculate_clustering();
             if(likelihood == final_likelihood) { max_centers = centers; }
-        }
-        SEG_DEBUG(std::cout << "max likelihood: " << final_likelihood << std::endl)
-        centers = max_centers;
-        //write_center_parameters("centers_param.txt");
+        }        
+        centers = max_centers;       
     }
     
+    /** Going to be removed */
     void write_random_centers(const char* file_name)
     {
         //std::ofstream output(file_name, std::ios_base::app);
@@ -420,6 +497,7 @@ protected:
         output.close();
     }
     
+    /** Going to be removed */
     void write_center_parameters(const char* file_name)
     {
         //std::ofstream output(file_name, std::ios_base::app);
