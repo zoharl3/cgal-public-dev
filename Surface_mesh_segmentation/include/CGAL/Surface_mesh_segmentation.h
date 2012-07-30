@@ -189,8 +189,8 @@ double calculate_dihedral_angle_of_edge(const Halfedge_handle& edge) const
     const Point& f1_v1 = f1->halfedge()->vertex()->point();
     const Point& f1_v2 = f1->halfedge()->next()->vertex()->point();
     const Point& f1_v3 = f1->halfedge()->prev()->vertex()->point();
-    Vector f1_normal = CGAL::unit_normal(f1_v1, f1_v2, f1_v3);
-    Vector f2_normal = CGAL::unit_normal(f2_v1, f2_v2, f2_v3);
+    Vector f1_normal = unit_normal(f1_v1, f1_v2, f1_v3);
+    Vector f2_normal = unit_normal(f2_v1, f2_v2, f2_v3);
     
     double dot = f1_normal * f2_normal;
     if(dot > 1.0)       { dot = 1.0;  }
@@ -305,7 +305,7 @@ void smooth_sdf_values_with_gaussian()
             
             double total_sdf_value = 0.0;
             double total_weight = 0.0;
-            for(std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+            for(typename std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 double weight =  exp(-0.5 * (std::pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma
                 total_sdf_value += sdf_values[it->first] * weight;
@@ -334,7 +334,7 @@ void smooth_sdf_values_with_median()
             std::map<Facet_handle, int> neighbors;
             get_neighbors_by_vertex(facet, neighbors, window_size);
             std::vector<double> sdf_of_neighbors;
-            for(std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+            for(typename std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 sdf_of_neighbors.push_back(sdf_values[it->first]);
             }
@@ -381,13 +381,13 @@ void smooth_sdf_values_with_bilateral()
             double current_sdf_value = sdf_values[facet];
             // calculate deviation for range weighting.
             double deviation = 0.0;
-            for(std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+            for(typename std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 deviation += std::pow(sdf_values[it->first] - current_sdf_value, 2);
             }            
             deviation = std::sqrt(deviation / neighbors.size()); 
             if(deviation == 0.0) { deviation = std::numeric_limits<double>::epsilon(); } //this might happen       
-            for(std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+            for(typename std::map<Facet_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 double spatial_weight =  exp(-0.5 * (std::pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma                
                 double domain_weight  =  exp(-0.5 * (std::pow((sdf_values[it->first] - current_sdf_value) / (std::sqrt(2.0)*deviation), 2)));
