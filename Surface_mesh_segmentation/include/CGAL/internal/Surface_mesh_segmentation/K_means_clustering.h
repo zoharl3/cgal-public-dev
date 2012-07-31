@@ -1,5 +1,5 @@
-#ifndef CGAL_SEGMENTATION_K_MEANS_CLUSTERING_H
-#define CGAL_SEGMENTATION_K_MEANS_CLUSTERING_H
+#ifndef CGAL_SURFACE_MESH_SEGMENTATION_K_MEANS_CLUSTERING_H
+#define CGAL_SURFACE_MESH_SEGMENTATION_K_MEANS_CLUSTERING_H
 
 #include <vector>
 #include <cmath>
@@ -78,7 +78,7 @@ protected:
         /**
          * Finds closest center and adds itself to the closest center's mean.
          * @param centers available centers
-         * @return true if #center_id is changed
+         * @return true if #center_id is changed (i.e. previous center is changed)
          */
         bool calculate_new_center(std::vector<K_means_center>& centers)
         {
@@ -163,8 +163,8 @@ protected:
         {
             double initial_mean = points[rand() % points.size()].data;
             K_means_center new_center(initial_mean);
-            if ( is_already_center(new_center) ) --i;
-            else  centers.push_back(new_center);
+            if(is_already_center(new_center)) { --i; }
+            else { centers.push_back(new_center); }
         } 
     }
     
@@ -200,9 +200,9 @@ protected:
                 - distance_square_cumulative.begin();
             double initial_mean = points[selection_index].data; 
             K_means_center new_center(initial_mean);
-            if ( is_already_center(new_center) ) --i;
-            else centers.push_back(new_center);
-        } 
+            if(is_already_center(new_center)) { --i; }
+            else { centers.push_back(new_center); }
+        }
     }
     
     /**
@@ -306,4 +306,4 @@ protected:
 #undef CGAL_DEFAULT_MAXIMUM_ITERATION
 #undef CGAL_DEFAULT_NUMBER_OF_RUN
 
-#endif //CGAL_SEGMENTATION_K_MEANS_CLUSTERING_H
+#endif //CGAL_SURFACE_MESH_SEGMENTATION_K_MEANS_CLUSTERING_H
