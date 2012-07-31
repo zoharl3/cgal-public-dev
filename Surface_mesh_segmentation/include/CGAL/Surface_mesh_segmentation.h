@@ -466,7 +466,7 @@ void smooth_sdf_values_with_bilateral()
             }            
             deviation = std::sqrt(deviation / neighbors.size()); 
             if(deviation == 0.0) { deviation = std::numeric_limits<double>::epsilon(); } //this might happen       
-            for(std::map<Facet_const_iterator, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+            for(typename std::map<Facet_const_iterator, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 double spatial_weight =  exp(-0.5 * (std::pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma                
                 double domain_weight  =  exp(-0.5 * (std::pow( (get(sdf_values, it->first) -  current_sdf_value) / (std::sqrt(2.0)*deviation), 2)));
