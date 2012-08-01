@@ -310,7 +310,7 @@ protected:
     /**
      * Uses initial_center_ids to determine parameters for each center.
      * @param number_of_centers
-     * @param initial_center_ids includes center_id for each point.
+     * @param initial_center_ids includes center id for each point.
      */
     void initiate_centers_from_memberships(int number_of_centers, const std::vector<int>& initial_center_ids)
     {  
@@ -347,7 +347,7 @@ protected:
     /**
      * Checks whether the parameter center is previosly included in the center list.
      * @param center to be checked against existent centers
-     * @return true if there is any center in the center list which has same mean with the parameter center
+     * @return true if there is any center in the center list which has the same mean with the parameter center
      */
     bool is_already_center(const Gaussian_center& center) const
     {
@@ -465,7 +465,7 @@ protected:
     }
     
     /**
-     * Calls calculate_clustering() number_of_run times, 
+     * Calls calculate_clustering() `number_of_run` times, 
      * and keeps the result which has maximum likelihood.  
      * @param number_of_centers
      * @param number_of_run
