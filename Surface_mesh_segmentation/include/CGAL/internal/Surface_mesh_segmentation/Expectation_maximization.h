@@ -34,11 +34,15 @@
 namespace CGAL {
 namespace internal {
 
+/**
+ * @brief Expectation maximization algorithm for GMM fitting.
+ * @see Gaussian_center
+ */
 class Expectation_maximization
 {
 protected:
     /**
-     * Represents centers in Expectation Maximization algorithm.
+     * @brief Represents centers in Expectation Maximization algorithm.
      * @see Expectation_maximization
      */
     class Gaussian_center
@@ -196,10 +200,10 @@ public:
         for(std::vector<double>::iterator it = points.begin(); it!= points.end(); ++it)
         {
             int closest_center = 0;
-            double min_distance = fabs(centers[0].mean - *it);
+            double min_distance = std::abs(centers[0].mean - *it);
             for(std::size_t i = 1; i < centers.size(); ++i)
             {
-                double distance = fabs(centers[i].mean - *it);
+                double distance = std::abs(centers[i].mean - *it);
                 if(distance < min_distance)
                 {
                     min_distance = distance;
@@ -223,10 +227,10 @@ protected:
         for(std::vector<double>::iterator it = points.begin(); it!= points.end(); ++it)
         {
             int closest_center = 0;
-            double min_distance = fabs(centers[0].mean - *it);
+            double min_distance = std::abs(centers[0].mean - *it);
             for(std::size_t i = 1; i < centers.size(); ++i)
             {
-                double distance = fabs(centers[i].mean - *it);
+                double distance = std::abs(centers[i].mean - *it);
                 if(distance < min_distance)
                 {
                     min_distance = distance;
@@ -444,7 +448,7 @@ protected:
     
     /**
      * Main entry point for EM algorithm.
-     * Iterates until convergence occurs (i.e. likelihood - prev_likelihood < threshold * abs(likelihood)) 
+     * Iterates until convergence occurs (i.e. likelihood - prev_likelihood < threshold * std::abs(likelihood)) 
      * or maximum iteration limit is reached.
      * @see iterate()
      */
@@ -458,7 +462,7 @@ protected:
              prev_likelihood = likelihood;
              likelihood = iterate(iteration_count == 1);
              double progress = likelihood - prev_likelihood;
-             is_converged = progress < threshold * std::fabs(likelihood);             
+             is_converged = progress < threshold * std::abs(likelihood);             
          }         
          if(final_likelihood < likelihood) { final_likelihood = likelihood; }
          return likelihood;

@@ -6,7 +6,7 @@
 #include <CGAL/AABB_polyhedron_triangle_primitive.h>
 #include <CGAL/internal/Surface_mesh_segmentation/AABB_traversal_traits.h>
 #include <CGAL/internal/Surface_mesh_segmentation/AABB_const_polyhedron_triangle_primitive.h>
-
+#include <CGAL/internal/Surface_mesh_segmentation/Disk_sampling.h>
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -14,9 +14,6 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/property_map/property_map.hpp>
 
-#include <CGAL/internal/Surface_mesh_segmentation/AABB_const_polyhedron_triangle_primitive.h>
-
-#define CGAL_ANGLE_ST_DEV_DIVIDER 2.0
 #define CGAL_ACCEPTANCE_RATE_THRESHOLD 0.5
 #define CGAL_ST_DEV_MULTIPLIER 0.75
 
@@ -24,9 +21,9 @@ namespace CGAL {
 namespace internal {
 
 /**
- * @class Resposable for calculating Shape Diameter Function over surface of the mesh.
+ * @brief Resposable for calculating Shape Diameter Function over surface of the mesh.
  */
-template <class Polyhedron>
+template <class Polyhedron, class DiskSampling = Vogel_disk_sampling>
 class SDF_calculation
 {
 
@@ -46,9 +43,9 @@ protected:
     typedef typename Kernel::Segment_3 Segment;
     
     typedef AABB_const_polyhedron_triangle_primitive<Kernel, Polyhedron> Primitive;
-    typedef typename CGAL::AABB_tree<AABB_traits<Kernel, Primitive> >             Tree;
-    typedef typename Tree::Object_and_primitive_id                                Object_and_primitive_id;
-    typedef typename Tree::Primitive_id                                           Primitive_id;
+    typedef typename CGAL::AABB_tree<AABB_traits<Kernel, Primitive> >    Tree;
+    typedef typename Tree::Object_and_primitive_id                       Object_and_primitive_id;
+    typedef typename Tree::Primitive_id                                  Primitive_id;
     
     // Sampled points from disk, t1 = coordinate-x, t2 = coordinate-y, t3 = weight (angle with cone-normal).
     typedef boost::tuple<double, double, double> Disk_sample;
@@ -57,7 +54,6 @@ protected:
 // member variables
 protected:  
     double cone_angle;
-    int    number_of_rays;
     
     Disk_samples_list disk_samples_sparse;
     Disk_samples_list disk_samples_dense;
@@ -67,30 +63,30 @@ protected:
     
 public:   
     /**
-     * Saves parameters to member variables.
-     * @param cone_angle opening angle for cone
-     * @param number_of_rays picked ray count from cone for each facet
+     * Assign default values to member variables.
      */
-    SDF_calculation(double cone_angle, int number_of_rays)
-    : cone_angle(cone_angle), 
-      number_of_rays(number_of_rays), 
-      use_minimum_segment(false),
+    SDF_calculation()
+    : use_minimum_segment(false),
       multiplier_for_segment(1)
     { }
     
     /**
-     * Calculates SDF values for each facet, and stores them in `sdf_values`.
-     * @pre parameter `mesh` should consist of triangles.
+     * Calculates SDF values for each facet, and stores them in @a sdf_values.
+     * @pre parameter @a mesh should consist of triangles.
+     * @param cone_angle opening angle for cone
+     * @param number_of_rays number of rays picked from cone for each facet
      * @param mesh polyhedron that SDF values are calculated on.
      * @param[out] sdf_values `WritablePropertyMap` with `Polyhedron::Facet_const_handle` as key and `double` as value type.
      */
-    template < class FacetValueMap >
-    void calculate_sdf_values(const Polyhedron& mesh, FacetValueMap sdf_values)
+    template <class FacetValueMap>
+    void calculate_sdf_values(double cone_angle, int number_of_rays, const Polyhedron& mesh, FacetValueMap sdf_values)
     {
-        int sparse_ray_count = number_of_rays;
-        int dense_ray_count = sparse_ray_count * 2;
-        disk_sampling_vogel_method(disk_samples_sparse, sparse_ray_count);
-        disk_sampling_vogel_method(disk_samples_dense, dense_ray_count);
+        this->cone_angle = cone_angle;
+        
+        const int sparse_ray_count = number_of_rays;
+        const int dense_ray_count = sparse_ray_count * 2;
+        DiskSampling().sample(sparse_ray_count, cone_angle, disk_samples_sparse);
+        DiskSampling().sample(dense_ray_count, cone_angle, disk_samples_dense);
         
         Tree tree(mesh.facets_begin(), mesh.facets_end());        
         for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
@@ -104,13 +100,14 @@ public:
     
 protected:
     /**
-     * Calculates SDF value for parameter `facet`.
-     * @param facet.
-     * @param tree AABB tree which includes polyhedron.
+     * Calculates SDF value for parameter @a facet.
+     * @param facet 
+     * @param tree AABB tree which is built from polyhedron.
      * @param samples sampled points from a unit-disk which are corresponds to rays picked from cone.
      * @return calculated SDF value.
      */
-    double calculate_sdf_value_of_facet(Facet_const_handle& facet, const Tree& tree, const Disk_samples_list& samples) const
+    double calculate_sdf_value_of_facet(Facet_const_handle& facet, const Tree& tree,
+         const Disk_samples_list& samples) const
     {
         const Point& p1 = facet->halfedge()->vertex()->point();
         const Point& p2 = facet->halfedge()->next()->vertex()->point();
@@ -126,8 +123,8 @@ protected:
         //arrange_center_orientation(plane, normal, center);
            
         std::vector<double> ray_distances, ray_weights;
-        ray_distances.reserve(number_of_rays);
-        ray_weights.reserve(number_of_rays);
+        ray_distances.reserve(samples.size());
+        ray_weights.reserve(samples.size());
         
         const double length_of_normal = 1.0 / tan(cone_angle / 2.0);
         normal = normal * length_of_normal;
@@ -209,11 +206,11 @@ protected:
     }
     
     /**
-     * Finds closest intersection for parameter `query`.
-     * @param query `Kernel::Segment_3` or `Kernel::Ray_3` type query.
+     * Finds closest intersection for parameter @a query.
+     * @param query `Segment` or `Ray` type query.
      * @param tree AABB tree which includes polyhedron.
-     * @param facet skipping parent facet 
-     * (since numerical limitations on both center calculation and intersection test, query might intersect with related facet)
+     * @param facet parent facet of @a query
+     * (since numerical limitations on both center calculation and intersection test, query might intersect with related facet, should be skipped in such case)
      * @return tuple of: 
      *   - get<0> bool   : true if any intersection is found
      *   - get<1> bool   : true if intersection is acceptable (i.e. accute angle with surface normal) 
@@ -273,7 +270,7 @@ protected:
     
     template <class Query> //Query can be templated for just Ray and Segment types.
     boost::tuple<bool, bool, double> cast_and_return_minimum_use_closest (const Query& ray, const Tree& tree, 
-    Facet_const_handle& facet) const
+        Facet_const_handle& facet) const
     {
         // get<0> : if any intersection is found then true
         // get<1> : if found intersection is acceptable (i.e. accute angle with surface normal) then true
@@ -313,17 +310,16 @@ protected:
     }
     
     /**
-     * Removes outliers by filtering .
-     * @param facet.
-     * @param tree AABB tree which includes polyhedron.
-     * @param samples sampled points from a unit-disk which are corresponds to rays picked from cone.
-     * @return calculated SDF value.
+     * Removes outliers by using median as mean and filtering rays which don't fall into `CGAL_ST_DEV_MULTIPLIER` standard deviation.
+     * @param ray_distances distances associated to casted rays
+     * @param ray_weights weights associated to casted rays
+     * @return tuple of: 
+     *   - get<0> double : outlier removed and averaged sdf value
+     *   - get<1> double : ratio of (not outlier ray count) / (total ray count)
      */
-    boost::tuple<double, double> remove_outliers_and_calculate_sdf_value( std::vector<double>& ray_distances,
+    boost::tuple<double, double> remove_outliers_and_calculate_sdf_value(std::vector<double>& ray_distances,
         std::vector<double>& ray_weights) const
     {    
-        // get<0> : sdf value
-        // get<1> : not outlier ray count / total ray count
         int accepted_ray_count = ray_distances.size();
         if(accepted_ray_count == 0)      { return 0.0; }
         else if(accepted_ray_count == 1) { return ray_distances[0]; }
@@ -355,26 +351,28 @@ protected:
             double dif = (*dist_it) - mean_sdf;
             st_dev += dif * dif;
         }
-        st_dev = std::sqrt(st_dev / ray_distances.size());
+        st_dev = std::sqrt(st_dev / accepted_ray_count);
         /* Calculate sdf, accept rays : ray_dist - median < st dev */
         int not_outlier_count = 0;
         w_it = ray_weights.begin();
         for(std::vector<double>::iterator dist_it = ray_distances.begin(); dist_it != ray_distances.end();
              ++dist_it, ++w_it)
-        {
-     
-            if(abs((*dist_it) - median_sdf) > (st_dev * CGAL_ST_DEV_MULTIPLIER)) { continue; }
+        {     
+            if(std::abs((*dist_it) - median_sdf) > (st_dev * CGAL_ST_DEV_MULTIPLIER)) { continue; }
             total_distance += (*dist_it) * (*w_it);
             total_weights += (*w_it);
             not_outlier_count++;
         }
-
-        if(total_distance == 0.0) { return median_sdf; } // no ray is accepted, return median.
-        double sdf_res = total_distance / total_weights;
+        double sdf_res;
+        if(total_distance == 0.0) { sdf_res = median_sdf; } // no ray is accepted, return median.
+        else                      { sdf_res = total_distance / total_weights; }
         double acceptance_rate = not_outlier_count / static_cast<double>(accepted_ray_count);
         return boost::tuple<double, double>(sdf_res, acceptance_rate);  
     }
     
+    /**
+     * Going to be removed.
+     */ 
     void arrange_center_orientation(const Plane& plane, const Vector& unit_normal, Point& center) const
     {
         /*
@@ -409,36 +407,9 @@ protected:
             ray = Ray(center, unit_normal);
         } while(intersector(ray, plane));
     }
-    
-    void disk_sampling_vogel_method(Disk_samples_list& samples, int ray_count)
-    {
-        const double length_of_normal = 1.0 / tan(cone_angle / 2.0);
-        const double angle_st_dev = cone_angle / CGAL_ANGLE_ST_DEV_DIVIDER; 
-        const double golden_ratio = 3.0 - std::sqrt(5.0);
-        
-        #if 0
-        for(int i = 0; i < number_of_points; ++i)
-        {
-            double Q = i * golden_ratio * CGAL_PI;
-            double R = std::sqrt(static_cast<double>(i) / ray_count);
-            double angle = atan(R / length_of_normal);
-            angle =  exp(-0.5 * (std::pow(angle / angle_st_dev, 2))); // weight
-            samples.push_back(Disk_sample(R * cos(Q), R * sin(Q), angle));
-        }
-        #else
-        double custom_power = 8.0 / 8.0;  
-        for(int i = 0; i < ray_count; ++i)
-        {
-            double Q = i * golden_ratio * CGAL_PI;
-            double R = std::pow(static_cast<double>(i) / ray_count, custom_power);
-            samples.push_back(Disk_sample(R * cos(Q), R * sin(Q), 1.0));
-        }
-        #endif
-    }
 };
 }//namespace internal
 }//namespace CGAL
-#undef CGAL_ANGLE_ST_DEV_DIVIDER
 #undef CGAL_ST_DEV_MULTIPLIER
 #undef CGAL_ACCEPTANCE_RATE_THRESHOLD
 

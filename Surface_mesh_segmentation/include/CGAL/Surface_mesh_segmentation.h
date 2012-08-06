@@ -155,19 +155,21 @@ void calculate_sdf_values(double cone_angle = CGAL_DEFAULT_CONE_ANGLE,
     internal_map facet_value_map_internal;
     boost::associative_property_map<internal_map> sdf_pmap(facet_value_map_internal);
     
-    SDF_calculation(cone_angle, number_of_ray).calculate_sdf_values(mesh, sdf_pmap);
+    SDF_calculation().calculate_sdf_values(cone_angle, number_of_ray, mesh, sdf_pmap);
     
-    double dum = 1.0;
     sdf_values = std::vector<double>(mesh.size_of_facets());
     for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
     {
         get(sdf_values, facet_it) = boost::get(sdf_pmap, facet_it);
     }
+    
     SEG_DEBUG(std::cerr <<"SDF computation time: " << t.time() << std::endl)
     SEG_DEBUG(t.reset())
+    
     check_zero_sdf_values();
     smooth_sdf_values_with_bilateral(); 
     normalize_sdf_values();
+    
     SEG_DEBUG(std::cerr <<"Normalization and smoothing time: " << t.time() << std::endl)
 }
 
@@ -206,7 +208,7 @@ void calculate_sdf_values(SDFPropertyMap sdf_pmap, double cone_angle = CGAL_DEFA
     SEG_DEBUG(Timer t)
     SEG_DEBUG(t.start())
     
-    SDF_calculation(cone_angle, number_of_rays).calculate_sdf_values(mesh, sdf_pmap);
+    SDF_calculation().calculate_sdf_values(cone_angle, number_of_rays, mesh, sdf_pmap);
     
     sdf_values = std::vector<double>(mesh.size_of_facets());
     for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
@@ -353,7 +355,7 @@ double calculate_dihedral_angle_of_edge_2(Edge_const_handle& edge) const
     //else if(dot < -1.0) { dot = -1.0; }
     //double angle = acos(dot) / CGAL_PI; // [0-1] normalize
     //std::cout << angle << " " << n_angle << " " << (concave ? "concave": "convex") << std::endl;
-    //if(fabs(angle - folded_angle) > 1e-6)
+    //if(std::abs(angle - folded_angle) > 1e-6)
     //{
     //    
     //}
