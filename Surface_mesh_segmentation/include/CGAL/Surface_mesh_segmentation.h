@@ -164,7 +164,7 @@ void calculate_sdf_values(double cone_angle = CGAL_DEFAULT_CONE_ANGLE,
         get(sdf_values, facet_it) = boost::get(sdf_pmap, facet_it);
     }
     
-    SEG_DEBUG(std::cerr <<"SDF computation time: " << t.time() << std::endl)
+    SEG_DEBUG(std::cerr << "SDF computation time: " << t.time() << std::endl)
     SEG_DEBUG(t.reset())
     
     check_zero_sdf_values();
@@ -276,7 +276,7 @@ double get_sdf_value_of_facet(Facet_const_handle facet) const
     return sdf_values[boost::get(facet_index_map, facet)];
 }
 
-int get_segment_id_of_facet(Facet_const_handle facet)
+int get_segment_id_of_facet(Facet_const_handle facet) const
 {
     return segments[boost::get(facet_index_map, facet)];
 }
@@ -435,7 +435,7 @@ void smooth_sdf_values_with_gaussian()
             double total_weight = 0.0;
             for(typename std::map<Facet_const_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
-                double weight =  exp(-0.5 * (std::pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma
+                double weight = gaussian_function(it->second, window_size/2.0); // window_size => 2*sigma
                 total_sdf_value += get(sdf_values, it->first) * weight;
                 total_weight += weight;
             }        
@@ -468,16 +468,12 @@ void smooth_sdf_values_with_median()
             double median_sdf = 0.0;
             int half_neighbor_count = sdf_of_neighbors.size() / 2;
             std::nth_element(sdf_of_neighbors.begin(), sdf_of_neighbors.begin() + half_neighbor_count, sdf_of_neighbors.end());
+            double median_sdf = sdf_of_neighbors[half_neighbor_count];
             if( half_neighbor_count % 2 == 0)
             {
-                double median_1 = sdf_of_neighbors[half_neighbor_count];
-                double median_2 = *std::max_element(sdf_of_neighbors.begin(), sdf_of_neighbors.begin() + half_neighbor_count);
-                median_sdf = (median_1 + median_2) / 2;
+                median_sdf += *std::max_element(sdf_of_neighbors.begin(), sdf_of_neighbors.begin() + half_neighbor_count);
+                median_sdf /= 2;
             }
-            else
-            {
-                median_sdf = sdf_of_neighbors[half_neighbor_count];
-            } 
             get(smoothed_sdf_values, facet_it) = median_sdf;                   
         }    
         sdf_values = smoothed_sdf_values;
@@ -500,7 +496,7 @@ void smooth_sdf_values_with_bilateral()
         {   
             //Facet_handle facet = facet_it;
             std::map<Facet_const_handle, int> neighbors;
-            get_neighbors_by_vertex(facet_it, neighbors, window_size);
+            get_neighbors_by_edge(facet_it, neighbors, window_size);
             
             double total_sdf_value = 0.0, total_weight = 0.0;
             double current_sdf_value = get(sdf_values, facet_it);
@@ -514,8 +510,11 @@ void smooth_sdf_values_with_bilateral()
             if(deviation == 0.0) { deviation = std::numeric_limits<double>::epsilon(); } //this might happen       
             for(typename std::map<Facet_const_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
-                double spatial_weight =  exp(-0.5 * (std::pow(it->second / (window_size/2.0), 2))); // window_size => 2*sigma                
-                double domain_weight  =  exp(-0.5 * (std::pow( (get(sdf_values, it->first) -  current_sdf_value) / (std::sqrt(2.0)*deviation), 2)));
+                double spatial_weight = gaussian_function(it->second, window_size/2.0); // window_size => 2*sigma 
+                // deviation was std::sqrt(2.0)*deviation                               
+                double domain_weight = gaussian_function(get(sdf_values, it->first) -  current_sdf_value, deviation);
+
+                //double domain_weight = exp(-0.5 * (std::pow( (get(sdf_values, it->first) -  current_sdf_value) / 0.1, 2)));
                 double weight = spatial_weight * domain_weight;            
                 total_sdf_value += get(sdf_values, it->first) * weight;
                 total_weight += weight;
@@ -675,6 +674,10 @@ T& get(std::vector<T>& data, const Facet_const_handle& facet)
     return data[ boost::get(facet_index_map, facet) ];
 }
 
+double gaussian_function(double value, double deviation)
+{
+    return exp(-0.5 * (std::pow(value / deviation, 2)));
+}
 public:
 /**
  * Going to be removed 
