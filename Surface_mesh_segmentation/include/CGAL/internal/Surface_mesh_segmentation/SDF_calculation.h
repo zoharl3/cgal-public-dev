@@ -75,8 +75,8 @@ public:
      * @pre parameter @a mesh should consist of triangles.
      * @param cone_angle opening angle for cone
      * @param number_of_rays number of rays picked from cone for each facet
-     * @param mesh polyhedron that SDF values are calculated on.
-     * @param[out] sdf_values `WritablePropertyMap` with `Polyhedron::Facet_const_handle` as key and `double` as value type.
+     * @param mesh polyhedron that SDF values are calculated on
+     * @param[out] sdf_values `WritablePropertyMap` with `Polyhedron::Facet_const_handle` as key and `double` as value type
      */
     template <class FacetValueMap>
     void calculate_sdf_values(double cone_angle, int number_of_rays, const Polyhedron& mesh, FacetValueMap sdf_values)
@@ -85,7 +85,7 @@ public:
         
         const int sparse_ray_count = number_of_rays;
         const int dense_ray_count = sparse_ray_count * 2;
-        DiskSampling().sample(sparse_ray_count, cone_angle, disk_samples_sparse);
+        DiskSampling().sample(sparse_ray_count, cone_angle, disk_samples_sparse);        
         DiskSampling().sample(dense_ray_count, cone_angle, disk_samples_dense);
         
         Tree tree(mesh.facets_begin(), mesh.facets_end());        
@@ -102,13 +102,14 @@ protected:
     /**
      * Calculates SDF value for parameter @a facet.
      * @param facet 
-     * @param tree AABB tree which is built from polyhedron.
-     * @param samples sampled points from a unit-disk which are corresponds to rays picked from cone.
-     * @return calculated SDF value.
+     * @param tree AABB tree which is built from polyhedron
+     * @param samples sampled points from a unit-disk which are corresponds to rays picked from cone
+     * @return calculated SDF value
      */
     double calculate_sdf_value_of_facet(Facet_const_handle& facet, const Tree& tree,
          const Disk_samples_list& samples) const
     {
+        //ofstream output("rays.txt", ios::app);
         const Point& p1 = facet->halfedge()->vertex()->point();
         const Point& p2 = facet->halfedge()->next()->vertex()->point();
         const Point& p3 = facet->halfedge()->prev()->vertex()->point();
@@ -144,7 +145,9 @@ protected:
             double min_distance;
             Vector disk_vector = v1 * sample_it->get<0>() + v2 * sample_it->get<1>();
             Vector ray_direction = normal + disk_vector;
-            
+            //output << center << std::endl;
+            //std::cout << center << std::endl;
+            //output << ray_direction << std::endl;
             #ifdef SHOOT_ONLY_RAYS
             Ray ray(center, ray_direction);
             boost::tie(is_intersected, intersection_is_acute, min_distance) = cast_and_return_minimum(ray, tree, facet);
@@ -207,8 +210,8 @@ protected:
     
     /**
      * Finds closest intersection for parameter @a query.
-     * @param query `Segment` or `Ray` type query.
-     * @param tree AABB tree which includes polyhedron.
+     * @param query `Segment` or `Ray` type query
+     * @param tree AABB tree which includes polyhedron
      * @param facet parent facet of @a query
      * (since numerical limitations on both center calculation and intersection test, query might intersect with related facet, should be skipped in such case)
      * @return tuple of: 
