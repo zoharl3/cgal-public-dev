@@ -41,7 +41,7 @@
 #define CGAL_DEFAULT_NUMBER_OF_CLUSTERS 5
 #define CGAL_DEFAULT_SMOOTHING_LAMBDA 23.0
 #define CGAL_DEFAULT_CONE_ANGLE (2.0 / 3.0) * CGAL_PI
-#define CGAL_DEFAULT_NUMBER_OF_RAYS 15
+#define CGAL_DEFAULT_NUMBER_OF_RAYS 25
 //IOY: these are going to be removed at the end (no CGAL_ pref)
 #define ACTIVATE_SEGMENTATION_DEBUG
 #ifdef ACTIVATE_SEGMENTATION_DEBUG
@@ -60,6 +60,7 @@ namespace CGAL {
  *   - `SDF_calculation` for calculating sdf values
  *   - `Expectation_maximization` for soft clustering
  *   - `Alpha_expansion_graph_cut` for hard clustering 
+ *
  * Other than being a connector it is responsable for preprocess and postprocess on intermadiate data, which are:
  *   - log-normalizing probabilities received from soft clustering
  *   - log-normalizing and calculating dihedral-angle based weights for edges
@@ -96,7 +97,7 @@ protected:
 public: // going to be protected !
     const Polyhedron& mesh; 
     
-    FacetIndexMap facet_index_map;
+    FacetIndexMap facet_index_map; /**< Property-map which associates each facet with an id */
     std::map<Facet_const_handle, int> facet_index_map_internal;
     
     std::vector<double> sdf_values;
@@ -152,6 +153,7 @@ Surface_mesh_segmentation(const Polyhedron& mesh, const Surface_mesh_segmentatio
         } 
     }
 }
+///////////////////////////////////////////////////////////////////
 // Use these two functions together
 void calculate_sdf_values(double cone_angle = CGAL_DEFAULT_CONE_ANGLE, 
                             int number_of_ray = CGAL_DEFAULT_NUMBER_OF_RAYS)
@@ -288,6 +290,9 @@ int get_segment_id_of_facet(Facet_const_handle facet) const
 }
 
 protected:
+/**
+ * Going to be removed
+ */
 double calculate_dihedral_angle_of_edge(Edge_const_handle& edge) const
 { 
     CGAL_precondition(!edge->is_border_edge());
@@ -321,6 +326,13 @@ double calculate_dihedral_angle_of_edge(Edge_const_handle& edge) const
     return angle; 
 }
 
+/**
+ * Calculates dihedral angle between facets and normalize them between [0-1] from [0 - 2*pi].
+ * Also convex dihedral angles are multiplied by a factor smaller than 1.0 which reduces their effect in graph-cut.
+ * @pre parameter @a edge should not be a border.
+ * @param edge whose dihedral angle is computed using incident facets
+ * @return computed dihedral angle
+ */
 double calculate_dihedral_angle_of_edge_2(Edge_const_handle& edge) const
 {
     CGAL_precondition(!edge->is_border_edge());
@@ -374,6 +386,10 @@ double calculate_dihedral_angle_of_edge_2(Edge_const_handle& edge) const
     //return angle;  
 }
 
+/**
+ * Normalize sdf values using function:
+ * normalized_sdf = log( alpha * ( current_sdf - min_sdf ) / ( max_sdf - min_sdf ) + 1 ) / log( alpha + 1 )
+ */
 void normalize_sdf_values()
 {
     typedef std::vector<double>::iterator fv_iterator;    
@@ -391,6 +407,9 @@ void normalize_sdf_values()
     }
 }
 
+/**
+ * Normalize sdf values between [0-1].
+ */
 void linear_normalize_sdf_values()
 {
     typedef std::vector<double>::iterator fv_iterator;    
@@ -406,6 +425,9 @@ void linear_normalize_sdf_values()
     }
 }
 
+/**
+ * Going to be removed 
+ */
 void smooth_sdf_values()
 {
     std::vector<double> smoothed_sdf_values(mesh.size_of_facets());
@@ -426,6 +448,9 @@ void smooth_sdf_values()
     sdf_values = smoothed_sdf_values;
 }
 
+/**
+ * Going to be removed 
+ */
 void smooth_sdf_values_with_gaussian()
 { 
     // take neighbors, use weighted average of neighbors as filtered result. (for weights use gaussian kernel with sigma = window_size/2)
@@ -454,6 +479,9 @@ void smooth_sdf_values_with_gaussian()
     }
 }
 
+/**
+ * Going to be removed 
+ */
 void smooth_sdf_values_with_median()
 { 
     // take neighbors, use median sdf_value as filtered one.
@@ -473,7 +501,7 @@ void smooth_sdf_values_with_median()
             {
                 sdf_of_neighbors.push_back(get(sdf_values, it->first));
             }
-            // Find median.
+            // Find median.            
             int half_neighbor_count = sdf_of_neighbors.size() / 2;
             std::nth_element(sdf_of_neighbors.begin(), sdf_of_neighbors.begin() + half_neighbor_count, sdf_of_neighbors.end());
             double median_sdf = sdf_of_neighbors[half_neighbor_count];
@@ -488,12 +516,15 @@ void smooth_sdf_values_with_median()
     }
 }
 
+/**
+ * Bilateral smoothing for sdf values.
+ * Takes neighbors using `get_window_size()`, and assigns weighted average of neighbors as filtered result. 
+ * For weighting two weights are multiplied:
+ *   - spatial: over geodesic distances (number of edges)
+ *   - domain : over sdf value distances
+ */
 void smooth_sdf_values_with_bilateral()
 { 
-    // take neighbors, use weighted average of neighbors as filtered result. 
-    // two weights are multiplied:
-    // spatial: over geodesic distances
-    // domain : over sdf_value distances
     const int window_size = get_window_size();
     const int iteration = 1;
         
@@ -518,12 +549,10 @@ void smooth_sdf_values_with_bilateral()
             if(deviation == 0.0) { deviation = std::numeric_limits<double>::epsilon(); } //this might happen       
             for(typename std::map<Facet_const_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
-                double spatial_weight = gaussian_function(it->second, window_size / 2.0); // window_size => 2*sigma 
-                // deviation was std::sqrt(2.0)*deviation                               
+                double spatial_weight = gaussian_function(it->second, window_size / 2.0); // window_size => 2*sigma                               
                 double domain_weight = gaussian_function(get(sdf_values, it->first) -  current_sdf_value, 1.5 * deviation);
-
-                //double domain_weight = exp(-0.5 * (std::pow( (get(sdf_values, it->first) -  current_sdf_value) / 0.1, 2)));
-                double weight = spatial_weight * domain_weight;            
+                double weight = spatial_weight * domain_weight;        
+                     
                 total_sdf_value += get(sdf_values, it->first) * weight;
                 total_weight += weight;
             }   
@@ -533,12 +562,18 @@ void smooth_sdf_values_with_bilateral()
     }
 }
 
+/**
+ * Simple window-size determination function for smoothing.
+ * It is proportional to square root of size of facets in polyhedron.
+ * @return size of the window
+ *  - 0-2000     -> 1
+ *  - 2000-8000  -> 2
+ *  - 8000-18000 -> 3
+ *  - ...
+ */
 int get_window_size()
 {
-    // facet     -> window size
-    // 0-2000     -> 1
-    // 2000-8000  -> 2
-    // 8000-18000 -> 3
+
     double facet_sqrt = std::sqrt(mesh.size_of_facets() / 2000.0);
     return static_cast<int>(facet_sqrt) + 1;
 }
@@ -666,8 +701,8 @@ void log_normalize_probability_matrix(std::vector<std::vector<double> >& probabi
 /**
  * Calculates dihedral-angle based weight for each edge which is not a border edge.
  * @param smoothing_lambda a factor for each weight (weight *= smoothing_lambda). 
- * @param edges list of pair of facet-ids
- * @param edge_weights calculated weight for each edge in @a edges
+ * @param[out] edges list of pair of facet-ids
+ * @param[out] edge_weights calculated weight for each edge in @a edges
  */
 void calculate_and_log_normalize_dihedral_angles(double smoothing_lambda, 
     std::vector<std::pair<int, int> >& edges, std::vector<double>& edge_weights) const
@@ -735,7 +770,7 @@ void depth_first_traversal(Facet_const_handle& facet, int segment_id)
 
 /**
  * Every assosiated data with facets are stored using vectors. 
- * These data are reached using facet-ids which are received by facet_index_map property-map.
+ * These data are reached using facet-ids which are received from #facet_index_map.
  * @param data associated data vector with facets
  * @param facet key to reach associated data
  */
@@ -745,6 +780,9 @@ T& get(std::vector<T>& data, const Facet_const_handle& facet)
     return data[ boost::get(facet_index_map, facet) ];
 }
 
+/**
+ * Gauissian function for weighting.
+ */
 double gaussian_function(double value, double deviation)
 {
     return exp(-0.5 * (std::pow(value / deviation, 2)));
