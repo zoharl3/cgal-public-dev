@@ -78,7 +78,7 @@ protected:
      * An adaptor for Lvalue property-map. It stores a pointer to vector for underlying data-structure,
      * and also stores another property-map which maps `key` to vector index.
      */
-    template<typename Polyhedron, typename ValueType, typename FacetIdPropertyMap>
+    template<class Polyhedron, class ValueType, class FacetIdPropertyMap>
     struct Polyhedron_property_map_for_facet
         : public boost::put_get_helper<ValueType&,
                  Polyhedron_property_map_for_facet<Polyhedron, ValueType, FacetIdPropertyMap> >
@@ -258,7 +258,7 @@ void calculate_sdf_values(SDFPropertyMap sdf_pmap, double cone_angle = CGAL_DEFA
     
     for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
     {
-        sdf_pmap[facet_it] = get(sdf_values, facet_it));
+        sdf_pmap[facet_it] = get(sdf_values, facet_it);
     }
    
     SEG_DEBUG(std::cout << t.time() << std::endl)
@@ -556,8 +556,7 @@ void smooth_sdf_values_with_bilateral()
     {
         std::vector<double> smoothed_sdf_values(mesh.size_of_facets());
         for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
-        {   
-            //Facet_handle facet = facet_it;
+        {               
             std::map<Facet_const_handle, int> neighbors;
             get_neighbors_by_edge(facet_it, window_size, neighbors);
             
