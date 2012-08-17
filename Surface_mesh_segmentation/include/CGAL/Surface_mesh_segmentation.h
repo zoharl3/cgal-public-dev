@@ -17,6 +17,7 @@
 #include <CGAL/internal/Surface_mesh_segmentation/Expectation_maximization.h>
 #include <CGAL/internal/Surface_mesh_segmentation/K_means_clustering.h>
 #include <CGAL/internal/Surface_mesh_segmentation/Alpha_expansion_graph_cut.h>
+//#include "Alpha_expansion_graph_cut.h"
 #include <CGAL/internal/Surface_mesh_segmentation/SDF_calculation.h>
 
 #include <CGAL/utility.h>
@@ -36,12 +37,15 @@
 #include <map>
 //AF: macros must be prefixed with "CGAL_"
 //IOY: done
-#define CGAL_NORMALIZATION_ALPHA 5.0
-#define CGAL_CONVEX_FACTOR 0.08
 #define CGAL_DEFAULT_NUMBER_OF_CLUSTERS 5
-#define CGAL_DEFAULT_SMOOTHING_LAMBDA 23.0
+#define CGAL_DEFAULT_SMOOTHING_LAMBDA 0.23
 #define CGAL_DEFAULT_CONE_ANGLE (2.0 / 3.0) * CGAL_PI
 #define CGAL_DEFAULT_NUMBER_OF_RAYS 25
+
+#define CGAL_NORMALIZATION_ALPHA 5.0
+#define CGAL_CONVEX_FACTOR 0.08
+#define CGAL_SMOOTHING_LAMBDA_MULTIPLIER 100.0 
+
 //IOY: these are going to be removed at the end (no CGAL_ pref)
 #define ACTIVATE_SEGMENTATION_DEBUG
 #ifdef ACTIVATE_SEGMENTATION_DEBUG
@@ -208,6 +212,9 @@ void calculate_sdf_values(double cone_angle = CGAL_DEFAULT_CONE_ANGLE,
 void partition(int number_of_centers = CGAL_DEFAULT_NUMBER_OF_CLUSTERS,
      double smoothing_lambda = CGAL_DEFAULT_SMOOTHING_LAMBDA)
 {    
+    smoothing_lambda = (std::max)(0.0, (std::min)(1.0, smoothing_lambda)); // clip into [0-1]
+    smoothing_lambda *= CGAL_SMOOTHING_LAMBDA_MULTIPLIER; // scale it into meaningful range for graph-cut
+    
     SEG_DEBUG(Timer t)
     SEG_DEBUG(t.start())
     // soft clustering using GMM-fitting initialized with k-means
@@ -230,7 +237,7 @@ void partition(int number_of_centers = CGAL_DEFAULT_NUMBER_OF_CLUSTERS,
     calculate_and_log_normalize_dihedral_angles(smoothing_lambda, edges, edge_weights);
     
     // apply graph cut
-    internal::Alpha_expansion_graph_cut gc(edges, edge_weights, probability_matrix, labels);
+    internal::Alpha_expansion_graph_cut(edges, edge_weights, probability_matrix, labels);
     centers = labels;
     // assign a segment id for each facet
     assign_segments();    
@@ -268,6 +275,9 @@ template <class FacetSegmentMap, class SDFPropertyMap>
 void partition(SDFPropertyMap sdf_pmap, FacetSegmentMap segment_pmap, int number_of_centers = CGAL_DEFAULT_NUMBER_OF_CLUSTERS,
      double smoothing_lambda = CGAL_DEFAULT_SMOOTHING_LAMBDA)
 {
+    smoothing_lambda = (std::max)(0.0, (std::min)(1.0, smoothing_lambda)); // clip into [0-1]
+    smoothing_lambda *= CGAL_SMOOTHING_LAMBDA_MULTIPLIER; // scale it into meaningful range for graph-cut
+    
     sdf_values = std::vector<double>(mesh.size_of_facets());
     for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
     {
@@ -293,7 +303,7 @@ void partition(SDFPropertyMap sdf_pmap, FacetSegmentMap segment_pmap, int number
     calculate_and_log_normalize_dihedral_angles(smoothing_lambda, edges, edge_weights);
     
     // apply graph cut
-    internal::Alpha_expansion_graph_cut gc(edges, edge_weights, probability_matrix, labels);
+    internal::Alpha_expansion_graph_cut(edges, edge_weights, probability_matrix, labels);
     centers = labels;
     // assign a segment id for each facet
     assign_segments();
