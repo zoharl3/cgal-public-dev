@@ -15,12 +15,15 @@
 namespace CGAL {
 namespace internal {
 
+/**
+ * @brief Implements alpha-expansion graph cut algorithm.
+ */
 class Alpha_expansion_graph_cut
 {
-public:
-    typedef boost::adjacency_list_traits<boost::vecS, boost::vecS, boost::directedS> Adjacency_list_traits;
+private:
+    typedef boost::adjacency_list_traits<boost::listS, boost::vecS, boost::directedS> Adjacency_list_traits;
     
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+    typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS,
         // 4 vertex properties (nested)
         boost::property<boost::vertex_index_t, int,
         boost::property<boost::vertex_color_t, boost::default_color_type,
@@ -39,16 +42,18 @@ public:
     typedef Traits::vertex_iterator Vertex_iterator;
     typedef Traits::edge_iterator Edge_iterator;
     
+public:
     Alpha_expansion_graph_cut(
         std::vector<std::pair<int, int> >& edges,
         const std::vector<double>& edge_weights,
         const std::vector<std::vector<double> >& probability_matrix,
         std::vector<int>& labels, double* result = NULL)
     {
-        double min_cut = apply_alpha_expansion(edges, edge_weights, probability_matrix, labels);
+        double min_cut = apply_alpha_expansion_2(edges, edge_weights, probability_matrix, labels);
         if(result != NULL) { *result = min_cut; }
     }
     
+private:    
     boost::tuple<Edge_descriptor, Edge_descriptor> 
     add_edge_and_reverse(Vertex_descriptor& v1, Vertex_descriptor& v2, double w1, double w2, Graph& graph)
     {
@@ -74,38 +79,37 @@ public:
         const std::vector<double>& edge_weights, const std::vector<std::vector<double> >& probability_matrix, 
         std::vector<int>& labels)
     {
-        std::ofstream log_file("log_file.txt");
-        
-        // logging input
-        log_file << "edges: " << std::endl;
-        for(std::vector<std::pair<int, int> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
-            ++edge_it)
-        {
-            log_file << edge_it->first << " " << edge_it->second << std::endl;
-        }
-        log_file << "edge weights: " << std::endl;
-        for(std::vector<double>::const_iterator w_it = edge_weights.begin(); w_it != edge_weights.end(); ++w_it)
-        {
-            log_file << (*w_it) << std::endl;
-        }
-        log_file << "prob matrix: " << std::endl;
-        for(std::vector< std::vector<double> >::const_iterator v_it = probability_matrix.begin(); 
-            v_it != probability_matrix.end(); ++v_it)
-        {
-            for(std::vector<double>::const_iterator p_it = v_it->begin(); p_it != v_it->end(); ++p_it)
-            {
-                log_file << (*p_it) << " ";
-            }
-            log_file << std::endl;
-        }
-        log_file << "labels-input:" << std::endl;
-        for(std::vector<int>::const_iterator l_it = labels.begin(); l_it != labels.end(); ++l_it)
-        {
-            log_file << (*l_it) << std::endl;
-        }
+        //std::ofstream log_file("log_file_2.txt");        
+        //// logging input
+        //log_file << "edges: " << std::endl;
+        //for(std::vector<std::pair<int, int> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
+        //    ++edge_it)
+        //{
+        //    log_file << edge_it->first << " " << edge_it->second << std::endl;
+        //}
+        //log_file << "edge weights: " << std::endl;
+        //for(std::vector<double>::const_iterator w_it = edge_weights.begin(); w_it != edge_weights.end(); ++w_it)
+        //{
+        //    log_file << (*w_it) << std::endl;
+        //}
+        //log_file << "prob matrix: " << std::endl;
+        //for(std::vector< std::vector<double> >::const_iterator v_it = probability_matrix.begin(); 
+        //    v_it != probability_matrix.end(); ++v_it)
+        //{
+        //    for(std::vector<double>::const_iterator p_it = v_it->begin(); p_it != v_it->end(); ++p_it)
+        //    {
+        //        log_file << (*p_it) << " ";
+        //    }
+        //    log_file << std::endl;
+        //}
+        //log_file << "labels-input:" << std::endl;
+        //for(std::vector<int>::const_iterator l_it = labels.begin(); l_it != labels.end(); ++l_it)
+        //{
+        //    log_file << (*l_it) << std::endl;
+        //}
             
         ////////////////////////////////////////////////////////////
-        int number_of_clusters = probability_matrix.size();
+        const int number_of_clusters = probability_matrix.size();
         double min_cut = (std::numeric_limits<double>::max)();
         bool success;
         Timer gt;
@@ -152,10 +156,8 @@ public:
                     int label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
                     if(label_1 == label_2)
                     {     
-                         // actually no need for this, since two alpha labeled vertices will not be seperated 
-                         // (their edges between sink is infitinity)                  
-                        double w1 = (label_1 == alpha) ? 0 : *weight_it;
-                        add_edge_and_reverse(v1, v2, w1, w1, graph);
+                        if(label_1 != alpha) 
+                        { add_edge_and_reverse(v1, v2, *weight_it, *weight_it, graph); }   
                     }
                     else
                     {
@@ -174,7 +176,7 @@ public:
                 //std::cout << "flow time: " << t.time() << std::endl;
                 if(min_cut - flow < flow * 1e-10) { continue; }
                 
-                log_file << "prev flow: " << min_cut << " new flow: " << flow << std::endl;
+                // log_file << "prev flow: " << min_cut << " new flow: " << flow << std::endl;
                 min_cut = flow;
                 success = true;
                 //update labeling
@@ -189,11 +191,11 @@ public:
                 
             }
         } while(success);
-        log_file << "labels-output:" << std::endl;
-        for(std::vector<int>::const_iterator l_it = labels.begin(); l_it != labels.end(); ++l_it)
-        {
-            log_file << (*l_it) << std::endl;
-        }
+        // log_file << "labels-output:" << std::endl;
+        //for(std::vector<int>::const_iterator l_it = labels.begin(); l_it != labels.end(); ++l_it)
+        //{
+        //    log_file << (*l_it) << std::endl;
+        //}
         
         std::cout << "Graph-cut time: " << gt.time() <<  std::endl;
         return min_cut;
@@ -208,7 +210,7 @@ public:
         bool success;
         Timer gt;
         gt.start();
-        double total_time = 0.0;
+       
         do {
             success = false;
             for(int alpha = 0; alpha < number_of_clusters; ++alpha)
@@ -235,8 +237,8 @@ public:
                     add_edge_and_reverse(cluster_source, new_vertex, source_weight, 0.0, graph);
                     add_edge_and_reverse(new_vertex, cluster_sink, sink_weight, 0.0, graph);
                 }
-                total_time += t.time();
-                //std::cout << "vertex time: " << t.time() << std::endl;
+                
+                std::cout << "vertex time: " << t.time() << std::endl;
                 t.reset();
                 // For E-Smooth
                 // add edge between every vertex, 
@@ -248,11 +250,9 @@ public:
                     Vertex_descriptor v1 = edge_it->first + 2, v2 = edge_it->second + 2;
                     int label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
                     if(label_1 == label_2)
-                    {     
-                         // actually no need for this, since two alpha labeled vertices will not be seperated 
-                         // (their edges between sink is infitinity)                  
-                        double w1 = (label_1 == alpha) ? 0 : *weight_it;
-                        add_edge_and_reverse(v1, v2, w1, w1, graph);
+                    {
+                        if(label_1 != alpha) 
+                        { add_edge_and_reverse(v1, v2, *weight_it, *weight_it, graph); }     
                     }
                     else
                     {
@@ -265,14 +265,13 @@ public:
                         add_edge_and_reverse(inbetween, cluster_sink, *weight_it, 0.0, graph);
                     }
                 }
-                total_time += t.time();
-                //std::cout << "edge time: " << t.time() << std::endl;
+                
+                std::cout << "edge time: " << t.time() << std::endl;
                 t.reset();
                 
                 double flow = boost::boykov_kolmogorov_max_flow(graph, cluster_source, cluster_sink);
-                
-                total_time += t.time();
-                //std::cout << "flow time: " << t.time() << std::endl;
+                                               
+                std::cout << "flow time: " << t.time() << std::endl;
                 t.reset();
                 if(min_cut - flow < flow * 1e-10) { continue; }
                 //std::cout << "prev flow: " << min_cut << " new flow: " << flow << std::endl;

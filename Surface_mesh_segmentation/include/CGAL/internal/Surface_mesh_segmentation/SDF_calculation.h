@@ -5,7 +5,7 @@
 #include <CGAL/AABB_traits.h>
 #include <CGAL/AABB_polyhedron_triangle_primitive.h>
 #include <CGAL/internal/Surface_mesh_segmentation/AABB_traversal_traits.h>
-#include <CGAL/internal/Surface_mesh_segmentation/Disk_sampling.h>
+#include <CGAL/internal/Surface_mesh_segmentation/Disk_samplers.h>
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -26,24 +26,24 @@ namespace internal {
  * @code
  *  // template parameters 
  *  // Polyhedron          : CGAL Polyhedron (type of the mesh)
- *  // Vogel_disk_sampling : Functor type which samples rays from cone (for other functors, or for writing your own method, check Disk_sampling.h)
+ *  // Vogel_disk_sampling : Functor type which samples rays from cone (for other functors, or for writing your own method, check Disk_samplers.h)
  * 
  *  // function parameters
  *  // mesh       : CGAL Polyhedron to calculate SDF
- *  // sdf_values : Writable Property-Map where results are 
+ *  // sdf_values : Writable Property-Map where results are stored
  *                
  *  SDF_calculation<Polyhedron, Vogel_disk_sampling>().
- *      calculate_sdf_values(120.0, 25, mesh, sdf_values);
+ *      calculate_sdf_values(mesh, sdf_values, 120.0, 25);
  * @endcode
  *
- * @see Disk_sampling.h
+ * @see Disk_samplers.h
  */
 template <class Polyhedron, class DiskSampling = Vogel_disk_sampling>
 class SDF_calculation
 {
 
 //type definitions
-protected:
+private:
     typedef typename Polyhedron::Traits Kernel;
     typedef typename Polyhedron::Facet  Facet;
     typedef typename Polyhedron::Facet  Vertex;
@@ -67,7 +67,7 @@ protected:
     typedef std::vector<Disk_sample>             Disk_samples_list;
     
 // member variables
-protected:  
+private:  
     double cone_angle;
     
     Disk_samples_list disk_samples_sparse;
@@ -81,20 +81,19 @@ public:
      * Assign default values to member variables.
      */
     SDF_calculation()
-    : use_minimum_segment(false),
-      multiplier_for_segment(1)
+        : use_minimum_segment(false), multiplier_for_segment(1)
     { }
     
     /**
      * Calculates SDF values for each facet, and stores them in @a sdf_values. Note that sdf values are neither smoothed nor normalized.
      * @pre parameter @a mesh should consist of triangles.
-     * @param cone_angle opening angle for cone
-     * @param number_of_rays number of rays picked from cone for each facet
-     * @param mesh polyhedron that SDF values are calculated on
-     * @param[out] sdf_values `WritablePropertyMap` with `Polyhedron::Facet_const_handle` as key and `double` as value type     
+     * @param mesh `CGAL Polyhedron` on which SDF values are computed
+     * @param[out] sdf_values `WritablePropertyMap` with `Polyhedron::Facet_const_handle` as key and `double` as value type
+     * @param cone_angle opening angle for cone, expressed in radians
+     * @param number_of_rays number of rays picked from cone for each facet  
      */
     template <class FacetValueMap>
-    void calculate_sdf_values(double cone_angle, int number_of_rays, const Polyhedron& mesh, FacetValueMap sdf_values)
+    void calculate_sdf_values(const Polyhedron& mesh, FacetValueMap sdf_values, double cone_angle, int number_of_rays)
     {
         this->cone_angle = cone_angle;
         
@@ -113,7 +112,7 @@ public:
         }        
     }
     
-protected:
+private:
     /**
      * Calculates SDF value for parameter @a facet.
      * @param facet 
@@ -243,8 +242,9 @@ protected:
         #if 1
         //SL: the difference with all_intersections is that in the traversal traits, we do do_intersect before calling intersection.
         typedef  std::back_insert_iterator< std::list<Object_and_primitive_id> > Output_iterator;
-        Listing_intersection_traits_ray_or_segment_triangle<typename Tree::AABB_traits,Query,Output_iterator> traversal_traits(std::back_inserter(intersections));
-		    tree.traversal(query,traversal_traits);
+        Listing_intersection_traits_ray_or_segment_triangle<typename Tree::AABB_traits,Query,Output_iterator> 
+            traversal_traits(std::back_inserter(intersections));
+		tree.traversal(query,traversal_traits);
         #else
         tree.all_intersections(query, std::back_inserter(intersections)); 
         #endif
