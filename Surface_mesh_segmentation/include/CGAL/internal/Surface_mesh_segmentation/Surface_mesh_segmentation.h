@@ -609,8 +609,7 @@ void assign_segments()
 void depth_first_traversal(Facet_const_handle& facet, int segment_id)
 {
     get(segments, facet) = segment_id;
-    typename Facet::Halfedge_around_facet_const_circulator facet_circulator = facet->facet_begin();
-    double total_neighbor_sdf = 0.0;
+    typename Facet::Halfedge_around_facet_const_circulator facet_circulator = facet->facet_begin();    
     do {
         if(facet_circulator->opposite()->is_border()) { continue; } // no facet to traversal
         Facet_const_handle neighbor = facet_circulator->opposite()->facet();
