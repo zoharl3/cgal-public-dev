@@ -90,9 +90,9 @@ private:
     typedef Traits::edge_descriptor   Edge_descriptor;
     typedef Traits::edge_iterator     Edge_iterator;
     
-    /**
+    /*
      * Helper method
-     * /
+     */
     boost::tuple<Edge_descriptor, Edge_descriptor> 
     add_edge_and_reverse(Vertex_descriptor& v1, Vertex_descriptor& v2, double w1, double w2, Graph& graph) const
     {
@@ -414,7 +414,7 @@ double operator()(std::vector<std::pair<int, int> >& edges,
     return min_cut;        
 }
 };
-#endif
+#endif //CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE
 }//namespace internal
 }//namespace CGAL
 #endif //CGAL_SURFACE_MESH_SEGMENTATION_ALPHA_EXPANSION_GRAPH_CUT_H
