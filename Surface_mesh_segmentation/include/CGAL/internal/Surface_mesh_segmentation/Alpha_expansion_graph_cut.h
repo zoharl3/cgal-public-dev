@@ -49,7 +49,7 @@ namespace internal {
 //     * Alpha_expansion_graph_cut_boost: use adjacency_list<vecS, listS> without
 //       pre-allocating vertex-list, it should be DEFAULT since it is both efficient and clear.  
 //     * Alpha_expansion_graph_cut_boost_with_preallocate: use adjacency_list<vecS, vecS> 
-//       with pre-allocating vertex-list with max-node size.                                          
+//       with pre-allocating vertex-list using max-node size.                                          
 //                                                                                   
 // 2) With Boykov-Kolmogorov MAXFLOW software:                                       
 //   (http://pub.ist.ac.at/~vnk/software/maxflow-v2.21.src.tar.gz)                   
@@ -127,7 +127,9 @@ double operator()(std::vector<std::pair<int, int> >& edges,
     gt.start();
     do {
         success = false;
-        for(int alpha = 0; alpha < probability_matrix.size(); ++alpha) // for each cluster
+        int alpha = 0;
+        for(std::vector<std::vector<double> >::const_iterator it = probability_matrix.begin(); 
+            it != probability_matrix.end(); ++it, ++alpha)
         {
             Graph graph;
             Vertex_descriptor cluster_source = boost::add_vertex(graph);
@@ -144,8 +146,8 @@ double operator()(std::vector<std::pair<int, int> >& edges,
                 double source_weight = probability_matrix[alpha][vertex_i];
                 // since it is expansion move, current alpha labeled vertices will be assigned to alpha again,
                 // making sink_weight 'infinity' guarantee this.
-                double sink_weight = (labels[vertex_i] == alpha) ? 
-                    (std::numeric_limits<double>::max)() : probability_matrix[labels[vertex_i]][vertex_i];
+                double sink_weight = (labels[vertex_i] == alpha) ? (std::numeric_limits<double>::max)() 
+                                                                 : probability_matrix[labels[vertex_i]][vertex_i];
                 
                 add_edge_and_reverse(cluster_source, new_vertex, source_weight, 0.0, graph);
                 add_edge_and_reverse(new_vertex, cluster_sink, sink_weight, 0.0, graph);
@@ -266,7 +268,9 @@ double operator()(std::vector<std::pair<int, int> >& edges,
     bool success;
     do {
         success = false;
-        for(int alpha = 0; alpha < probability_matrix.size(); ++alpha)
+        int alpha = 0;
+        for(std::vector<std::vector<double> >::const_iterator it = probability_matrix.begin(); 
+            it != probability_matrix.end(); ++it, ++alpha)
         {
             Graph graph(edges.size() + labels.size() + 2); // allocate using maximum possible size.
             Vertex_descriptor cluster_source = 0, cluster_sink = 1;
@@ -278,8 +282,8 @@ double operator()(std::vector<std::pair<int, int> >& edges,
                 double source_weight = probability_matrix[alpha][vertex_i];
                 // since it is expansion move, current alpha labeled vertices will be assigned to alpha again,
                 // making sink_weight 'infinity' guarantee this.
-                double sink_weight = (labels[vertex_i] == alpha) ? 
-                    (std::numeric_limits<double>::max)() : probability_matrix[labels[vertex_i]][vertex_i];
+                double sink_weight = (labels[vertex_i] == alpha) ? (std::numeric_limits<double>::max)() 
+                                                                 : probability_matrix[labels[vertex_i]][vertex_i];
                                     
                 add_edge_and_reverse(cluster_source, new_vertex, source_weight, 0.0, graph);
                 add_edge_and_reverse(new_vertex, cluster_sink, sink_weight, 0.0, graph);
@@ -349,7 +353,9 @@ double operator()(std::vector<std::pair<int, int> >& edges,
     gt.start();
     do {
         success = false;
-        for(int alpha = 0; alpha < probability_matrix.size(); ++alpha)
+        int alpha = 0;
+        for(std::vector<std::vector<double> >::const_iterator it = probability_matrix.begin(); 
+            it != probability_matrix.end(); ++it, ++alpha)
         {
             Graph graph; 
             std::vector<Graph::node_id> inserted_vertices;
@@ -364,8 +370,8 @@ double operator()(std::vector<std::pair<int, int> >& edges,
                 double source_weight = probability_matrix[alpha][vertex_i];
                 // since it is expansion move, current alpha labeled vertices will be assigned to alpha again,
                 // making sink_weight 'infinity' guarantee this.
-                double sink_weight = (labels[vertex_i] == alpha) ? 
-                    (std::numeric_limits<double>::max)() : probability_matrix[labels[vertex_i]][vertex_i]; 
+                double sink_weight = (labels[vertex_i] == alpha) ? (std::numeric_limits<double>::max)() 
+                                                                 : probability_matrix[labels[vertex_i]][vertex_i];
                 graph.add_tweights(new_vertex, source_weight, sink_weight);
             }
             // For E-Smooth
