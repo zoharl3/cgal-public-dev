@@ -201,16 +201,6 @@ int partition(SDFPropertyMap sdf_pmap, FacetSegmentMap segment_pmap, int number_
     std::cout << "ne : " <<number_of_segments << std::endl;
     return number_of_segments;
 }
-///////////////////////////////////////////////////////////////////
-double get_sdf_value_of_facet(Facet_const_handle facet) const
-{
-    return sdf_values[facet_index_map[facet]];
-}
-
-int get_segment_id_of_facet(Facet_const_handle facet) const
-{
-    return segments[facet_index_map[facet]];
-}
 
 private:
 /**
