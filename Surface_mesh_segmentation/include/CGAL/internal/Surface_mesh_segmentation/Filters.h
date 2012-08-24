@@ -43,6 +43,7 @@ public:
         typedef typename Polyhedron::Facet_const_iterator Facet_const_iterator; 
         std::vector<double> smoothed_values; // holds smoothed values
         smoothed_values.reserve(mesh.size_of_facets());    
+        
         for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
         {               
             std::map<Facet_const_handle, int> neighbors;
@@ -57,7 +58,13 @@ public:
                 deviation += std::pow(values[it->first] - current_sdf_value, 2);
             }            
             deviation = std::sqrt(deviation / neighbors.size()); 
-            if(deviation == 0.0) { deviation = std::numeric_limits<double>::epsilon(); } //this might happen       
+            if(deviation == 0.0) 
+            { 
+                //this might happen. In case there is no neighbors (i.e. NeighborSelector() returns just the parameter facet)
+                //                 . Or all neighbor facets have same sdf value.
+                smoothed_values.push_back(current_sdf_value); 
+                continue;
+            }    
             for(typename std::map<Facet_const_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 double spatial_weight = gaussian_function(it->second, window_size / 2.0); // window_size => 2*sigma                               
@@ -115,6 +122,7 @@ public:
             NeighborSelector()(facet_it, window_size, neighbors);
             
             std::vector<double> neighbor_values;
+            neighbor_values.reserve(neighbors.size());
             for(typename std::map<Facet_const_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 neighbor_values.push_back(values[it->first]);
@@ -123,7 +131,7 @@ public:
             int half_neighbor_count = neighbor_values.size() / 2;
             std::nth_element(neighbor_values.begin(), neighbor_values.begin() + half_neighbor_count, neighbor_values.end());
             double median_sdf = neighbor_values[half_neighbor_count];
-            if(half_neighbor_count % 2 == 0)
+            if(neighbor_values.size() % 2 == 0)
             {
                 median_sdf += *std::max_element(neighbor_values.begin(), neighbor_values.begin() + half_neighbor_count);
                 median_sdf /= 2;
