@@ -45,11 +45,9 @@ namespace internal {
  */
 class Vogel_disk_sampling
 {
-private:
-    typedef boost::tuple<double, double, double> Disk_sample;
-    typedef std::vector<Disk_sample>             Disk_samples_list;
-    
+private:    
     bool uniform;
+    
 public:    
     Vogel_disk_sampling() : uniform(false) { }
     /**
@@ -61,8 +59,12 @@ public:
      *   - get<1> = coordinate-y
      *   - get<2> = weight (proportional to angle between cone-normal)
      */
-    void operator()(int number_of_points, double cone_angle, Disk_samples_list& samples) const
+    void operator()(int number_of_points, double cone_angle,
+                    std::vector<boost::tuple<double, double, double> >& samples) const
     {
+        typedef boost::tuple<double, double, double> Disk_sample;
+        typedef std::vector<Disk_sample>             Disk_samples_list;
+    
         const double golden_ratio = 3.0 - std::sqrt(5.0);
         
         if(uniform)
@@ -123,9 +125,6 @@ public:
  */
 class Polar_disk_sampling
 {
-private:
-    typedef boost::tuple<double, double, double> Disk_sample;
-    typedef std::vector<Disk_sample>             Disk_samples_list;
 public:    
     /**
      * Samples points from unit-disk.
@@ -139,8 +138,12 @@ public:
      * Note:
      * Returned samples size = \f$ \lfloor \sqrt {number\_of\_points} \rfloor ^ 2 \f$
      */
-    void operator()(int number_of_points, double cone_angle, Disk_samples_list& samples) const
+    void operator()(int number_of_points, double cone_angle,
+                    std::vector<boost::tuple<double, double, double> >& samples) const
     {
+        typedef boost::tuple<double, double, double> Disk_sample;
+        typedef std::vector<Disk_sample>             Disk_samples_list;
+        
         const int number_of_points_sqrt = static_cast<int>(std::sqrt(
             static_cast<double>(number_of_points)));
         const double length_of_normal = 1.0 / tan(cone_angle / 2.0);
@@ -189,9 +192,6 @@ public:
  */
 class Concentric_disk_sampling
 {
-private:
-    typedef boost::tuple<double, double, double> Disk_sample;
-    typedef std::vector<Disk_sample>             Disk_samples_list;
 public:    
     /**
      * Samples points from unit-disk.
@@ -205,8 +205,12 @@ public:
      * Note:
      * Returned samples size = \f$ \lfloor \sqrt {number\_of\_points} \rfloor ^ 2 \f$
      */
-    void operator()(int number_of_points, double cone_angle, Disk_samples_list& samples) const
+    void operator()(int number_of_points, double cone_angle,
+                    std::vector<boost::tuple<double, double, double> >& samples) const
     {
+        typedef boost::tuple<double, double, double> Disk_sample;
+        typedef std::vector<Disk_sample>             Disk_samples_list;
+        
         const int number_of_points_sqrt = static_cast<int>(std::sqrt(
             static_cast<double>(number_of_points)));
         const double length_of_normal = 1.0 / tan(cone_angle / 2.0);

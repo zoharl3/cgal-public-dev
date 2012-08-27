@@ -4,6 +4,8 @@
 /** 
  * @file Filters.h
  * @brief This file contains 2 filtering methods, which can be used as a template parameter for CGAL::internal::Surface_mesh_segmentation.
+ * 
+ * Also filtering methods can be used by their-own for smoothing associated values to `CGAL Polyhedron`.
  */
 #include <vector>
 #include <map>
@@ -41,6 +43,7 @@ public:
     {    
         typedef typename Polyhedron::Facet_const_handle Facet_const_handle; 
         typedef typename Polyhedron::Facet_const_iterator Facet_const_iterator; 
+        
         std::vector<double> smoothed_values; // holds smoothed values
         smoothed_values.reserve(mesh.size_of_facets());    
         
@@ -113,6 +116,7 @@ public:
     {     
         typedef typename Polyhedron::Facet_const_handle Facet_const_handle; 
         typedef typename Polyhedron::Facet_const_iterator Facet_const_iterator; 
+        
         std::vector<double> smoothed_values;
         smoothed_values.reserve(mesh.size_of_facets());    
         for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
