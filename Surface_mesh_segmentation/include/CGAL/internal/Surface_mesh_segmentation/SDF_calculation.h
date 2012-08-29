@@ -71,7 +71,8 @@ private:
     typename SGT::Construct_sum_of_vectors_3      sum_functor;
     typename SGT::Construct_normal_3              normal_functor;
     typename SGT::Construct_unit_normal_3         unit_normal_functor;
-    typename SGT::Construct_translated_point_3    translated_point_functor;   
+    typename SGT::Construct_translated_point_3    translated_point_functor;  
+    typename SGT::Construct_centroid_3            centroid_functor; 
 public:   
     /**
      * Assign default values to member variables.
@@ -124,7 +125,7 @@ private:
         const Point& p1 = facet->halfedge()->vertex()->point();
         const Point& p2 = facet->halfedge()->next()->vertex()->point();
         const Point& p3 = facet->halfedge()->prev()->vertex()->point();
-        Point center  = centroid(p1, p2, p3);
+        Point center  = centroid_functor(p1, p2, p3);
         Vector normal = unit_normal_functor(p2, p1, p3); //Assuming triangles are CCW oriented.
           
         Plane plane(center, normal);
