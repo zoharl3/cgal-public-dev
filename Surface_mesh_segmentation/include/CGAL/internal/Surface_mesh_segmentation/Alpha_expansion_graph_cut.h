@@ -6,18 +6,27 @@
  *
  * Main differences between implementations are underlying max-flow algorithm and graph type (i.e. results are the same, performance differs).
  *
+ * For activating MAXFLOW software, define CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE. It activates Alpha_expansion_graph_cut_boykov_kolmogorov, 
+ * and makes CGAL::internal::Surface_mesh_segmentation choose this implementation for graph-cut. 
+ *
  * Also algorithms can be used by their-own for applying alpha-expansion graph-cut on any graph.
  */
 #include <CGAL/assertions.h> 
 
+#include <boost/version.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/boykov_kolmogorov_max_flow.hpp>
+#if BOOST_VERSION >= 104400 // at this version kolmogorov_max_flow become depricated.
+ #include <boost/graph/boykov_kolmogorov_max_flow.hpp>
+#else
+ #include <boost/graph/kolmogorov_max_flow.hpp>
+#endif
 
 #include <vector>
 
-//#define CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE
+#define CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE
+
 #ifdef CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE
-#include "graph.h"
+#include <CGAL/internal/auxiliary/graph.h>
 #endif
 
 namespace CGAL {
@@ -194,10 +203,14 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
             {
                 boost::put(boost::vertex_index, graph, *v_begin, index++);
             }
-
-            double flow = boost::boykov_kolmogorov_max_flow(graph, cluster_source, cluster_sink);
-            if(min_cut - flow < flow * 1e-10) { continue; }
             
+        #if BOOST_VERSION >= 104400
+            double flow = boost::boykov_kolmogorov_max_flow(graph, cluster_source, cluster_sink);
+        #else
+            double flow = boost::kolmogorov_max_flow(graph, cluster_source, cluster_sink);
+        #endif
+        
+            if(min_cut - flow < flow * 1e-10) { continue; }            
             min_cut = flow;
             success = true;
             //update labeling
@@ -340,9 +353,14 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                     add_edge_and_reverse(inbetween, cluster_sink, *weight_it, 0.0, graph);
                 }
             }
-            double flow = boost::boykov_kolmogorov_max_flow(graph, cluster_source, cluster_sink);
-            if(min_cut - flow < flow * 1e-10) { continue; }
             
+        #if BOOST_VERSION >= 104400
+            double flow = boost::boykov_kolmogorov_max_flow(graph, cluster_source, cluster_sink);
+        #else
+            double flow = boost::kolmogorov_max_flow(graph, cluster_source, cluster_sink);
+        #endif
+        
+            if(min_cut - flow < flow * 1e-10) { continue; }            
             min_cut = flow;
             success = true;
             //update labeling                
