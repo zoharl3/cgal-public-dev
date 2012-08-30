@@ -23,7 +23,7 @@
 
 #include <vector>
 
-#define CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE
+//#define CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE
 
 #ifdef CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE
 #include <CGAL/internal/auxiliary/graph.h>
@@ -104,7 +104,7 @@ private:
      * @param v2 second vertex
      * @param w1 weight for edge from v1 to v2 (v1->v2)
      * @param w2 weight for edge from v2 to v1 (v2->v1)
-     * @graph to be added
+     * @param graph to be added
      * @return pair of added edges, first: v1->v2 and second: v2->v1
      */
     boost::tuple<Edge_descriptor, Edge_descriptor> 
@@ -136,6 +136,7 @@ public:
  * @param probability_matrix contains responsibility of the center on the vertex probability[center][vertex]
  * @param[in, out] labels as input it contains initial labeling of vertices (i.e. a center-id between [0, number of centers -1]),
  * and as output it returns final labeling of vertices
+ * @return result of energy function
  */
 double operator()(const std::vector<std::pair<int, int> >& edges,
                   const std::vector<double>& edge_weights,
@@ -265,7 +266,7 @@ private:
      * @param v2 second vertex
      * @param w1 weight for edge from v1 to v2 (v1->v2)
      * @param w2 weight for edge from v2 to v1 (v2->v1)
-     * @graph to be added
+     * @param graph to be added
      * @return pair of added edges, first: v1->v2 and second: v2->v1
      */
     boost::tuple<Edge_descriptor, Edge_descriptor> 
@@ -295,8 +296,9 @@ public:
  * @param edges contains incident vertex-id pairs for each edge (vertex-ids should be between [0, number of vertices -1])
  * @param edge_weights contains weights for each edge in @a edges (correspondence according to order)
  * @param probability_matrix contains responsibility of the center on the vertex probability[center][vertex]
- * @param[in, out] labels as input it contains initial labeling of vertices (i.e. a center-id between [0, number of centers -1]),
+ * @param[in, out] labels as input it contains initial labeling of vertices (i.e. a center-id between [0, number of centers -1]), 
  * and as output it returns final labeling of vertices
+ * @return result of energy function
  */
 double operator()(const std::vector<std::pair<int, int> >& edges,
                   const std::vector<double>& edge_weights,
@@ -396,6 +398,7 @@ public:
  * @param probability_matrix contains responsibility of the center on the vertex probability[center][vertex]
  * @param[in, out] labels as input it contains initial labeling of vertices (i.e. a center-id between [0, number of centers -1]),
  * and as output it returns final labeling of vertices
+ * @return result of energy function
  */
 double operator()(const std::vector<std::pair<int, int> >& edges,
                   const std::vector<double>& edge_weights,
