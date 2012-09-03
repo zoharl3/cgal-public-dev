@@ -16,6 +16,7 @@
 #define CGAL_ST_DEV_MULTIPLIER 0.75
 
 namespace CGAL {
+/// @cond CGAL_DOCUMENT_INTERNAL
 namespace internal {
 
 /**
@@ -438,6 +439,7 @@ private:
     }
 };
 }//namespace internal
+/// @endcond
 }//namespace CGAL
 #undef CGAL_ST_DEV_MULTIPLIER
 #undef CGAL_ACCEPTANCE_RATE_THRESHOLD

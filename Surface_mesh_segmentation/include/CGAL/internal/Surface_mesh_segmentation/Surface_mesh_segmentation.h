@@ -21,6 +21,7 @@
 #define CGAL_SMOOTHING_LAMBDA_MULTIPLIER 100.0 
 
 namespace CGAL {
+/// @cond CGAL_DOCUMENT_INTERNAL
 namespace internal{
 /**
  * @brief Main entry point for mesh segmentation algorithm.
@@ -440,6 +441,7 @@ breadth_first_traversal(Facet_const_handle& root, int segment_id, SDFProperyMap 
 
 };
 }//namespace internal
+/// @endcond
 } //namespace CGAL
 
 #undef CGAL_NORMALIZATION_ALPHA

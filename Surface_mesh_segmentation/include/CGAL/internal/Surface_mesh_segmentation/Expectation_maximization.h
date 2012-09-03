@@ -16,6 +16,7 @@
 #define CGAL_DEFAULT_SEED 1340818006
 
 namespace CGAL {
+/// @cond CGAL_DOCUMENT_INTERNAL
 namespace internal {
 
 /**
@@ -471,6 +472,7 @@ private:
     }
 };
 }//namespace internal
+/// @endcond
 }//namespace CGAL
 #undef CGAL_DEFAULT_SEED
 #undef CGAL_DEFAULT_MAXIMUM_ITERATION

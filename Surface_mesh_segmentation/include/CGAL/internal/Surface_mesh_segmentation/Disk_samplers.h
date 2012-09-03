@@ -10,6 +10,7 @@
 #define CGAL_ANGLE_ST_DEV_DIVIDER 3.0
 
 namespace CGAL {
+/// @cond CGAL_DOCUMENT_INTERNAL
 namespace internal {
 
 ///////////////////////////////////////////////////////// /////////////////////////////////////////////////////////
@@ -246,6 +247,7 @@ public:
 };
 
 }//namespace internal
+/// @endcond
 }//namespace CGAL
 #undef CGAL_ANGLE_ST_DEV_DIVIDER
 #endif //CGAL_SURFACE_MESH_SEGMENTATION_DISK_SAMPLERS_H

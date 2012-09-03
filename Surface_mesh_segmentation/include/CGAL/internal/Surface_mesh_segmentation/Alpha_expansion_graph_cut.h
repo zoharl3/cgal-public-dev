@@ -30,6 +30,7 @@
 #endif
 
 namespace CGAL {
+/// @cond CGAL_DOCUMENT_INTERNAL
 namespace internal {
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -476,5 +477,6 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
 };
 #endif //CGAL_USE_BOYKOV_KOLMOGOROV_MAXFLOW_SOFTWARE
 }//namespace internal
+/// @endcond
 }//namespace CGAL
 #endif //CGAL_SURFACE_MESH_SEGMENTATION_ALPHA_EXPANSION_GRAPH_CUT_H

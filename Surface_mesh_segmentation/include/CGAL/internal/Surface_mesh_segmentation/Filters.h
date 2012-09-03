@@ -13,6 +13,7 @@
 #include <queue>
 
 namespace CGAL {
+/// @cond CGAL_DOCUMENT_INTERNAL
 namespace internal {
 
 template<class Polyhedron>
@@ -248,5 +249,6 @@ public:
     }
 };
 }//namespace internal
+/// @endcond
 }//namespace CGAL
 #endif //CGAL_SURFACE_MESH_SEGMENTATION_FILTERS_H
