@@ -1,6 +1,7 @@
 #ifndef CGAL_SURFACE_MESH_SEGMENTATION_FILTERS_H
 #define CGAL_SURFACE_MESH_SEGMENTATION_FILTERS_H
 
+/// @cond CGAL_DOCUMENT_INTERNAL
 /** 
  * @file Filters.h
  * @brief This file contains 2 filtering methods, which can be used as a template parameter for CGAL::internal::Surface_mesh_segmentation.
@@ -13,7 +14,7 @@
 #include <queue>
 
 namespace CGAL {
-/// @cond CGAL_DOCUMENT_INTERNAL
+
 namespace internal {
 
 template<class Polyhedron>

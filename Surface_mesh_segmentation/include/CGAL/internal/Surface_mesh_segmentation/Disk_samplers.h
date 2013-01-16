@@ -1,5 +1,8 @@
 #ifndef CGAL_SURFACE_MESH_SEGMENTATION_DISK_SAMPLERS_H
 #define CGAL_SURFACE_MESH_SEGMENTATION_DISK_SAMPLERS_H
+
+/// @cond CGAL_DOCUMENT_INTERNAL
+
 /** 
  * @file Disk_samplers.h
  * @brief This file contains 3 sampling methods, which can be used as a template parameter for CGAL::internal::SDF_calculation.
@@ -10,7 +13,7 @@
 #define CGAL_ANGLE_ST_DEV_DIVIDER 3.0
 
 namespace CGAL {
-/// @cond CGAL_DOCUMENT_INTERNAL
+
 namespace internal {
 
 ///////////////////////////////////////////////////////// /////////////////////////////////////////////////////////
