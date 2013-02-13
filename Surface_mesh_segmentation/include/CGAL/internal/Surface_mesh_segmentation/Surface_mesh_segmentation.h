@@ -76,6 +76,7 @@ private:
 private:
     const Polyhedron& mesh; 
     GeomTraits traits;
+    int m_window_size;
 // member functions
 public:
 /**
@@ -83,7 +84,7 @@ public:
  * @param mesh `CGAL Polyhedron` on which other functions operate.
  */ 
 Surface_mesh_segmentation(const Polyhedron& mesh, GeomTraits traits)
-    : mesh(mesh), traits(traits)     
+    : mesh(mesh), traits(traits), m_window_size( get_default_window_size() )
 { CGAL_precondition(mesh.is_pure_triangle());  }
 
 // Use these two functions together
@@ -140,6 +141,17 @@ int partition(int number_of_centers, double smoothing_lambda, SDFPropertyMap sdf
     int number_of_segments = assign_segments(number_of_centers, sdf_pmap, segment_pmap);   
     return number_of_segments;
 }
+
+/**
+  * Return the current window size. It is used when calling Filter::operator().
+  * By default it is the value returned by `get_default_window_size()`.
+  */
+int get_window_size() const { return m_window_size; }
+
+/**
+  * Set the window size used to call `Filter::operator()` to `s`
+  */
+void set_window_size(int s) { m_window_size=s; }
 
 private:
 
@@ -221,7 +233,7 @@ std::pair<double, double> linear_normalize_sdf_values(SDFPropertyMap sdf_values)
  *  - 8000-18000 -> 3
  *  - ...
  */
-int get_window_size()
+int get_default_window_size()
 {
     double facet_sqrt = std::sqrt(mesh.size_of_facets() / 2000.0);
     return static_cast<int>(facet_sqrt) + 1;
