@@ -50,7 +50,7 @@ template <
 #else
     class GraphCut = Alpha_expansion_graph_cut_boost,
 #endif    
-    class Filter = Bilateral_filtering<Polyhedron>  
+    class Filter = Bilateral_filtering<Polyhedron>
     >
 class Surface_mesh_segmentation
 {   
