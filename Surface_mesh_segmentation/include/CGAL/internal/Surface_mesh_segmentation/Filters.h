@@ -209,6 +209,8 @@ public:
         facet_queue.push(Facet_level_pair(facet, 0));
         neighbors.insert(facet_queue.front());
         
+        if(max_level <= 0) { return; }
+
         while(!facet_queue.empty())
         {
             const Facet_level_pair& pair = facet_queue.front();  
@@ -256,6 +258,8 @@ public:
         facet_queue.push(Facet_level_pair(facet, 0));
         neighbors.insert(facet_queue.front());
         
+        if(max_level <= 0) { return; }
+
         while(!facet_queue.empty())
         {
             const Facet_level_pair& pair = facet_queue.front();
