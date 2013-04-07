@@ -69,7 +69,7 @@ compute_sdf_values(const Polyhedron& polyhedron,
  * @param sdf_values sdf_values the sdf value of each facet
  * @param[out] segment_ids the segment id of each facet
  * @param number_of_levels number of clusters for soft clustering
- * @param smoothing_lambda factor in the interval [0,1] which indicates the importance of surface features in energy minimization
+ * @param smoothing_lambda factor in the interval [0,1] (sugggested but not forced) which indicates the importance of surface features in energy minimization
  * @param traits traits object
  * @return number of segments
  */ 
@@ -85,9 +85,7 @@ segment_from_sdf_values(const Polyhedron& polyhedron,
                                            int number_of_levels = 5, 
                                            double smoothing_lambda = 0.26,
                                            GeomTraits traits = GeomTraits())
-{
-    smoothing_lambda = (std::max)(0.0, (std::min)(1.0, smoothing_lambda)); // clip into [0-1]
-    
+{ 
     internal::Surface_mesh_segmentation<Polyhedron, GeomTraits> algorithm(polyhedron, traits);
     return algorithm.partition(number_of_levels, smoothing_lambda, sdf_values, segment_ids);
 }
@@ -114,7 +112,7 @@ segment_from_sdf_values(const Polyhedron& polyhedron,
  * @param cone_angle opening angle for cone, expressed in radians
  * @param number_of_rays number of rays picked from cone for each facet. In general, increasing the number of rays has a little effect on the quality of the result.
  * @param number_of_levels number of clusters for soft clustering
- * @param smoothing_lambda factor in the interval [0,1] which indicates the importance of surface features in energy minimization
+ * @param smoothing_lambda factor in the interval [0,1] (sugggested but not forced) which indicates the importance of surface features in energy minimization
  * @param traits traits object
  * @return number of segments
  */ 
@@ -132,8 +130,6 @@ compute_sdf_values_and_segment(const Polyhedron& polyhedron,
                            double smoothing_lambda = 0.26,
                            GeomTraits traits = GeomTraits())
 {
-    smoothing_lambda = (std::max)(0.0, (std::min)(1.0, smoothing_lambda)); // clip into [0-1]
-    
     typedef std::map< typename Polyhedron::Facet_const_handle, double> Facet_double_map;
     Facet_double_map internal_sdf_map;
     boost::associative_property_map<Facet_double_map> sdf_property_map(internal_sdf_map);
