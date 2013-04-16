@@ -144,26 +144,34 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                   const std::vector<std::vector<double> >& probability_matrix,
                   std::vector<int>& labels) const
 {
+    const double tolerance = 1e-10;
+ 
     double min_cut = (std::numeric_limits<double>::max)();
+    
+    std::vector<Vertex_descriptor> inserted_vertices;
+    inserted_vertices.resize(labels.size());
+
+    Graph graph; 
+
     bool success;
     do {
         success = false;
         int alpha = 0;
+
         for(std::vector<std::vector<double> >::const_iterator it = probability_matrix.begin(); 
             it != probability_matrix.end(); ++it, ++alpha)
         {
-            Graph graph;
+            graph.clear();
+
             Vertex_descriptor cluster_source = boost::add_vertex(graph);
             Vertex_descriptor cluster_sink = boost::add_vertex(graph);
-            std::vector<Vertex_descriptor> inserted_vertices;
-            inserted_vertices.reserve(labels.size());
-            
+
             // For E-Data 
             // add every facet as a vertex to the graph, put edges to source & sink vertices
             for(std::size_t vertex_i = 0; vertex_i < labels.size(); ++vertex_i)
             {
                 Vertex_descriptor new_vertex = boost::add_vertex(graph);
-                inserted_vertices.push_back(new_vertex);
+                inserted_vertices[vertex_i] = new_vertex;
                 double source_weight = probability_matrix[alpha][vertex_i];
                 // since it is expansion move, current alpha labeled vertices will be assigned to alpha again,
                 // making sink_weight 'infinity' guarantee this.
@@ -197,7 +205,8 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                     add_edge_and_reverse(inbetween, v2, w2, w2, graph);
                     add_edge_and_reverse(inbetween, cluster_sink, *weight_it, 0.0, graph);
                 }
-            }            
+            }        
+
             // initialize vertex indices, it is neccessary since we are using VertexList = listS 
             Vertex_iterator v_begin, v_end;
             Traits::vertices_size_type index = 0;
@@ -211,8 +220,8 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
         #else
             double flow = boost::kolmogorov_max_flow(graph, cluster_source, cluster_sink);
         #endif
-        
-            if(min_cut - flow < flow * 1e-10) { continue; }            
+
+            if(min_cut - flow < flow * tolerance) { continue; }            
             min_cut = flow;
             success = true;
             //update labeling
@@ -224,7 +233,6 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                     labels[vertex_i] = alpha;
                 }
             }
-            
         }
     } while(success);
     return min_cut;
@@ -255,8 +263,14 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                   const std::vector<std::vector<double> >& probability_matrix,
                   std::vector<int>& labels) const
 {       
+    const double tolerance = 1e-10;
+
     double min_cut = (std::numeric_limits<double>::max)();
     bool success;
+
+    std::vector<Graph::node_id> inserted_vertices;
+    inserted_vertices.resize(labels.size());
+
     do {
         success = false;
         int alpha = 0;
@@ -264,14 +278,13 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
             it != probability_matrix.end(); ++it, ++alpha)
         {
             Graph graph; 
-            std::vector<Graph::node_id> inserted_vertices;
-            inserted_vertices.reserve(labels.size());
+           
             // For E-Data 
             // add every facet as a vertex to graph, put edges to source-sink vertices
-            for(std::size_t vertex_i = 0; vertex_i <  probability_matrix[0].size(); ++vertex_i)
+            for(std::size_t vertex_i = 0; vertex_i <  labels.size(); ++vertex_i)
             {
                 Graph::node_id new_vertex = graph.add_node();                
-                inserted_vertices.push_back(new_vertex);
+                inserted_vertices[vertex_i] = new_vertex;
                 
                 double source_weight = probability_matrix[alpha][vertex_i];
                 // since it is expansion move, current alpha labeled vertices will be assigned to alpha again,
@@ -307,7 +320,7 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                 }
             }
             double flow = graph.maxflow();
-            if(min_cut - flow < flow * 1e-10) { continue; }
+            if(min_cut - flow < flow * tolerance) { continue; }
 
             min_cut = flow;
             success = true;
