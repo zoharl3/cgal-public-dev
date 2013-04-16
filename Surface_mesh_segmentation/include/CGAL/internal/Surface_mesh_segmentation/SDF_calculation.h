@@ -57,7 +57,8 @@ private:
     typedef typename GeomTraits::Ray_3      Ray;
     typedef typename GeomTraits::Plane_3    Plane;
     typedef typename GeomTraits::Segment_3  Segment;
-    
+    typedef typename GeomTraits::FT         FT;
+
     typedef typename Polyhedron::Facet  Facet;   
     
     typedef typename Polyhedron::Facet_const_iterator Facet_const_iterator;
@@ -73,6 +74,7 @@ private:
     typedef std::vector<Disk_sample>             Disk_samples_list;
     
     typedef Vogel_disk_sampling<boost::tuple<double, double, double> > Default_sampler;
+
 // member variables
 private:  
     GeomTraits traits;
@@ -158,7 +160,7 @@ public:
                 DiskSampling disk_sampler) const
     {
         Disk_samples_list disk_samples;
-        disk_sampler(number_of_rays, cone_angle, std::back_inserter(disk_samples));        
+        disk_sampler(number_of_rays, std::back_inserter(disk_samples));        
               
         for( ; facet_begin != facet_end; ++facet_begin)
         {
@@ -219,7 +221,7 @@ public:
                 DiskSampling disk_sampler) const
     {        
         Disk_samples_list disk_samples;
-        disk_sampler(number_of_rays, cone_angle, std::back_inserter(disk_samples));  
+        disk_sampler(number_of_rays, std::back_inserter(disk_samples));  
         
         return calculate_sdf_value_of_point(center, normal, skip, visitor, cone_angle, accept_if_acute, disk_samples);
     }
@@ -236,17 +238,24 @@ public:
                 double cone_angle,
                 bool accept_if_acute,
                 const Disk_samples_list& disk_samples) const
-    {        
+    {
+        if(cone_angle < 0.0 || cone_angle > CGAL_PI) {
+            CGAL_warning(false && "Cone angle is clamped between [0, CGAL_PI].");
+            cone_angle = (std::min)(CGAL_PI, (std::max)(0.0, cone_angle));
+        }
+
         Plane plane(center, normal);
         Vector v1 = plane.base1(), v2 = plane.base2();
-        v1 = scale_functor(v1, static_cast<typename GeomTraits::FT>(1.0 / CGAL::sqrt(v1.squared_length())));
-        v2 = scale_functor(v2, static_cast<typename GeomTraits::FT>(1.0 / CGAL::sqrt(v2.squared_length())));        
+        v1 = scale_functor(v1, static_cast<FT>(1.0 / CGAL::sqrt(v1.squared_length())));
+        v2 = scale_functor(v2, static_cast<FT>(1.0 / CGAL::sqrt(v2.squared_length())));        
            
         std::vector<std::pair<double, double> > ray_distances;
         ray_distances.reserve(disk_samples.size());
         
-        const typename GeomTraits::FT length_of_normal = static_cast<typename GeomTraits::FT>( 1.0 / tan(cone_angle / 2.0) );
-        Vector scaled_normal = scale_functor(normal, length_of_normal);
+        const FT normal_multiplier( cos(cone_angle / 2.0) );
+        const FT disk_multiplier  ( sin(cone_angle / 2.0) );
+
+        Vector scaled_normal = scale_functor(normal, normal_multiplier);
 
         for(Disk_samples_list::const_iterator sample_it = disk_samples.begin(); 
             sample_it != disk_samples.end(); ++sample_it)
@@ -256,11 +265,17 @@ public:
             Primitive_id closest_id;
 
             Vector disk_vector = sum_functor(
-              scale_functor(v1, static_cast<typename GeomTraits::FT>(sample_it->get<0>())), 
-              scale_functor(v2, static_cast<typename GeomTraits::FT>(sample_it->get<1>())) );
+              scale_functor(v1, static_cast<FT>(disk_multiplier * sample_it->get<0>())), 
+              scale_functor(v2, static_cast<FT>(disk_multiplier * sample_it->get<1>())) );
             Vector ray_direction = sum_functor(scaled_normal, disk_vector);
 
             Ray ray(center, ray_direction);
+
+            if(traits.is_degenerate_3_object()(ray)) {
+                CGAL_warning(false && 
+                  "A degenerate ray is constructed. Most probable reason is using CGAL_PI as cone_angle parameter and also picking center of disk as a sample.");
+            }
+
             boost::tie(is_intersected, intersection_is_acute, min_distance, closest_id)
               = cast_and_return_minimum(ray, skip, accept_if_acute);
 
