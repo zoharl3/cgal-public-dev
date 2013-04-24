@@ -8,6 +8,7 @@
 
 #include <CGAL/internal/Surface_mesh_segmentation/K_means_clustering.h>
 #include <CGAL/assertions.h> 
+#include <CGAL/Random.h>
 
 #define CGAL_DEFAULT_MAXIMUM_ITERATION 10
 #define CGAL_DEFAULT_NUMBER_OF_RUN 15
@@ -91,6 +92,7 @@ private:
     
     Initialization_types init_type;
     
+    CGAL::Random random;
 public:   
     /**
      * @pre @a number_of_centers should be positive
@@ -117,7 +119,10 @@ public:
         :        
         final_likelihood(-(std::numeric_limits<double>::max)()), points(data),
         responsibility_matrix(std::vector<std::vector<double> >(number_of_centers, std::vector<double>(points.size()))),
-        threshold(threshold), maximum_iteration(maximum_iteration), init_type(init_type)
+        threshold(threshold), 
+        maximum_iteration(maximum_iteration), 
+        init_type(init_type),
+        random(CGAL_DEFAULT_SEED)
     {
         CGAL_assertion(number_of_centers > 0 && "Number of centers should be positive.");
         CGAL_assertion(data.size() >= static_cast<std::size_t>(number_of_centers) && "Number of centers can not be more than number of data.");
@@ -136,7 +141,6 @@ public:
         // For initialization with random center selection, with multiple run
         else
         {
-            srand(CGAL_DEFAULT_SEED);
             calculate_clustering_with_multiple_run(number_of_centers, number_of_runs);             
         }
         sort(centers.begin(), centers.end());
@@ -241,7 +245,7 @@ private:
     void initiate_centers_randomly(int number_of_centers)
     {
         centers.clear();   
-        Selector().forgy_initialization(number_of_centers, points, centers);
+        Selector().forgy_initialization(number_of_centers, points, centers, random);
 
         calculate_initial_mixing_and_deviation();
     }
@@ -254,7 +258,7 @@ private:
     void initiate_centers_plus_plus(int number_of_centers)
     {
         centers.clear();
-        Selector().plus_plus_initialization(number_of_centers, points, centers);
+        Selector().plus_plus_initialization(number_of_centers, points, centers, random);
 
         calculate_initial_mixing_and_deviation();
     }
