@@ -44,7 +44,6 @@ public:
     typedef Constrained_triangulation_face_base_2<Gt,Fb2>    Other;
   };
 
-
 protected:
   bool C[3];
  

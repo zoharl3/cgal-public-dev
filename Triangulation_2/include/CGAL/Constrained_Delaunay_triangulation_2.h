@@ -177,7 +177,9 @@ public:
   // get_boundary_of_conflicts(const Point  &p, 
   // 			       OutputItBoundaryEdges eit, 
   // 			       Face_handle start ) const;
-   
+
+  // DUAL
+  Polygon dual(Vertex_handle v) const;
 
   // INSERTION-REMOVAL
   Vertex_handle insert(const Point & a, Face_handle start = Face_handle());
@@ -771,6 +773,29 @@ virtual_insert(const Point& a,
 // virtual version of insert
 {
   return insert(a,lt,loc,li);
+}
+
+// DUALITY
+template< class Gt, class Tds, class Itag >
+inline Polygon
+Constrained_Delaunay_triangulation_2<Gt,Tds,Itag>::
+dual (Vertex_handle v) const
+{
+	CGAL_triangulation_precondition( v != Vertex_handle());
+	CGAL_triangulation_precondition( !this->is_infinite(v));
+
+	// The Circulator moves ccw.
+	Face_circulator fc = this->incident_faces(v), done(fc);
+	Polygon poly;
+	do{
+		if(!this->is_infinite(fc)){
+			poli.push_back(this->circumcenter(face));
+		}else{
+			return Polygon();
+		}
+	}while(++fc!=done);
+
+	return poly;
 }
 
 template < class Gt, class Tds, class Itag >  
