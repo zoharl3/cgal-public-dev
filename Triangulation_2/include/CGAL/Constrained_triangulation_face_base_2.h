@@ -37,6 +37,7 @@ public:
   typedef TDS                                  Triangulation_data_structure;
   typedef typename TDS::Vertex_handle          Vertex_handle;
   typedef typename TDS::Face_handle            Face_handle;
+  typedef typename std::pair<Face_handle, int> Edge;
 
   template < typename TDS2 >
   struct Rebind_TDS {
@@ -44,12 +45,23 @@ public:
     typedef Constrained_triangulation_face_base_2<Gt,Fb2>    Other;
   };
 
+  enum {INSIDE = -1,
+  				UNDETERMINED = 0,
+  				OUTSIDE = 1};
+
 protected:
   bool C[3];
+
+  // additional member data
+  	int m_location; // inside / outside / undetermined
+  	bool m_blind;
+  	Edge m_blinding_constraint;
  
 public:
   Constrained_triangulation_face_base_2()
-    : Base()
+    : Base(),
+	  m_location(UNDETERMINED),
+	  m_blind(false)
   {
     set_constraints(false,false,false);
   }
@@ -57,7 +69,9 @@ public:
   Constrained_triangulation_face_base_2(Vertex_handle v0, 
 					Vertex_handle v1, 
 					Vertex_handle v2)
-    : Base(v0,v1,v2)
+    : Base(v0,v1,v2),
+	  m_location(UNDETERMINED),
+	  m_blind(false)
   {
     set_constraints(false,false,false);
   }
@@ -68,7 +82,9 @@ public:
 					Face_handle n0, 
 					Face_handle n1, 
 					Face_handle n2)
-    : Base(v0,v1,v2,n0,n1,n2)
+    : Base(v0,v1,v2,n0,n1,n2),
+	  m_location(UNDETERMINED),
+	  m_blind(false)
   {
     set_constraints(false,false,false);
   }
@@ -83,7 +99,9 @@ public:
 					bool c0, 
 					bool c1, 
 					bool c2 )
-    : Base(v0,v1,v2,n0,n1,n2)
+    : Base(v0,v1,v2,n0,n1,n2),
+	  m_location(UNDETERMINED),
+	  m_blind(false)
   {
     set_constraints(c0,c1,c2);
   }
@@ -96,6 +114,18 @@ public:
   void ccw_permute();
   void cw_permute();
   
+  // inside/outside/undetermined
+  const int location() const;
+  int& location();
+
+  // sees its circumcenter or not?
+  const bool& blind() const;
+  bool& blind();
+
+  // if blind, the constrained edge that prevents the face
+  // to see its circumcenter
+  const Edge& blinding_constraint() const;
+  Edge& blinding_constraint();
 };
 
 template <class Gt, class Fb>
@@ -151,7 +181,45 @@ cw_permute()
   Base::cw_permute();
   set_constraints(C[1],C[2],C[0]);
 }
+
+// inside/outside/undetermined
+template <class Gt, class Fb>
+inline const int
+Constrained_triangulation_face_base_2<Gt,Fb>::
+location() const { return m_location; }
+
+template <class Gt, class Fb>
+inline int&
+Constrained_triangulation_face_base_2<Gt,Fb>::
+location() { return m_location; }
+
+// sees its circumcenter or not?
+template <class Gt, class Fb>
+inline const bool&
+Constrained_triangulation_face_base_2<Gt,Fb>::
+blind() const { return m_blind; }
+
+template <class Gt, class Fb>
+inline bool&
+Constrained_triangulation_face_base_2<Gt,Fb>::
+blind(){ return m_blind; }
+
+// if blind, the constrained edge that prevents the face
+// to see its circumcenter
+template <class Gt, class Fb>
+inline const
+typename Constrained_triangulation_face_base_2<Gt,Fb>::Edge&
+Constrained_triangulation_face_base_2<Gt,Fb>::
+blinding_constraint() const { return m_blinding_constraint; }
+
+template <class Gt, class Fb>
+inline
+typename Constrained_triangulation_face_base_2<Gt,Fb>::Edge&
+Constrained_triangulation_face_base_2<Gt,Fb>::
+blinding_constraint() { return m_blinding_constraint; }
   
-} //namespace CGAL 
-  
+} //namespace CGAL
+
+
+
 #endif //CGAL_CONSTRAINED_TRIANGULATION_FACE_BASE_2_H

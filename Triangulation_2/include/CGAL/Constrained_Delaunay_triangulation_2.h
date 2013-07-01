@@ -31,6 +31,7 @@
 
 #include <boost/iterator/zip_iterator.hpp>
 #include <boost/mpl/and.hpp>
+#include <CGAL/Polygon_2.h>
 
 namespace CGAL {
 
@@ -108,6 +109,7 @@ public:
 #endif
 
   typedef typename Geom_traits::Point_2  Point;
+  typedef CGAL::Polygon_2<Gt, std::vector<Point> >		Polygon;
 
 
   Constrained_Delaunay_triangulation_2(const Geom_traits& gt=Geom_traits()) 
@@ -777,7 +779,8 @@ virtual_insert(const Point& a,
 
 // DUALITY
 template< class Gt, class Tds, class Itag >
-inline Polygon
+inline
+typename Constrained_Delaunay_triangulation_2<Gt,Tds,Itag>::Polygon
 Constrained_Delaunay_triangulation_2<Gt,Tds,Itag>::
 dual (Vertex_handle v) const
 {
@@ -789,7 +792,7 @@ dual (Vertex_handle v) const
 	Polygon poly;
 	do{
 		if(!this->is_infinite(fc)){
-			poli.push_back(this->circumcenter(face));
+			poly.push_back(this->circumcenter(fc));
 		}else{
 			return Polygon();
 		}

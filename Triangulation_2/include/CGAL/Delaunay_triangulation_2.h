@@ -34,9 +34,7 @@
 
 #include <boost/iterator/zip_iterator.hpp>
 #include <boost/mpl/and.hpp>
-
 #include <CGAL/Polygon_2.h>
-#include <CGAL/intersections.h>
 
 #endif //CGAL_TRIANGULATION_2_DONT_INSERT_RANGE_OF_POINTS_WITH_INFO
 
@@ -75,6 +73,8 @@ public:
   typedef typename Triangulation::Finite_vertices_iterator 
                                                      Finite_vertices_iterator;
   typedef typename Triangulation::All_faces_iterator    All_faces_iterator;
+
+  typedef CGAL::Polygon_2<Geom_traits, std::vector<Point> >	Polygon;
  
 #ifndef CGAL_CFG_USING_BASE_MEMBER_BUG_2
   using Triangulation::side_of_oriented_circle;
@@ -86,7 +86,7 @@ public:
   using Triangulation::delete_vertex;
 #endif
 
-  typedef CGAL::Polygon_2<Geom_traits,std::vector<Point> > Polygon;
+
 
  Delaunay_triangulation_2(const Gt& gt = Gt())
   : Triangulation_2<Gt,Tds>(gt) {}
@@ -140,8 +140,6 @@ public:
   Object dual(const Edge_circulator& ec) const;
   Object dual(const Finite_edges_iterator& ei) const;
   Polygon dual(Vertex_handle v) const;
-  Polygon dual(const Vertex_circulator& vc) const;
-  Polygon dual(const Finite_vertices_iterator& vi) const;
   
   //INSERTION-REMOVAL
   Vertex_handle insert(const Point  &p, 
@@ -849,7 +847,7 @@ dual(const Finite_edges_iterator& ei) const
 }
 
 template<class Gt, class Tds>
-inline Polygon
+typename Delaunay_triangulation_2<Gt,Tds>::Polygon
 Delaunay_triangulation_2<Gt,Tds>::
 dual (Vertex_handle v) const
 {
@@ -861,29 +859,13 @@ dual (Vertex_handle v) const
 	Polygon poly;
 	do{
 		if(!this->is_infinite(fc)){
-			poli.push_back(this->circumcenter(face));
+			poly.push_back(this->circumcenter(fc));
 		}else{
 			return Polygon();
 		}
 	}while(++fc!=done);
 
 	return poly;
-}
-
-template<class Gt, class Tds>
-inline Polygon
-Delaunay_triangulation_2<Gt,Tds>::
-dual (Vertex_circulator& vc) const
-{
-	return dual(*vc);
-}
-
-template<class Gt, class Tds>
-inline Polygon
-Delaunay_triangulation_2<Gt,Tds>::
-dual (Finite_vertices_iterator& vi) const
-{
-	return dual(*vi);
 }
 
 ///////////////////////////////////////////////////////////////
