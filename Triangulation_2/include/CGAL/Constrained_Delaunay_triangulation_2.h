@@ -47,6 +47,45 @@ struct Get_iterator_value_type<T,true>{
  typedef typename std::iterator_traits<T>::value_type type;
 };
 
+template <class Cdt>
+class Cvd_cell : public std::pair<typename Cdt::Polygon,			  // cell
+																	typename Cdt::Vertex_handle> // generator
+{
+	//typedef typename Cvd_cell<Cdt> Cell;
+
+public:
+	Cvd_cell<Cdt>()
+		: std::pair<typename Cdt::Polygon,
+	 		  			  typename Cdt::Vertex_handle>()
+	{
+	}
+	Cvd_cell<Cdt>(typename Cdt::Polygon poly,
+			 typename Cdt::Vertex_handle v)
+			 : std::pair<typename Cdt::Polygon,
+			  					 typename Cdt::Vertex_handle>(poly, v)
+	{
+	}
+
+	bool operator<(const Cvd_cell<Cdt>& cell) const
+	{
+		typename Cdt::Point p1 = *((*this).first.left_vertex());
+		typename Cdt::Point p2 = *(cell.first.left_vertex());
+		return( p1.x() <  p2.x()
+			  || (p1.x() == p2.x()  &&  p1.y() < p2.y()));
+	};
+
+	typename Cdt::Vertex_handle get_generator() const
+	{
+		return (*this).second;
+	}
+
+	typename Cdt::Polygon get_polygon() const
+	{
+		return (*this).first;
+	}
+}; //end CLASS Bvd_cell
+
+
 } } //namespace CGAL::internal
 #endif //CGAL_TRIANGULATION_2_DONT_INSERT_RANGE_OF_POINTS_WITH_INFO
 
@@ -110,10 +149,23 @@ public:
 
   typedef typename Geom_traits::Point_2  Point;
   typedef CGAL::Polygon_2<Gt, std::vector<Point> >		Polygon;
+  typedef typename Ctr::Segment  						Segment;
+  typedef typename Geom_traits::FT 						FT;
+  typedef typename Ctr::Triangle 						Triangle;
+  typedef internal::Cvd_cell<CDt> 						Cvd_cell;
+  typedef typename std::list<Cvd_cell> 					Cvd;
 
+protected:
+	FT m_bounding_box[4]; // xmin,xmax,ymin,ymax
+	Cvd m_cvd;
 
+public:
   Constrained_Delaunay_triangulation_2(const Geom_traits& gt=Geom_traits()) 
-    : Ctr(gt) { }
+    : Ctr(gt) {
+	  	  m_bounding_box[0] = m_bounding_box[2] = 0.0;
+	  	  m_bounding_box[1] = m_bounding_box[3] = 1.0;
+	  	  //this->construct_bvd();
+  }
 
   Constrained_Delaunay_triangulation_2(const CDt& cdt)
     : Ctr(cdt) {}
