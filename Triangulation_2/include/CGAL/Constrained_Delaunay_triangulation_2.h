@@ -32,6 +32,8 @@
 #include <boost/iterator/zip_iterator.hpp>
 #include <boost/mpl/and.hpp>
 #include <CGAL/Polygon_2.h>
+#include <CGAL/number_utils.h>
+
 #include <list>
 
 #include <GL/gl.h>		   // Open Graphics Library (OpenGL) header
@@ -388,22 +390,22 @@ public:
 	{
 		Point A = seg.source();
 		Point B = seg.target();
-		double dX = B.x() - A.x();
-		double dY = B.y() - A.y();
+		double dX = CGAL::to_double(B.x()) - CGAL::to_double(A.x());
+		double dY = CGAL::to_double(B.y()) - CGAL::to_double(A.y());
 
 		Point p0 = tr[0];
 		Point p1 = tr[1];
 		Point p2 = tr[2];
-		double R0 = p0.x()*p0.x() + p0.y()*p0.y();
-		double R1 = p1.x()*p1.x() + p1.y()*p1.y();
-		double R2 = p2.x()*p2.x() + p2.y()*p2.y();
-		double denominator = (p1.x()-p0.x())*(p2.y()-p0.y()) +
-								(p0.x()-p2.x())*(p1.y()-p0.y());
+		double R0 = CGAL::to_double(p0.x())*CGAL::to_double(p0.x()) + CGAL::to_double(p0.y())*CGAL::to_double(p0.y());
+		double R1 = CGAL::to_double(p1.x())*CGAL::to_double(p1.x()) + CGAL::to_double(p1.y())*CGAL::to_double(p1.y());
+		double R2 = CGAL::to_double(p2.x())*CGAL::to_double(p2.x()) + CGAL::to_double(p2.y())*CGAL::to_double(p2.y());
+		double denominator = (CGAL::to_double(p1.x())-CGAL::to_double(p0.x()))*(CGAL::to_double(p2.y())-CGAL::to_double(p0.y())) +
+								(CGAL::to_double(p0.x())-CGAL::to_double(p2.x()))*(CGAL::to_double(p1.y())-CGAL::to_double(p0.y()));
 
-		double to_test = 2*denominator * (A.x()*dY - A.y()*dX)
-										- (R2-R1) * (p0.x()*dX + p0.y()*dY)
-										- (R0-R2) * (p1.x()*dX + p1.y()*dY)
-										- (R1-R0) * (p2.x()*dX + p2.y()*dY);
+		double to_test = 2.0*denominator * (CGAL::to_double(A.x())*dY - CGAL::to_double(A.y())*dX)
+										- (R2-R1) * (CGAL::to_double(p0.x())*dX + CGAL::to_double(p0.y())*dY)
+										- (R0-R2) * (CGAL::to_double(p1.x())*dX + CGAL::to_double(p1.y())*dY)
+										- (R1-R0) * (CGAL::to_double(p2.x())*dX + CGAL::to_double(p2.y())*dY);
 		if( to_test > 0 )
 			return false;
 		else
