@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <list>
 
 #define SSTR( x ) dynamic_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
@@ -23,6 +24,7 @@ typedef CDT::Point          Point;
 
 typedef CDT::Finite_faces_iterator    Finite_faces_iterator;
 typedef CDT::Polygon                    Polygon;
+typedef CDT::Cvd                        Cvd;
 
 void Triangulation_to_vtk(CDT cdt,std::string name)
 {
@@ -66,7 +68,7 @@ void Triangulation_to_vtk(CDT cdt,std::string name)
 }
 
 
-void voronoi_cells_to_vtk(Polygon poly, std::string name){
+void voronoi_cells_to_vtk(Polygon poly, Point p, std::string name){
   if (poly.size() == 0){
     return;
   }
@@ -81,10 +83,10 @@ void voronoi_cells_to_vtk(Polygon poly, std::string name){
   }
   out<<std::endl;
   out<<"LINES "<<"1 "<<poly.size()+2<<std::endl<<poly.size()+1;
-  for(int i=1;i<=poly.size();i++){
+  for(int i=0;i<poly.size();i++){
     out<<" "<<i;
   }
-  out<<" 1\n";
+  out<<" 0\n";
 }
 
 int main(int argc, char **argv)
@@ -112,6 +114,7 @@ int main(int argc, char **argv)
   std::cout << "Output CVD to an image" << std::endl;
   Triangulation_to_vtk(cdt,"./vtk_files/cdt.vtk");
 
+/*
   int i=1;
   for(CDT::Finite_vertices_iterator vit = cdt.finite_vertices_begin();
       vit != cdt.finite_vertices_end();
@@ -127,6 +130,22 @@ int main(int argc, char **argv)
     }
     
   }
+*/
+
+  cdt.construct_cvd();
+  Cvd my_cvd = cdt.get_cvd();
+  Cvd::iterator cell_it;
+  unsigned int i=1;
+  for(cell_it = my_cvd.begin();cell_it!=my_cvd.end();cell_it++){
+    Polygon poly = cell_it->first;
+    std::string name = "./vtk_files/voronoi_cell";
+    name.append(SSTR(i));
+    name.append(".vtk");
+    voronoi_cells_to_vtk(poly,cell_it->second->point(),name);
+    i++;
+  }
+
+  
 
   return 0;
 }

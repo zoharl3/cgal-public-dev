@@ -257,6 +257,10 @@ public:
 			m_color_table[i] = my_random(200,255);
 	}
 
+  Cvd get_cvd(){
+	  return m_cvd;
+  }
+
   void construct_cvd()
 	{
 		m_cvd.clear();
@@ -470,7 +474,7 @@ public:
 
 		return Cvd_cell(polygon, v);
 	}
-
+/*
 	void gl_draw_constructed_cvd()
 	{
 		this->construct_cvd();
@@ -498,7 +502,7 @@ public:
 			n = n+3;
 		}
 	}
-
+*/
 
   // INSERTION-REMOVAL
   Vertex_handle insert(const Point & a, Face_handle start = Face_handle());

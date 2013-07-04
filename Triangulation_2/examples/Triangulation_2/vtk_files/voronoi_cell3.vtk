@@ -1,0 +1,15 @@
+# vtk DataFile Version 1.0
+Line representation of vtk
+ASCII
+
+DATASET POLYDATA
+POINTS 6 float
+1.5 3.5 0.0
+0.5 3.5 0.0
+0.5 3.5 0.0
+0.5 2.5 0.0
+1.5 2.5 0.0
+1.5 2.5 0.0
+
+LINES 1 8
+7 0 1 2 3 4 5 0
