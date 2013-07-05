@@ -36,6 +36,9 @@
 
 #include <list>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
 #include <GL/gl.h>		   // Open Graphics Library (OpenGL) header
 #include <GL/glut.h>	   // The GL Utility Toolkit (GLUT) Header
 
@@ -54,20 +57,20 @@ struct Get_iterator_value_type<T,true>{
 };
 
 template <class Cdt>
-class Cvd_cell : public std::pair<typename Cdt::Polygon,			  // cell
+class Cvd_cell : public std::pair<typename Cdt::Polygon_2,			  // cell
 																	typename Cdt::Vertex_handle> // generator
 {
 	//typedef typename Cvd_cell<Cdt> Cell;
 
 public:
 	Cvd_cell<Cdt>()
-		: std::pair<typename Cdt::Polygon,
+		: std::pair<typename Cdt::Polygon_2,
 	 		  			  typename Cdt::Vertex_handle>()
 	{
 	}
-	Cvd_cell<Cdt>(typename Cdt::Polygon poly,
+	Cvd_cell<Cdt>(typename Cdt::Polygon_2 poly,
 			 typename Cdt::Vertex_handle v)
-			 : std::pair<typename Cdt::Polygon,
+			 : std::pair<typename Cdt::Polygon_2,
 			  					 typename Cdt::Vertex_handle>(poly, v)
 	{
 	}
@@ -85,7 +88,7 @@ public:
 		return (*this).second;
 	}
 
-	typename Cdt::Polygon get_polygon() const
+	typename Cdt::Polygon_2 get_polygon() const
 	{
 		return (*this).first;
 	}
@@ -158,7 +161,7 @@ public:
 #endif
 
   typedef typename Geom_traits::Point_2  Point;
-  typedef CGAL::Polygon_2<Gt, std::vector<Point> >		Polygon;
+  typedef CGAL::Polygon_2<Gt, std::vector<Point> >		Polygon_2;
   typedef typename Ctr::Segment  						Segment;
   typedef typename Geom_traits::FT 						FT;
   typedef typename Ctr::Triangle 						Triangle;
@@ -245,7 +248,7 @@ public:
   // 			       Face_handle start ) const;
 
   // DUAL
-  Polygon dual(Vertex_handle v) const;
+  Polygon_2 dual(Vertex_handle v) const;
 
   int my_random(int min, int max){
   		return (int) (min + rand() % (max - min) );
@@ -416,7 +419,7 @@ public:
 	// incident to vertex v
 	Cvd_cell cell(Vertex_handle v)
 	{
-		Polygon polygon;
+		Polygon_2 polygon;
 
 		CGAL_assertion(!is_infinite(v));
 		Face_circulator face = this->incident_faces(v);
@@ -482,7 +485,7 @@ public:
 				cell_it != m_cvd.end();
 				cell_it++)
 		{
-			Polygon poly = cell_it->first;
+			Polygon_2 poly = cell_it->first;
 			::glBegin(GL_TRIANGLES);
 			rd_r = (int)m_color_table[n%300]; // couleurs pastel
 			rd_g = (int)m_color_table[(n+1)%300];
@@ -1097,7 +1100,7 @@ virtual_insert(const Point& a,
 // DUALITY
 template< class Gt, class Tds, class Itag >
 inline
-typename Constrained_Delaunay_triangulation_2<Gt,Tds,Itag>::Polygon
+typename Constrained_Delaunay_triangulation_2<Gt,Tds,Itag>::Polygon_2
 Constrained_Delaunay_triangulation_2<Gt,Tds,Itag>::
 dual (Vertex_handle v) const
 {
@@ -1106,12 +1109,12 @@ dual (Vertex_handle v) const
 
 	// The Circulator moves ccw.
 	Face_circulator fc = this->incident_faces(v), done(fc);
-	Polygon poly;
+	Polygon_2 poly;
 	do{
 		if(!this->is_infinite(fc)){
 			poly.push_back(this->circumcenter(fc));
 		}else{
-			return Polygon();
+			return Polygon_2();
 		}
 	}while(++fc!=done);
 
