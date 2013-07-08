@@ -1,6 +1,5 @@
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Constrained_Delaunay_triangulation_2.h>
-#include <CGAL/centroid.h>
 
 #include <cassert>
 #include <iostream>
@@ -8,7 +7,6 @@
 #include <string>
 #include <sstream>
 #include <list>
-
 
 #define SSTR( x ) dynamic_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
@@ -94,62 +92,15 @@ void voronoi_cells_to_vtk(Polygon_2 poly, std::string name){
 
 int main(int argc, char **argv)
 {
+  srand(time(NULL));
+  //std::cout<<rand()%100<<std::endl;
   CDT cdt;
-  std::cout << "Inserting a grid of 5x5 constraints " << std::endl;
-  for (int i = 1; i < 6; ++i)
-    cdt.insert_constraint( Point(0,i), Point(6,i));
-  for (int j = 1; j < 6; ++j)
-    cdt.insert_constraint( Point(j,0), Point(j,6));
-
-  assert(cdt.is_valid());
-  int count = 0;
-  for (CDT::Finite_edges_iterator eit = cdt.finite_edges_begin();
-       eit != cdt.finite_edges_end();
-       ++eit)
-    if (cdt.is_constrained(*eit)) ++count;
-  std::cout << "The number of resulting constrained edges is  ";
-  std::cout <<  count << std::endl;
-
-  std::cout << "The number of vertices is  ";
-  std::cout << cdt.number_of_vertices() << std::endl;
-
-  std::cout << "Build the constrained Voronoi diagram" << std::endl;
-  std::cout << "Output CVD to an image" << std::endl;
-  Triangulation_to_vtk(cdt,"./vtk_files/cdt.vtk");
-
-
-  int i=1;
-  for(CDT::Finite_vertices_iterator vit = cdt.finite_vertices_begin();
-      vit != cdt.finite_vertices_end();
-      ++vit)
-  {
-    if (!cdt.cell_is_infinite(vit)){
-      Polygon_2 poly = cdt.dual(vit);
-      std::cout<<CGAL::centroid(poly.vertices_begin(),poly.vertices_end(),CGAL::Dimension_tag<0>())<<std::endl;
-      std::string name = "./vtk_files/voronoi_cell";
-      name.append(SSTR(i));
-      name.append(".vtk");
-      voronoi_cells_to_vtk(poly,name);
-      i++;
-    }
-    
+  for(int i=0;i<100;i++){
+    cdt.insert(Point(rand()%100,rand()%100));
   }
 
-/*
-  cdt.construct_cvd();
-  Cvd my_cvd = cdt.get_cvd();
-  Cvd::iterator cell_it;
-  unsigned int i=1;
-  for(cell_it = my_cvd.begin();cell_it!=my_cvd.end();cell_it++){
-    Polygon_2 poly = cell_it->first;
-    std::string name = "./vtk_files/voronoi_cell";
-    name.append(SSTR(i));
-    name.append(".vtk");
-    voronoi_cells_to_vtk(poly,name);
-    i++;
-  }
-*/
   
 
+  std::cout << cdt.number_of_vertices() << std::endl;
   return 0;
 }
