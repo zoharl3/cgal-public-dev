@@ -250,7 +250,7 @@ public:
   // DUAL
   Polygon_2 dual(Vertex_handle v)
 	{
-		return this->cell(v).get_polygon();
+		return this->construct_cvd_cell(v).get_polygon();
 	}
 
   int my_random(int min, int max){
@@ -278,7 +278,7 @@ public:
 				++v)
 		{
 			if(!this->cell_is_infinite(v))
-				m_cvd.push_back(this->cell(v));
+				m_cvd.push_back(this->construct_cvd_cell(v));
 		}
 	}
 
@@ -424,7 +424,7 @@ public:
 
 	// assemble a cell of the bounded Voronoi diagram
 	// incident to vertex v
-	Cvd_cell cell(Vertex_handle v)
+	Cvd_cell construct_cvd_cell(Vertex_handle v)
 	{
 		Polygon_2 polygon;
 
