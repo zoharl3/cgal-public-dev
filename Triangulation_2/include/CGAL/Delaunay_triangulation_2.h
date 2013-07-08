@@ -74,7 +74,7 @@ public:
                                                      Finite_vertices_iterator;
   typedef typename Triangulation::All_faces_iterator    All_faces_iterator;
 
-  typedef CGAL::Polygon_2<Geom_traits, std::vector<Point> >	Polygon;
+  typedef CGAL::Polygon_2<Geom_traits, std::vector<Point> >	Polygon_2;
  
 #ifndef CGAL_CFG_USING_BASE_MEMBER_BUG_2
   using Triangulation::side_of_oriented_circle;
@@ -139,7 +139,7 @@ public:
   Object dual(const Edge &e) const ;
   Object dual(const Edge_circulator& ec) const;
   Object dual(const Finite_edges_iterator& ei) const;
-  Polygon dual(Vertex_handle v) const;
+  Polygon_2 dual(Vertex_handle v) const;
   
   //INSERTION-REMOVAL
   Vertex_handle insert(const Point  &p, 
@@ -847,7 +847,7 @@ dual(const Finite_edges_iterator& ei) const
 }
 
 template<class Gt, class Tds>
-typename Delaunay_triangulation_2<Gt,Tds>::Polygon
+typename Delaunay_triangulation_2<Gt,Tds>::Polygon_2
 Delaunay_triangulation_2<Gt,Tds>::
 dual (Vertex_handle v) const
 {
@@ -856,12 +856,12 @@ dual (Vertex_handle v) const
 
 	// The Circulator moves ccw.
 	Face_circulator fc = this->incident_faces(v), done(fc);
-	Polygon poly;
+	Polygon_2 poly;
 	do{
 		if(!this->is_infinite(fc)){
 			poly.push_back(this->circumcenter(fc));
 		}else{
-			return Polygon();
+			return Polygon_2();
 		}
 	}while(++fc!=done);
 

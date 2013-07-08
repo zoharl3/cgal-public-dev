@@ -23,8 +23,8 @@ typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag> CDT;
 typedef CDT::Point          Point;
 
 typedef CDT::Finite_faces_iterator    Finite_faces_iterator;
-typedef CDT::Polygon                    Polygon;
 typedef CDT::Cvd                        Cvd;
+typedef CDT::Polygon_2                    Polygon_2;
 
 void Triangulation_to_vtk(CDT cdt,std::string name)
 {
@@ -68,7 +68,8 @@ void Triangulation_to_vtk(CDT cdt,std::string name)
 }
 
 
-void voronoi_cells_to_vtk(Polygon poly, Point p, std::string name){
+
+void voronoi_cells_to_vtk(Polygon_2 poly, std::string name){
   if (poly.size() == 0){
     return;
   }
@@ -121,7 +122,7 @@ int main(int argc, char **argv)
       ++vit)
   {
     if (!cdt.cell_is_infinite(vit)){
-      Polygon poly = cdt.dual(vit);
+      Polygon_2 poly = cdt.dual(vit);
       std::string name = "./vtk_files/voronoi_cell";
       name.append(SSTR(i));
       name.append(".vtk");
@@ -137,11 +138,11 @@ int main(int argc, char **argv)
   Cvd::iterator cell_it;
   unsigned int i=1;
   for(cell_it = my_cvd.begin();cell_it!=my_cvd.end();cell_it++){
-    Polygon poly = cell_it->first;
+    Polygon_2 poly = cell_it->first;
     std::string name = "./vtk_files/voronoi_cell";
     name.append(SSTR(i));
     name.append(".vtk");
-    voronoi_cells_to_vtk(poly,cell_it->second->point(),name);
+    voronoi_cells_to_vtk(poly,name);
     i++;
   }
 
