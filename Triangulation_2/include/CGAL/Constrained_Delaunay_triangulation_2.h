@@ -60,8 +60,6 @@ template <class Cdt>
 class Cvd_cell : public std::pair<typename Cdt::Polygon_2,			  // cell
 																	typename Cdt::Vertex_handle> // generator
 {
-	//typedef typename Cvd_cell<Cdt> Cell;
-
 public:
 	Cvd_cell<Cdt>()
 		: std::pair<typename Cdt::Polygon_2,
@@ -165,8 +163,8 @@ public:
   typedef typename Ctr::Segment  						Segment;
   typedef typename Geom_traits::FT 						FT;
   typedef typename Ctr::Triangle 						Triangle;
-  typedef internal::Cvd_cell<CDt> 						Cvd_cell;
-  typedef typename std::list<Cvd_cell> 					Cvd;
+  typedef internal::Cvd_cell<CDt> 					Cvd_cell;
+  typedef typename std::map<Vertex_handle, Cvd_cell> Cvd;
 
 protected:
 	FT m_bounding_box[4]; // xmin,xmax,ymin,ymax
@@ -250,7 +248,9 @@ public:
   // DUAL
   Polygon_2 dual(Vertex_handle v)
 	{
-		return this->construct_cvd_cell(v).get_polygon();
+    if(m_cvd.find(v) == m_cvd.end())
+		  this->construct_cvd_cell(v);
+    return m_cvd[v].get_polygon();
 	}
 
   int my_random(int min, int max){
@@ -278,7 +278,7 @@ public:
 				++v)
 		{
 			if(!this->cell_is_infinite(v))
-				m_cvd.push_back(this->construct_cvd_cell(v));
+				m_cvd[v] = this->construct_cvd_cell(v);
 		}
 	}
 
