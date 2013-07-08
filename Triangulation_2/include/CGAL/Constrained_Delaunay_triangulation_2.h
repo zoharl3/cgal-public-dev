@@ -248,7 +248,10 @@ public:
   // 			       Face_handle start ) const;
 
   // DUAL
-  Polygon_2 dual(Vertex_handle v) const;
+  Polygon_2 dual(Vertex_handle v)
+	{
+		return this->cell(v).get_polygon();
+	}
 
   int my_random(int min, int max){
   		return (int) (min + rand() % (max - min) );
@@ -1101,29 +1104,7 @@ virtual_insert(const Point& a,
   return insert(a,lt,loc,li);
 }
 
-// DUALITY
-template< class Gt, class Tds, class Itag >
-inline
-typename Constrained_Delaunay_triangulation_2<Gt,Tds,Itag>::Polygon_2
-Constrained_Delaunay_triangulation_2<Gt,Tds,Itag>::
-dual (Vertex_handle v) const
-{
-	CGAL_triangulation_precondition( v != Vertex_handle());
-	CGAL_triangulation_precondition( !this->is_infinite(v));
 
-	// The Circulator moves ccw.
-	Face_circulator fc = this->incident_faces(v), done(fc);
-	Polygon_2 poly;
-	do{
-		if(!this->is_infinite(fc)){
-			poly.push_back(this->circumcenter(fc));
-		}else{
-			return Polygon_2();
-		}
-	}while(++fc!=done);
-
-	return poly;
-}
 
 template < class Gt, class Tds, class Itag >  
 inline 

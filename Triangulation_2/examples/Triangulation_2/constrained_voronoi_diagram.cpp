@@ -115,7 +115,7 @@ int main(int argc, char **argv)
   std::cout << "Output CVD to an image" << std::endl;
   Triangulation_to_vtk(cdt,"./vtk_files/cdt.vtk");
 
-/*
+
   int i=1;
   for(CDT::Finite_vertices_iterator vit = cdt.finite_vertices_begin();
       vit != cdt.finite_vertices_end();
@@ -131,8 +131,8 @@ int main(int argc, char **argv)
     }
     
   }
-*/
 
+/*
   cdt.construct_cvd();
   Cvd my_cvd = cdt.get_cvd();
   Cvd::iterator cell_it;
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
     voronoi_cells_to_vtk(poly,name);
     i++;
   }
-
+*/
   
 
   return 0;
