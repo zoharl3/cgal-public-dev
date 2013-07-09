@@ -27,7 +27,7 @@
 #include <QPainter>
 
 // GraphicsView items and event filters (input classes)
-//#include "DelaunayMeshTriangulation2GraphicsItem.h"
+#include "VoronoiCellGraphicsItem.h"
 #include "TriangulationCircumcircle.h"
 #include <CGAL/Qt/GraphicsViewPolylineInput.h>
 #include <CGAL/Qt/DelaunayMeshTriangulationGraphicsItem.h>
@@ -185,7 +185,7 @@ private:
   std::list<Point_2> seeds;
 
   CGAL::Qt::DelaunayMeshTriangulationGraphicsItem<CDT> * dgi;
-//  CGAL::Qt::DelaunayMeshTriangulation2GraphicsItem<CDT> * dgi2;
+  CGAL::Qt::VoronoiCellGraphicsItem<CDT> * vgi;
 
   CGAL::Qt::GraphicsViewPolylineInput<K> * pi;
   CGAL::Qt::TriangulationCircumcircle<CDT> *tcc;
@@ -273,23 +273,24 @@ MainWindow::MainWindow()
 
   // Add a GraphicItem for the CDT triangulation
   dgi = new CGAL::Qt::DelaunayMeshTriangulationGraphicsItem<CDT>(&cdt);
-//  dgi2 = new CGAL::Qt::DelaunayMeshTriangulation2GraphicsItem<CDT>(&cdt);
   QColor facesColor(::Qt::blue);
   facesColor.setAlpha(150);
   dgi->setFacesInDomainBrush(facesColor);
-  //dgi2->setFacesInDomainBrush(facesColor);
     
   QObject::connect(this, SIGNAL(changed()),
 		   dgi, SLOT(modelChanged()));
-//  QObject::connect(this, SIGNAL(changed()),
-  //     dgi2, SLOT(modelChanged()));
 
   dgi->setVerticesPen(QPen(Qt::red, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-  //dgi2->setVerticesPen(QPen(Qt::red, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
   dgi->setZValue(-1);
-  //dgi2->setZValue(-1);
   scene.addItem(dgi);
-//  scene.addItem(dgi2);
+
+  vgi = new CGAL::Qt::VoronoiCellGraphicsItem<CDT>(&cdt);
+  QObject::connect(this, SIGNAL(changed()),
+       vgi, SLOT(modelChanged()));
+
+  vgi->setEdgesPen(QPen(Qt::blue, 0, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  scene.addItem(vgi);
+  vgi->hide();
 
   // Setup input handlers. They get events before the scene gets them
   // and the input they generate is passed to the triangulation with 
