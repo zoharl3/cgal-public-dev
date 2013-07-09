@@ -79,21 +79,14 @@ VoronoiCellGraphicsItem<DT>::paint(QPainter *painter, const QStyleOptionGraphics
   PainterOstream<typename DT::Geom_traits> pos(painter, rect);
   
   painter->setPen(edgesPen());
-  for(typename DT::Finite_edges_iterator eit = dt->finite_edges_begin();
-      eit != dt->finite_edges_end();
-      eit++){
-    Polygon_2 poly = this->dt->dual(this->dt->finite_vertices_begin());
-    //CGAL::Object o = dt->dual(eit);
-    typename DT::Segment s;
-    typename DT::Geom_traits::Ray_2 r;
-    typename DT::Geom_traits::Line_2 l;
-    //if(CGAL::assign(s,o)){
-      //pos << s;
-    //} else if(CGAL::assign(r,o)) {
-//      pos << r;
-    //}else if(CGAL::assign(l,o)) {
-//      pos << l;
-    //} 
+  for(typename DT::Finite_vertices_iterator vit = dt->finite_vertices_begin();
+      vit != dt->finite_vertices_end();
+      vit++){
+    Polygon_2 poly = this->dt->dual(vit);
+    for(unsigned int i=0; i<poly.size() ; i++){
+      typename DT::Segment s = typename DT::Segment(poly[i],poly[(i+1)%poly.size()]);
+      pos<<s;
+    }
   }
 }
 

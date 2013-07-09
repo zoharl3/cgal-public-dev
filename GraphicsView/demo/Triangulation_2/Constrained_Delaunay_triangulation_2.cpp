@@ -237,7 +237,7 @@ public slots:
 
   void on_actionLoadConstraints_triggered();
 
-  void on_actionVoronoiDiagram_toggled(bool checked);
+  void on_actionShowVoronoi_toggled(bool checked);
 
   void loadFile(QString);
 
@@ -426,10 +426,11 @@ MainWindow::on_actionCircumcenter_toggled(bool checked)
 }
 
 void 
-MainWindow::on_actionVoronoiDiagram_toggled(bool checked){
+MainWindow::on_actionShowVoronoi_toggled(bool checked){
   //dgi2->setVisibleConstraints(checked);
   //dgi2->setVisibleEdges(checked);
   //dgi2->setVisibleFacesInDomain(checked);
+  vgi->setVisible(checked);
   update();
 }
 
