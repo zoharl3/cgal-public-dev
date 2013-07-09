@@ -27,11 +27,11 @@
 #include <QPainter>
 
 // GraphicsView items and event filters (input classes)
-#include "VoronoiCellGraphicsItem.h"
 #include "TriangulationCircumcircle.h"
 #include <CGAL/Qt/GraphicsViewPolylineInput.h>
 #include <CGAL/Qt/DelaunayMeshTriangulationGraphicsItem.h>
 #include <CGAL/Qt/Converter.h>
+#include <CGAL/Qt/ConstrainedVoronoiGraphicsItem.h>
 
 // the two base classes
 #include "ui_Constrained_Delaunay_triangulation_2.h"
