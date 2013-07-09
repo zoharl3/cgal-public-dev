@@ -4,6 +4,7 @@
     <file>icons/constrained_triangulation_show_in_domain.png</file>
     <file>icons/constrained_triangulation_show_constraints.png</file>
     <file>icons/constrained_triangulation.png</file>
+    <file>icons/cdt.png</file>
   </qresource>
   <qresource prefix="/cgal/help" >
     <file alias="about_CGAL.html" >../resources/about_CGAL.html</file>

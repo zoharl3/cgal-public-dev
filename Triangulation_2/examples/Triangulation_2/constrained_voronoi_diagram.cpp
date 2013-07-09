@@ -118,13 +118,17 @@ int main(int argc, char **argv)
   Triangulation_to_vtk(cdt,"./vtk_files/cdt.vtk");
 
 
+  cdt.construct_cvd();
   int i=1;
+
+  std::cout<<"Printing centroids of Polygons"<<std::endl;
   for(CDT::Finite_vertices_iterator vit = cdt.finite_vertices_begin();
       vit != cdt.finite_vertices_end();
       ++vit)
   {
     if (!cdt.cell_is_infinite(vit)){
       Polygon_2 poly = cdt.dual(vit);
+      
       std::cout<<CGAL::centroid(poly.vertices_begin(),poly.vertices_end(),CGAL::Dimension_tag<0>())<<std::endl;
       std::string name = "./vtk_files/voronoi_cell";
       name.append(SSTR(i));

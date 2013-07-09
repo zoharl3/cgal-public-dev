@@ -249,7 +249,7 @@ public:
   Polygon_2 dual(Vertex_handle v)
 	{
     if(m_cvd.find(v) == m_cvd.end())
-		  this->construct_cvd_cell(v);
+		  m_cvd[v] = this->construct_cvd_cell(v);
     return m_cvd[v].get_polygon();
 	}
 

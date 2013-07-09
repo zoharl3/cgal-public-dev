@@ -24,8 +24,10 @@
 #include <QInputDialog>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QPainter>
 
 // GraphicsView items and event filters (input classes)
+//#include "DelaunayMeshTriangulation2GraphicsItem.h"
 #include "TriangulationCircumcircle.h"
 #include <CGAL/Qt/GraphicsViewPolylineInput.h>
 #include <CGAL/Qt/DelaunayMeshTriangulationGraphicsItem.h>
@@ -183,6 +185,7 @@ private:
   std::list<Point_2> seeds;
 
   CGAL::Qt::DelaunayMeshTriangulationGraphicsItem<CDT> * dgi;
+//  CGAL::Qt::DelaunayMeshTriangulation2GraphicsItem<CDT> * dgi2;
 
   CGAL::Qt::GraphicsViewPolylineInput<K> * pi;
   CGAL::Qt::TriangulationCircumcircle<CDT> *tcc;
@@ -234,6 +237,8 @@ public slots:
 
   void on_actionLoadConstraints_triggered();
 
+  void on_actionVoronoiDiagram_toggled(bool checked);
+
   void loadFile(QString);
 
   void loadPolygonConstraints(QString);
@@ -268,16 +273,23 @@ MainWindow::MainWindow()
 
   // Add a GraphicItem for the CDT triangulation
   dgi = new CGAL::Qt::DelaunayMeshTriangulationGraphicsItem<CDT>(&cdt);
+//  dgi2 = new CGAL::Qt::DelaunayMeshTriangulation2GraphicsItem<CDT>(&cdt);
   QColor facesColor(::Qt::blue);
   facesColor.setAlpha(150);
   dgi->setFacesInDomainBrush(facesColor);
+  //dgi2->setFacesInDomainBrush(facesColor);
     
   QObject::connect(this, SIGNAL(changed()),
 		   dgi, SLOT(modelChanged()));
+//  QObject::connect(this, SIGNAL(changed()),
+  //     dgi2, SLOT(modelChanged()));
 
   dgi->setVerticesPen(QPen(Qt::red, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+  //dgi2->setVerticesPen(QPen(Qt::red, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
   dgi->setZValue(-1);
+  //dgi2->setZValue(-1);
   scene.addItem(dgi);
+//  scene.addItem(dgi2);
 
   // Setup input handlers. They get events before the scene gets them
   // and the input they generate is passed to the triangulation with 
@@ -307,6 +319,7 @@ MainWindow::MainWindow()
   this->actionShow_faces_in_domain->setChecked(true);
   this->actionShow_constrained_edges->setChecked(true);
 
+  this->actionVoronoiDiagram->setChecked(false);
   //
   // Setup the scene and the view
   //
@@ -410,6 +423,14 @@ MainWindow::on_actionCircumcenter_toggled(bool checked)
     scene.removeEventFilter(tcc);
     tcc->hide();
   }
+}
+
+void 
+MainWindow::on_actionVoronoiDiagram_toggled(bool checked){
+  //dgi2->setVisibleConstraints(checked);
+  //dgi2->setVisibleEdges(checked);
+  //dgi2->setVisibleFacesInDomain(checked);
+  update();
 }
 
 
