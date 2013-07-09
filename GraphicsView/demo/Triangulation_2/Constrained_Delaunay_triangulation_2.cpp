@@ -319,8 +319,7 @@ MainWindow::MainWindow()
   this->actionShowDelaunay->setChecked(true);
   this->actionShow_faces_in_domain->setChecked(true);
   this->actionShow_constrained_edges->setChecked(true);
-
-  this->actionVoronoiDiagram->setChecked(false);
+  this->actionShowVoronoi->setChecked(false);
   //
   // Setup the scene and the view
   //
