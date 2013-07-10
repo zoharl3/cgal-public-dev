@@ -185,7 +185,7 @@ private:
   std::list<Point_2> seeds;
 
   CGAL::Qt::DelaunayMeshTriangulationGraphicsItem<CDT> * dgi;
-  CGAL::Qt::VoronoiCellGraphicsItem<CDT> * vgi;
+  CGAL::Qt::ConstrainedVoronoiGraphicsItem<CDT> * vgi;
 
   CGAL::Qt::GraphicsViewPolylineInput<K> * pi;
   CGAL::Qt::TriangulationCircumcircle<CDT> *tcc;
@@ -284,7 +284,7 @@ MainWindow::MainWindow()
   dgi->setZValue(-1);
   scene.addItem(dgi);
 
-  vgi = new CGAL::Qt::VoronoiCellGraphicsItem<CDT>(&cdt);
+  vgi = new CGAL::Qt::ConstrainedVoronoiGraphicsItem<CDT>(&cdt);
   QObject::connect(this, SIGNAL(changed()),
        vgi, SLOT(modelChanged()));
 

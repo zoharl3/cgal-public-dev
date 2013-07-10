@@ -1,5 +1,5 @@
-#ifndef CGAL_QT_VORONOI_CELL_GRAPHICS_ITEM_H
-#define CGAL_QT_VORONOI_CELL_GRAPHICS_ITEM_H
+#ifndef CGAL_QT_CONSTRAINED_VORONOI_GRAPHICS_ITEM_H
+#define CGAL_QT_CONSTRAINED_VORONOI_GRAPHICS_ITEM_H
 
 
 
@@ -22,11 +22,11 @@ namespace CGAL {
 namespace Qt {
 
 template <typename DT>
-class VoronoiCellGraphicsItem : public GraphicsItem
+class ConstrainedVoronoiGraphicsItem : public GraphicsItem
 {
   typedef CGAL::Polygon_2<typename DT::Geom_traits, std::vector<typename DT::Point> >    Polygon_2;
 public:
-  VoronoiCellGraphicsItem(DT  * dt_);
+  ConstrainedVoronoiGraphicsItem(DT  * dt_);
 
 
   QRectF 
@@ -56,7 +56,7 @@ private:
 
 
 template <typename DT>
-VoronoiCellGraphicsItem<DT>::VoronoiCellGraphicsItem(DT * dt_)
+ConstrainedVoronoiGraphicsItem<DT>::ConstrainedVoronoiGraphicsItem(DT * dt_)
   :  dt(dt_)
 {
   setZValue(3);
@@ -64,7 +64,7 @@ VoronoiCellGraphicsItem<DT>::VoronoiCellGraphicsItem(DT * dt_)
 
 template <typename DT>
 QRectF 
-VoronoiCellGraphicsItem<DT>::boundingRect() const
+ConstrainedVoronoiGraphicsItem<DT>::boundingRect() const
 {
   QRectF rect = CGAL::Qt::viewportsBbox(scene());
   return rect;
@@ -73,7 +73,7 @@ VoronoiCellGraphicsItem<DT>::boundingRect() const
 
 template <typename DT>
 void 
-VoronoiCellGraphicsItem<DT>::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget * /*w*/)
+ConstrainedVoronoiGraphicsItem<DT>::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget * /*w*/)
 {
   QRectF rect = option->exposedRect;
   PainterOstream<typename DT::Geom_traits> pos(painter, rect);
@@ -93,7 +93,7 @@ VoronoiCellGraphicsItem<DT>::paint(QPainter *painter, const QStyleOptionGraphics
 
 template <typename T>
 void 
-VoronoiCellGraphicsItem<T>::modelChanged()
+ConstrainedVoronoiGraphicsItem<T>::modelChanged()
 {
   update();
 }
@@ -101,4 +101,4 @@ VoronoiCellGraphicsItem<T>::modelChanged()
 } // namespace Qt
 } // namespace CGAL
 
-#endif // CGAL_QT_VORONOI_CELL_GRAPHICS_ITEM_H
+#endif // CGAL_QT_CONSTRAINED_VORONOI_GRAPHICS_ITEM_H
