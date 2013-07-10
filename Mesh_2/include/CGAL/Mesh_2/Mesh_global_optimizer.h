@@ -137,7 +137,7 @@ private:
   typedef std::list<FT> FT_list;
   FT_list big_moves_;
   
-#ifdef CGAL_MESH_3_OPTIMIZER_VERBOSE
+#ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
   mutable FT sum_moves_;
 #endif
 
@@ -278,8 +278,8 @@ update_big_moves(const FT& new_sq_move)
 }
 
   
-} // end namespace Mesh_3
+} // end namespace Mesh_2
 
 } //namespace CGAL
 
-#endif // CGAL_MESH_3_MESH_GLOBAL_OPTIMIZER_H
+#endif // CGAL_MESH_2_MESH_GLOBAL_OPTIMIZER_H
