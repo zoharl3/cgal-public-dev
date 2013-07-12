@@ -16,7 +16,7 @@
 // $Id$
 //
 //
-// Author(s)     : Stephane Tayeb
+// Author(s)     : Raul Gallegos, Jane Tournois
 //
 //******************************************************************************
 // File Description : 
@@ -43,59 +43,48 @@ namespace CGAL {
 namespace Mesh_2 {
   
   
-template <typename C2T2,
-          typename MeshDomain,
-          typename MoveFunction,
-          typename Visitor_ = Null_global_optimizer_visitor<C3T3> >
+template <typename CDT,
+          typename MoveFunction>
 class Mesh_global_optimizer
 {  
   // Types
-  typedef typename C2T2::Triangulation  Tr;
+  typedef typename CDT  Tr;
   typedef typename Tr::Geom_traits      Gt;
   
   typedef typename Tr::Point            Point_2;
-  typedef typename Tr::Face_handle      Face_handle;
+//  typedef typename Tr::Face_handle      Face_handle;
   typedef typename Tr::Vertex_handle    Vertex_handle;
-  typedef typename Tr::Edge             Edge;
-  typedef typename Tr::Vertex           Vertex;
+//  typedef typename Tr::Edge             Edge;
+//  typedef typename Tr::Vertex           Vertex;
   
   typedef typename Gt::FT               FT;
   typedef typename Gt::Vector_2         Vector_2;
   
-  typedef typename std::vector<Face_handle>                 Face_vector;
-  typedef typename std::vector<Vertex_handle>               Vertex_vector;
   typedef typename std::set<Vertex_handle>                  Vertex_set;
   typedef typename std::pair<Vertex_handle,Point_2>         Move;
 
   typedef std::vector<Move >   Moves_vector;
   
-  typedef typename MoveFunction::Sizing_field Sizing_field;
-  
-
-  
-  // Visitor class
-  // Should define:
-  //  - after_compute_moves()
-  //  - after_move_points()
-  //  - after_rebuild_restricted_delaunay()
-  //  - end_of_iteration(int iteration_number)
-  typedef Visitor_ Visitor;
-    
+//  typedef typename MoveFunction::Sizing_field Sizing_field;
+      
 public:
   /**
    * Constructor
    */
-  Mesh_global_optimizer(C2T2& c2t2,
-                        const MeshDomain& domain,
-                        const FT& freeze_ratio,
-                        const FT& convergence_ratio,
+  Mesh_global_optimizer(CDT& cdt,
                         const MoveFunction move_function = MoveFunction());
   
-  /// Time accessors
-  void set_time_limit(double time) { time_limit_ = time; }
-  double time_limit() const { return time_limit_; }
-  
+  /**
+   * Launch optimization process
+   *
+   * @param nb_interations maximum number of iterations
+   */
+  void operator()(int nb_iterations);
 
+  /// Time accessors
+  //void set_time_limit(double time) { time_limit_ = time; }
+  //double time_limit() const { return time_limit_; }
+  
 private:
   /**
    * Returns moves for vertices of set \c moving_vertices
@@ -105,10 +94,6 @@ private:
    * Returns the move for vertex \c v
    */
   Vector_2 compute_move(const Vertex_handle& v);
-  /**
-   * Returns the minimum cicumradius length of faces incident to \c v
-   */
-  FT min_circumradius_sq_length(const Vertex_handle& v) const;
   /**
    * update big_moves_ vector with new_sq_move value
    */
@@ -124,13 +109,11 @@ private:
   // -----------------------------------
   // Private data
   // -----------------------------------
-  C2T2& c2t2_;
-  Tr& tr_;
-  const MeshDomain& domain_;
-  FT sq_freeze_ratio_;
-  FT convergence_ratio_;
+  CDT& cdt_;
+//  FT sq_freeze_ratio_;
+//  FT convergence_ratio_;
   MoveFunction move_function_;
-  Sizing_field sizing_field_;
+//  Sizing_field sizing_field_;
   double time_limit_;
   CGAL::Timer running_time_;
   
@@ -140,14 +123,49 @@ private:
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
   mutable FT sum_moves_;
 #endif
-
-
-
+  
 };
 
-template <typename C2T2, typename Md, typename Mf, typename V_>
-typename Mesh_global_optimizer<C2T2,Md,Mf,V_>::Moves_vector
-Mesh_global_optimizer<C2T2,Md,Mf,V_>::
+template <typename CDT, typename MoveFunction>
+void
+Mesh_global_optimizer<CDT, MoveFunction>::
+operator()(int nb_iterations)
+{
+//  Moving_vertices_set moving_vertices;
+//  collect_all_vertices(moving_vertices);
+
+//  std::size_t initial_vertices_nb = moving_vertices.size();
+
+  // Initialize big moves (stores the largest moves)
+  //big_moves_.clear();
+  //big_moves_size_ = 
+  //  (std::max)(std::size_t(1), std::size_t(moving_vertices.size()/500));
+  
+  std::size_t nb_vertices_moved = -1;
+  bool convergence_stop = false;
+
+  // Iterate
+  int i = -1;
+  while ( ++i < nb_iterations)// && ! is_time_limit_reached() )
+  {
+    // Compute move for each vertex
+    Moves_vector moves = compute_moves(moving_vertices);
+
+    // Stop if time_limit is reached
+//    if ( is_time_limit_reached() )
+//      break;
+    
+    // Update mesh with those moves
+     // do : move_point(vertex, newpoint) for each pair    
+    //update_mesh(moves, moving_vertices); 
+  }  
+//  running_time_.stop();
+  
+}
+
+template <typename CDT, typename MoveFunction>
+typename Mesh_global_optimizer<CDT, MoveFunction>::Moves_vector
+Mesh_global_optimizer<CDT, MoveFunction>::
 compute_moves(const Vertex_set& moving_vertices)
 {
   typename Gt::Construct_translated_point_2 translate =
@@ -180,9 +198,9 @@ compute_moves(const Vertex_set& moving_vertices)
   return moves;
 }
 
-template <typename C2T2, typename Md, typename Mf, typename V_>
-typename Mesh_global_optimizer<C2T2,Md,Mf,V_>::Vector_2
-Mesh_global_optimizer<C2T2,Md,Mf,V_>::
+template <typename CDT, typename MoveFunction>
+typename Mesh_global_optimizer<CDT, MoveFunction>::Vector_2
+Mesh_global_optimizer<CDT, MoveFunction>::
 compute_move(const Vertex_handle& v)
 {    
   typename Gt::Compute_squared_length_2 sq_length =
@@ -224,42 +242,9 @@ compute_move(const Vertex_handle& v)
   return move;
 }
 
-template <typename C2T2, typename Md, typename Mf, typename V_>
-typename Mesh_global_optimizer<C2T2,Md,Mf,V_>::FT
-Mesh_global_optimizer<C2T2,Md,Mf,V_>::
-min_circumradius_sq_length(const Vertex_handle& v) const
-{
-  Face_vector incident_faces;
-  incident_faces.reserve(64);
-  tr_.incident_faces(v, std::back_inserter(incident_faces));
-  
-  // Get first face sq_circumradius_length 
-  typename Face_vector::iterator cit = incident_faces.begin();
-  //while ( incident_faces.end() != cit && !c2t2_.is_in_complex(*cit) ) { ++cit; }
-  while ( incident_faces.end() != cits ) { ++cit; }
-  
-  // if vertex is isolated ...
-  if ( incident_faces.end() == cit )
-    return FT(0);
-  
-  // Initialize min
-  FT min_sq_len = sq_circumradius_length(*cit++,v);
-  
-  // Find the minimum value
-  for ( ; cit != incident_faces.end() ; ++cit )
-  {
-    //if ( !c2t2_.is_in_complex(*cit) )
-      //continue;
-    
-    min_sq_len = (std::min)(min_sq_len,sq_circumradius_length(*cit,v));
-  }
-  
-  return min_sq_len;
-}
-
-template <typename C2T2, typename Md, typename Mf, typename V_>
+template <typename CDT, typename MoveFunction>
 void
-Mesh_global_optimizer<C2T2,Md,Mf,V_>::
+Mesh_global_optimizer<CDT, MoveFunction>::
 update_big_moves(const FT& new_sq_move)
 {  
   namespace bl = boost::lambda;

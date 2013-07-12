@@ -24,6 +24,8 @@
 #include <CGAL/Mesh_2/Refine_edges_with_clusters.h>
 #include <CGAL/Mesh_2/Refine_edges_visitor.h>
 #include <CGAL/Mesh_2/Refine_faces.h>
+#include <CGAL/lloyd_optimize_mesh_2.h>
+#include <CGAL/odt_optimize_mesh_2.h>
 
 namespace CGAL {
 
@@ -272,6 +274,21 @@ public:
   bool try_one_step_refine_mesh()
   {
     return faces_level.one_step(visitor);
+  }
+
+  /** \name OPTIMIZATION FUNCTIONS */
+  void lloyd(const int nb_iterations = 10) const
+  {
+#ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
+    std::cout << "Running Lloyd iterations...";
+#endif
+  }
+
+  void odt(const int nb_iterations = 10) const
+  {
+#ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
+    std::cout << "Running ODT iterations...";
+#endif
   }
 
   /** \name ACCESS FUNCTIONS */
