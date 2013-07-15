@@ -49,7 +49,7 @@ class Odt_move
         new_y += psit->y();
       }
 
-      return Vector_2(v->point(),Point_2(new_x,new_y));
+      return Vector_2(v->point(),Point_2(new_x/pset.size(),new_y/pset.size()));
     }
     return CGAL::NULL_VECTOR;
   }
