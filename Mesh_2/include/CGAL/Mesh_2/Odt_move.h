@@ -7,6 +7,7 @@
 #define CGAL_MESH_2_ODT_MOVE_H
 
 #include <string>
+#include <set>
 
 namespace CGAL {
 
@@ -15,17 +16,41 @@ namespace Mesh_2 {
 template <typename CDT>
 class Odt_move
 {
-  typedef typename CDT::Vertex_handle Vertex_handle;
-  typedef typename CDT::Geom_traits::Vector_3 Vector_3;
+  typedef typename CDT::Vertex_handle           Vertex_handle;
+  typedef typename CDT::Geom_traits::Vector_2   Vector_2;
+  typedef typename CDT::Polygon_2               Polygon_2;
+  typedef typename CDT::Point_2                 Point_2;
+  typedef std::set<Point_2>                     point_set;
   
   /**
-   * @brief Return move to apply on \c v according to Lloyd optimization 
+   * @brief Return move to apply on \c v according to Odt optimization 
    * function
    */
-  Vector_3 operator()(const Vertex_handle& v,
+  Vector_2 operator()(const Vertex_handle& v,
                       const CDT& cdt) const
   {
-    //todo
+    //to review
+    // Calculate the average of \c circumcenters incident to current vertex.
+    Polygon_2 poly = dual(v);
+    unsigned int poly_size = poly.size();
+    if(poly_size==0)
+      return Vector_2(v->point(),v->point());
+    else{
+
+      point_set pset;
+      double new_x=0;
+      double new_y=0;
+
+      for(typename Polygon_2::iterator pit=poly.vertices_begin(); pit!=poly.vertices_end(); pit++){
+        pset.insert();
+      }
+      for(typename point_set::iterator psit=pset.begin(); psit=pset.end(); psit++){
+        new_x += psit->x();
+        new_y += psit->y();
+      }
+
+      return Vector_2(v->point(),Point_2(new_x,new_y));
+    }
     return CGAL::NULL_VECTOR;
   }
   

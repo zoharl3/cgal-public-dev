@@ -158,13 +158,13 @@ public:
   using Ctr::push_back;
 #endif
 
-  typedef typename Geom_traits::Point_2  Point;
+  typedef typename Geom_traits::Point_2  				Point;
   typedef CGAL::Polygon_2<Gt, std::vector<Point> >		Polygon_2;
   typedef typename Ctr::Segment  						Segment;
   typedef typename Geom_traits::FT 						FT;
   typedef typename Ctr::Triangle 						Triangle;
-  typedef internal::Cvd_cell<CDt> 					Cvd_cell;
-  typedef typename std::map<Vertex_handle, Cvd_cell> Cvd;
+  typedef internal::Cvd_cell<CDt> 						Cvd_cell;
+  typedef typename std::map<Vertex_handle, Cvd_cell> 	Cvd;
 
 protected:
 	FT m_bounding_box[4]; // xmin,xmax,ymin,ymax
