@@ -12,7 +12,7 @@ namespace CGAL
   odt_optimize_mesh_2(CDT& cdt,
                       const std::size_t& max_iteration_number)
 {
-  typedef typename Mesh_2::Odt_move<C3T3>    Move;
+  typedef typename Mesh_2::Odt_move<CDT>    Move;
   typedef typename Mesh_2::Mesh_global_optimizer<CDT,Move> Odt_optimizer;
   
   // Create optimizer

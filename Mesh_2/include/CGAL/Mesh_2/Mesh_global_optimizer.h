@@ -48,7 +48,7 @@ template <typename CDT,
 class Mesh_global_optimizer
 {  
   // Types
-  typedef typename CDT  Tr;
+  typedef CDT  Tr;
   typedef typename Tr::Geom_traits      Gt;
   
   typedef typename Tr::Point            Point_2;
@@ -101,7 +101,7 @@ private:
 
   bool is_time_limit_reached() const
   {
-    return ( (time_limit() > 0) && (running_time_.time() > time_limit()) );      
+    return ( (this->time_limit() > 0) && (running_time_.time() > this->time_limit()) );
   }
 
 
@@ -131,8 +131,8 @@ void
 Mesh_global_optimizer<CDT, MoveFunction>::
 operator()(int nb_iterations)
 {
-//  Moving_vertices_set moving_vertices;
-//  collect_all_vertices(moving_vertices);
+  Vertex_set moving_vertices;
+  //collect_all_vertices(moving_vertices);
 
 //  std::size_t initial_vertices_nb = moving_vertices.size();
 
@@ -213,16 +213,17 @@ compute_move(const Vertex_handle& v)
     Gt().construct_translated_point_2_object();
   
   // Get move from move function
-  Vector_2 move = move_function_(v, c2t2_, sizing_field_);
+  //Vector_2 move = move_function_(v, c2t2_, sizing_field_);
+    Vector_2 move = move_function_(v, this->cdt_);
   
   // Project surface vertex
-  if ( c2t2_.in_dimension(v) == 2 )
+  /*if ( c2t2_.in_dimension(v) == 2 )
   {
     Point_2 new_position = translate(v->point(),move);
 
     //TODO: NEED TO DEFINE WHAT THIS MOVE DOES and how to get the vector_2.
     //move = vector(v->point(), helper_.project_on_surface(new_position,v));
-  }
+  }*/
   
   FT local_sq_size = min_circumradius_sq_length(v);
   if ( FT(0) == local_sq_size )
@@ -231,10 +232,10 @@ compute_move(const Vertex_handle& v)
   FT local_move_sq_length = sq_length(move) / local_sq_size;
   
   // Move point only if displacement is big enough w.r.t local size
-  if ( local_move_sq_length < sq_freeze_ratio_ )
+  /*if ( local_move_sq_length < sq_freeze_ratio_ )
   {
     return CGAL::NULL_VECTOR;
-  }
+  }*/
   
   // Update big moves
   update_big_moves(local_move_sq_length);
