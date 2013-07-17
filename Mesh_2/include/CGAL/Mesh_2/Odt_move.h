@@ -57,6 +57,13 @@ class Odt_move
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
   static std::string name() { return std::string("ODT"); }
 #endif
+
+private:
+  Vector_2 lloyd_move_inside_domain(const Vertex_handle& v,
+                                    const CDT& cdt) const
+  {
+    Vector_2 move = CGAL::NULL_VECTOR;
+  }
   
 };
 

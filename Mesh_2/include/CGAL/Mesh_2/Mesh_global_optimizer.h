@@ -48,22 +48,22 @@ template <typename CDT,
 class Mesh_global_optimizer
 {  
   // Types
-  typedef CDT  Tr;
-  typedef typename Tr::Geom_traits      Gt;
+  typedef CDT                                              Tr;
+  typedef typename Tr::Geom_traits                         Gt;
   
-  typedef typename Tr::Point            Point_2;
+  typedef typename Tr::Point                               Point_2;
 //  typedef typename Tr::Face_handle      Face_handle;
-  typedef typename Tr::Vertex_handle    Vertex_handle;
+  typedef typename Tr::Vertex_handle                       Vertex_handle;
 //  typedef typename Tr::Edge             Edge;
 //  typedef typename Tr::Vertex           Vertex;
   
-  typedef typename Gt::FT               FT;
-  typedef typename Gt::Vector_2         Vector_2;
+  typedef typename Gt::FT                                  FT;
+  typedef typename Gt::Vector_2                            Vector_2;
   
-  typedef typename std::set<Vertex_handle>                  Vertex_set;
-  typedef typename std::pair<Vertex_handle,Point_2>         Move;
+  typedef typename std::set<Vertex_handle>                 Vertex_set;
+  typedef typename std::pair<Vertex_handle,Point_2>        Move;
 
-  typedef std::vector<Move >   Moves_vector;
+  typedef std::vector<Move >                               Moves_vector;
   
 //  typedef typename MoveFunction::Sizing_field Sizing_field;
       
@@ -99,6 +99,13 @@ private:
    */
   void update_big_moves(const FT& new_sq_move);
 
+  /**
+   * Updates mesh using moves of \c moves vector. Updates moving_vertices with
+   * the new set of moving vertices after the move.
+   */
+  void update_mesh(const Moves_vector& moves,
+                   Vertex_set& moving_vertices);
+
   bool is_time_limit_reached() const
   {
     return ( (this->time_limit() > 0) && (running_time_.time() > this->time_limit()) );
@@ -132,17 +139,22 @@ Mesh_global_optimizer<CDT, MoveFunction>::
 operator()(int nb_iterations)
 {
   Vertex_set moving_vertices;
+
+  for ( typename CDT::Finite_vertices_iterator vit = cdt_.finite_vertices_begin();
+        vit != cdt_.finite_vertices_end();
+        ++vit)
+  {
+    moving_vertices.insert(vit);
+  }
   //collect_all_vertices(moving_vertices);
 
 //  std::size_t initial_vertices_nb = moving_vertices.size();
 
   // Initialize big moves (stores the largest moves)
-  //big_moves_.clear();
-  //big_moves_size_ = 
-  //  (std::max)(std::size_t(1), std::size_t(moving_vertices.size()/500));
-  
-  std::size_t nb_vertices_moved = -1;
-  bool convergence_stop = false;
+  big_moves_.clear();
+  std::size_t big_moves_size_ = 
+    (std::max)(std::size_t(1), std::size_t(moving_vertices.size()/500));
+  big_moves_.resize(big_moves_size_,FT(0));
 
   // Iterate
   int i = -1;
@@ -157,7 +169,7 @@ operator()(int nb_iterations)
     
     // Update mesh with those moves
      // do : move_point(vertex, newpoint) for each pair    
-    //update_mesh(moves, moving_vertices); 
+    update_mesh(moves, moving_vertices); 
   }  
 //  running_time_.stop();
   
@@ -262,6 +274,28 @@ update_big_moves(const FT& new_sq_move)
     big_moves_.insert(pos, new_sq_move);
   }
 }
+
+template <typename CDT, typename MoveFunction>
+void
+Mesh_global_optimizer<CDT, MoveFunction>::
+update_mesh(const Moves_vector& moves,
+            Vertex_set& moving_vertices)
+{
+  //std::set<Face_handle> outdated_faces;
+  for( typename Moves_vector::const_iterator it = moves.begin() ;
+        it != moves.end() ;
+        ++it)
+  {
+    const Vertex_handle& v = it->first;
+    const Point_2& new_position = it->second;
+
+    // How to treat the sizing field?
+    //move_point(v,new_position,outdated_faces);
+    cdt_.move(v,new_position);
+  }
+  moving_vertices.clear();
+    // Rebuild Delaunay?
+} 
 
   
 } // end namespace Mesh_2
