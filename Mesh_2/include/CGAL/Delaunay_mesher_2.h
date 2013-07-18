@@ -277,17 +277,19 @@ public:
   }
 
   /** \name OPTIMIZATION FUNCTIONS */
-  void lloyd(const int nb_iterations = 10) const
+  void lloyd(int nb_iterations = 10) const
   {
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
-    std::cout << "Running Lloyd iterations...";
+    std::cout << "Running Lloyd iterations..."<<std::endl;
+    CGAL::lloyd_optimize_mesh_2<Triangulation>(tr,nb_iterations);
 #endif
   }
 
-  void odt(const int nb_iterations = 10) const
+  void odt(int nb_iterations = 10) const
   {
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
-    std::cout << "Running ODT iterations...";
+    std::cout << "Running ODT iterations..."<<std::endl;
+    CGAL::odt_optimize_mesh_2<Triangulation>(tr,nb_iterations);
 #endif
   }
 

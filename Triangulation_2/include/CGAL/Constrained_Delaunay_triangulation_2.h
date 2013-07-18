@@ -246,7 +246,7 @@ public:
   // 			       Face_handle start ) const;
 
   // DUAL
-  Polygon_2 dual(Vertex_handle v)
+  Polygon_2 dual(const Vertex_handle& v)
 	{
     if(m_cvd.find(v) == m_cvd.end())
     	if(!this->cell_is_infinite(v))
@@ -284,7 +284,7 @@ public:
 	}
 
   //returns true IFF generators's cell is finite
-	bool cell_is_infinite(const Vertex_handle generator)
+	bool cell_is_infinite(const Vertex_handle& generator) const
 	{
 		Face_circulator face = this->incident_faces(generator);
 		Face_circulator begin = face;

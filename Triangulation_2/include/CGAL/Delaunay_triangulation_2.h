@@ -139,7 +139,7 @@ public:
   Object dual(const Edge &e) const ;
   Object dual(const Edge_circulator& ec) const;
   Object dual(const Finite_edges_iterator& ei) const;
-  Polygon_2 dual(Vertex_handle v) const;
+  Polygon_2 dual(const Vertex_handle& v);
   
   //INSERTION-REMOVAL
   Vertex_handle insert(const Point  &p, 
@@ -849,7 +849,7 @@ dual(const Finite_edges_iterator& ei) const
 template<class Gt, class Tds>
 typename Delaunay_triangulation_2<Gt,Tds>::Polygon_2
 Delaunay_triangulation_2<Gt,Tds>::
-dual (Vertex_handle v) const
+dual (const Vertex_handle& v)
 {
 	CGAL_triangulation_precondition( v != Vertex_handle());
 	CGAL_triangulation_precondition( !this->is_infinite(v));

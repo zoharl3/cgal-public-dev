@@ -16,35 +16,37 @@ namespace Mesh_2 {
 template <typename CDT>
 class Odt_move
 {
+
   typedef typename CDT::Vertex_handle           Vertex_handle;
   typedef typename CDT::Geom_traits::Vector_2   Vector_2;
   typedef typename CDT::Polygon_2               Polygon_2;
-  typedef typename CDT::Point_2                 Point_2;
-  typedef std::set<Point_2>                     point_set;
+  typedef typename CDT::Point                   Point_2;
+  typedef std::set<Point_2>                     Point_set;
   
+public:
   /**
    * @brief Return move to apply on \c v according to Odt optimization 
    * function
    */
   Vector_2 operator()(const Vertex_handle& v,
-                      const CDT& cdt) const
+                      CDT& cdt) const
   {
     //to review
     // Calculate the average of \c circumcenters incident to current vertex.
-    Polygon_2 poly = dual(v);
+    Polygon_2 poly = cdt.dual(v);
     unsigned int poly_size = poly.size();
     if(poly_size==0)
       return Vector_2(v->point(),v->point());
     else{
 
-      point_set pset;
-      double new_x=0;
-      double new_y=0;
+      Point_set pset;
+      double new_x=0.0;
+      double new_y=0.0;
 
       for(typename Polygon_2::iterator pit=poly.vertices_begin(); pit!=poly.vertices_end(); pit++){
-        pset.insert();
+        pset.insert(*pit);
       }
-      for(typename point_set::iterator psit=pset.begin(); psit=pset.end(); psit++){
+      for(typename Point_set::iterator psit=pset.begin(); psit!=pset.end(); psit++){
         new_x += psit->x();
         new_y += psit->y();
       }

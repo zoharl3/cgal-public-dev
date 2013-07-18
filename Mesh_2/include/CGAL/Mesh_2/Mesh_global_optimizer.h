@@ -72,7 +72,7 @@ public:
    * Constructor
    */
   Mesh_global_optimizer(CDT& cdt,
-                        const MoveFunction move_function = MoveFunction());
+                        const MoveFunction);
   
   /**
    * Launch optimization process
@@ -106,10 +106,10 @@ private:
   void update_mesh(const Moves_vector& moves,
                    Vertex_set& moving_vertices);
 
-  bool is_time_limit_reached() const
+  /*bool is_time_limit_reached() const
   {
     return ( (this->time_limit() > 0) && (running_time_.time() > this->time_limit()) );
-  }
+  }*/
 
 
 private:
@@ -132,6 +132,14 @@ private:
 #endif
   
 };
+template <typename CDT, typename MoveFunction>
+Mesh_global_optimizer<CDT, MoveFunction>::
+Mesh_global_optimizer(CDT& cdt,
+                        const MoveFunction move_function = MoveFunction())
+: cdt_(cdt)
+, move_function_(move_function)
+{
+}
 
 template <typename CDT, typename MoveFunction>
 void
@@ -203,8 +211,8 @@ compute_moves(const Vertex_set& moving_vertices)
     }
     
     // Stop if time_limit_ is reached
-    if ( is_time_limit_reached() )
-      break;
+    /*if ( is_time_limit_reached() )
+      break;*/
   }   
   
   return moves;
@@ -218,8 +226,8 @@ compute_move(const Vertex_handle& v)
   typename Gt::Compute_squared_length_2 sq_length =
     Gt().compute_squared_length_2_object();
   
-  typename Gt::Construct_vector_2 vector =
-    Gt().construct_vector_2_object();
+  //typename Gt::Construct_vector_2 vector =
+    //Gt().construct_vector_2_object();
   
   typename Gt::Construct_translated_point_2 translate =
     Gt().construct_translated_point_2_object();
@@ -237,11 +245,11 @@ compute_move(const Vertex_handle& v)
     //move = vector(v->point(), helper_.project_on_surface(new_position,v));
   }*/
   
-  FT local_sq_size = min_circumradius_sq_length(v);
+/*  FT local_sq_size = min_circumradius_sq_length(v);
   if ( FT(0) == local_sq_size )
     return CGAL::NULL_VECTOR;
-  
-  FT local_move_sq_length = sq_length(move) / local_sq_size;
+  */
+  //FT local_move_sq_length = sq_length(move) / local_sq_size;
   
   // Move point only if displacement is big enough w.r.t local size
   /*if ( local_move_sq_length < sq_freeze_ratio_ )
@@ -250,7 +258,7 @@ compute_move(const Vertex_handle& v)
   }*/
   
   // Update big moves
-  update_big_moves(local_move_sq_length);
+  //update_big_moves(local_move_sq_length);
   
   return move;
 }
@@ -291,6 +299,7 @@ update_mesh(const Moves_vector& moves,
 
     // How to treat the sizing field?
     //move_point(v,new_position,outdated_faces);
+    std::cout<<"moving point to its new location"<<std::endl;
     cdt_.move(v,new_position);
   }
   moving_vertices.clear();

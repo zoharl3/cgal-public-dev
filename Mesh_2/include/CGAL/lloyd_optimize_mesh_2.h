@@ -10,7 +10,7 @@ namespace CGAL
   template <typename CDT> 
   void
   lloyd_optimize_mesh_2(CDT& cdt,
-                        const std::size_t& max_iteration_number)
+                        int& max_iteration_number)
 {
   typedef typename Mesh_2::Lloyd_move<CDT>    Move;
   typedef typename Mesh_2::Mesh_global_optimizer<CDT,Move> Lloyd_optimizer;

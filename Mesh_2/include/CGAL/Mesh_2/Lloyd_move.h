@@ -20,16 +20,17 @@ class Lloyd_move
   typedef typename CDT::Geom_traits::Vector_2 Vector_2;
   typedef typename CDT::Polygon_2             Polygon_2;
 
+public:
   /**
    * @brief Return move to apply on \c v according to Lloyd optimization 
    * function
    */
   Vector_2 operator()(const Vertex_handle& v,
-                      const CDT& cdt) const
+                       CDT& cdt) const
   {
     //to review
     //Vector_2 move = CGAL::NULL_VECTOR;
-    Polygon_2 poly = dual(v);
+    Polygon_2 poly = cdt.dual(v);
 
     // If the dual returns no points,\c that vertex doesn't have dual.
     if(poly.size()==0)
