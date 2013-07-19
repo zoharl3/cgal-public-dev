@@ -290,6 +290,7 @@ update_mesh(const Moves_vector& moves,
             Vertex_set& moving_vertices)
 {
   //std::set<Face_handle> outdated_faces;
+  std::cout<<"moving point to its new location"<<std::endl;
   for( typename Moves_vector::const_iterator it = moves.begin() ;
         it != moves.end() ;
         ++it)
@@ -299,7 +300,7 @@ update_mesh(const Moves_vector& moves,
 
     // How to treat the sizing field?
     //move_point(v,new_position,outdated_faces);
-    std::cout<<"moving point to its new location"<<std::endl;
+    //std::cout<<"moving point to its new location"<<std::endl;
     cdt_.move(v,new_position);
   }
   moving_vertices.clear();
