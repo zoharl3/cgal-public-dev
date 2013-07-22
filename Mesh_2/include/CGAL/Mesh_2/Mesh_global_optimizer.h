@@ -97,7 +97,7 @@ private:
   /**
    * update big_moves_ vector with new_sq_move value
    */
-  void update_big_moves(const FT& new_sq_move);
+//  void update_big_moves(const FT& new_sq_move);
 
   /**
    * Updates mesh using moves of \c moves vector. Updates moving_vertices with
@@ -125,7 +125,7 @@ private:
   CGAL::Timer running_time_;
   
   typedef std::list<FT> FT_list;
-  FT_list big_moves_;
+//  FT_list big_moves_;
   
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
   mutable FT sum_moves_;
@@ -159,11 +159,11 @@ operator()(int nb_iterations)
 //  std::size_t initial_vertices_nb = moving_vertices.size();
 
   // Initialize big moves (stores the largest moves)
-  big_moves_.clear();
+/*  big_moves_.clear();
   std::size_t big_moves_size_ = 
     (std::max)(std::size_t(1), std::size_t(moving_vertices.size()/500));
   big_moves_.resize(big_moves_size_,FT(0));
-
+*/
   // Iterate
   int i = -1;
   while ( ++i < nb_iterations)// && ! is_time_limit_reached() )
@@ -196,7 +196,7 @@ compute_moves(const Vertex_set& moving_vertices)
   moves.reserve(moving_vertices.size());
   
   // reset worst_move list
-  std::fill(big_moves_.begin(),big_moves_.end(),FT(0));
+//  std::fill(big_moves_.begin(),big_moves_.end(),FT(0));
   
   // Get move for each moving vertex
   for ( typename Vertex_set::const_iterator vit = moving_vertices.begin() ;
@@ -262,7 +262,7 @@ compute_move(const Vertex_handle& v)
   
   return move;
 }
-
+/*
 template <typename CDT, typename MoveFunction>
 void
 Mesh_global_optimizer<CDT, MoveFunction>::
@@ -281,7 +281,7 @@ update_big_moves(const FT& new_sq_move)
     
     big_moves_.insert(pos, new_sq_move);
   }
-}
+}*/
 
 template <typename CDT, typename MoveFunction>
 void

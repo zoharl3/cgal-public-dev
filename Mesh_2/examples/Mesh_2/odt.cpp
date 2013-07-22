@@ -95,6 +95,7 @@ int main()
   mesher.refine_mesh();
 
   std::cout << "Number of vertices: " << cdt.number_of_vertices() << std::endl;
+  Triangulation_to_vtk(cdt,"odt_mid_mesher.vtk");
 
   int nb_iterations = 10;
   mesher.odt(nb_iterations);
