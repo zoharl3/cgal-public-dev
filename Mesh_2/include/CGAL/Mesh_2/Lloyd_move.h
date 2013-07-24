@@ -28,6 +28,9 @@ public:
   Vector_2 operator()(const Vertex_handle& v,
                        CDT& cdt) const
   {
+    if (!cdt.cell_is_infinite(v)){
+      return CGAL::NULL_VECTOR;
+    }
     //to review
     //Vector_2 move = CGAL::NULL_VECTOR;
     Polygon_2 poly = cdt.dual(v);

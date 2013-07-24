@@ -63,7 +63,7 @@ class Mesh_global_optimizer
   typedef typename std::set<Vertex_handle>                 Vertex_set;
   typedef typename std::pair<Vertex_handle,Point_2>        Move;
 
-  typedef std::vector<Move >                               Moves_vector;
+  typedef std::vector<Move>                                Moves_vector;
   
 //  typedef typename MoveFunction::Sizing_field Sizing_field;
       
@@ -223,18 +223,18 @@ typename Mesh_global_optimizer<CDT, MoveFunction>::Vector_2
 Mesh_global_optimizer<CDT, MoveFunction>::
 compute_move(const Vertex_handle& v)
 {    
-  typename Gt::Compute_squared_length_2 sq_length =
-    Gt().compute_squared_length_2_object();
+  /*typename Gt::Compute_squared_length_2 sq_length =
+    Gt().compute_squared_length_2_object();*/
   
   //typename Gt::Construct_vector_2 vector =
     //Gt().construct_vector_2_object();
   
-  typename Gt::Construct_translated_point_2 translate =
-    Gt().construct_translated_point_2_object();
+  /*typename Gt::Construct_translated_point_2 translate =
+    Gt().construct_translated_point_2_object();*/
   
   // Get move from move function
   //Vector_2 move = move_function_(v, c2t2_, sizing_field_);
-    Vector_2 move = move_function_(v, this->cdt_);
+  Vector_2 move = move_function_(v, this->cdt_);
   
   // Project surface vertex
   /*if ( c2t2_.in_dimension(v) == 2 )

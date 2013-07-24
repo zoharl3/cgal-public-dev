@@ -95,8 +95,10 @@ int main()
   mesher.refine_mesh();
 
   std::cout << "Number of vertices: " << cdt.number_of_vertices() << std::endl;
+  Triangulation_to_vtk(cdt,"lloyd_mid_mesher.vtk");
 
-  int nb_iterations = 10;
+  int nb_iterations = 100;
   mesher.lloyd(nb_iterations);
+  std::cout << "Number of vertices: " << cdt.number_of_vertices() << std::endl;
   Triangulation_to_vtk(cdt,"lloyd_after_mesher.vtk");
 }

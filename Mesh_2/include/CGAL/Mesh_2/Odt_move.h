@@ -31,6 +31,9 @@ public:
   Vector_2 operator()(const Vertex_handle& v,
                       CDT& cdt) const
   {
+    if (!cdt.cell_is_infinite(v)){
+      return CGAL::NULL_VECTOR;
+    }
     //to review
     // Calculate the average of \c circumcenters incident to current vertex.
     Polygon_2 poly = cdt.dual(v);
@@ -57,7 +60,7 @@ public:
   }
   
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
-  static std::string name() { return std::string("ODT"); }
+  static std::string name() { return std::string("Odt"); }
 #endif
 
 private:
