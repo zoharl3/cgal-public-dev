@@ -403,16 +403,16 @@ private:
             
             Vector i_ray(*i_point, query.source());
             double new_distance = i_ray.squared_length();
-            if(!min_distance.get<0>() || new_distance < min_distance.get<2>())
+            if(!min_distance.template get<0>() || new_distance < min_distance.template get<2>())
             {                 
-                min_distance.get<3>() = id;
-                min_distance.get<2>() = new_distance;
-                min_distance.get<0>() = true;
+                min_distance.template get<3>() = id;
+                min_distance.template get<2>() = new_distance;
+                min_distance.template get<0>() = true;
                 min_id = id;
                 min_i_ray = i_ray; 
             }
         }
-        if(!min_distance.get<0>()) { return min_distance; }
+        if(!min_distance.template get<0>()) { return min_distance; }
         
         if(accept_if_acute)
         {
@@ -430,8 +430,8 @@ private:
             }
         }
 
-        min_distance.get<1>() = true; // founded intersection is acceptable.
-        min_distance.get<2>() = std::sqrt(min_distance.get<2>());
+        min_distance.template get<1>() = true; // founded intersection is acceptable.
+        min_distance.template get<2>() = std::sqrt(min_distance.template get<2>());
         return min_distance;
     }   
 
