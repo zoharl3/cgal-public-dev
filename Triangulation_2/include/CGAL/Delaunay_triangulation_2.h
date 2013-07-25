@@ -140,6 +140,9 @@ public:
   Object dual(const Edge_circulator& ec) const;
   Object dual(const Finite_edges_iterator& ei) const;
   Polygon_2 dual(const Vertex_handle& v);
+
+  bool is_inside_triangulation_cell(const Vertex_handle& generator, 
+                                    const Point & target) const;
   
   //INSERTION-REMOVAL
   Vertex_handle insert(const Point  &p, 
@@ -867,6 +870,25 @@ dual (const Vertex_handle& v)
 
 	return poly;
 }
+template<class Gt, class Tds>
+bool
+Delaunay_triangulation_2<Gt,Tds>::
+is_inside_triangulation_cell(const Vertex_handle& generator, 
+    const Point & target) const
+  {
+    Vertex_circulator vc = this->incident_vertices(generator);
+    Vertex_circulator begin = vc;
+    std::vector<Point> poly;
+    CGAL_For_all(vc, begin){
+      if(this->is_infinite(vc))
+        return false;
+      poly.push_back(vc->point());
+    }
+    if(CGAL::bounded_side_2(poly.begin(),poly.end(),target, Gt())
+      == CGAL::ON_BOUNDED_SIDE)
+        return true;
+    return false;
+  }
 
 ///////////////////////////////////////////////////////////////
 //  INSERT

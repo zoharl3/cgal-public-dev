@@ -118,6 +118,7 @@ public:
   typedef typename Ctr::Constraint    Constraint;
   typedef typename Ctr::Vertex_handle Vertex_handle;
   typedef typename Ctr::Finite_vertices_iterator Finite_vertices_iterator;
+  typedef typename Ctr::Vertex_circulator		Vertex_circulator;
   typedef typename Ctr::Face_handle   Face_handle;
   typedef typename Ctr::Edge          Edge;
   typedef typename Ctr::Finite_edges_iterator Finite_edges_iterator;
@@ -292,6 +293,23 @@ public:
 			if(this->is_infinite(face))
 				return true;
 		}
+		return false;
+	}
+
+	bool is_inside_triangulation_cell(const Vertex_handle& generator, 
+		const Point & target) const
+	{
+		Vertex_circulator vc = this->incident_vertices(generator);
+		Vertex_circulator begin = vc;
+		std::vector<Point> poly;
+		CGAL_For_all(vc, begin){
+			if(this->is_infinite(vc))
+				return false;
+			poly.push_back(vc->point());
+		}
+		if(CGAL::bounded_side_2(poly.begin(),poly.end(),target, Gt())
+			== CGAL::ON_BOUNDED_SIDE)
+	      return true;
 		return false;
 	}
 

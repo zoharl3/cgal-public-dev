@@ -57,7 +57,7 @@ class Mesh_global_optimizer
 //  typedef typename Tr::Edge             Edge;
 //  typedef typename Tr::Vertex           Vertex;
   
-  typedef typename Gt::FT                                  FT;
+//  typedef typename Gt::FT                                  FT;
   typedef typename Gt::Vector_2                            Vector_2;
   
   typedef typename std::set<Vertex_handle>                 Vertex_set;
@@ -121,15 +121,15 @@ private:
 //  FT convergence_ratio_;
   MoveFunction move_function_;
 //  Sizing_field sizing_field_;
-  double time_limit_;
-  CGAL::Timer running_time_;
+//  double time_limit_;
+//  CGAL::Timer running_time_;
   
-  typedef std::list<FT> FT_list;
+//  typedef std::list<FT> FT_list;
 //  FT_list big_moves_;
   
-#ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
+/*#ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
   mutable FT sum_moves_;
-#endif
+#endif*/
   
 };
 template <typename CDT, typename MoveFunction>
@@ -170,6 +170,7 @@ operator()(int nb_iterations)
   {
     // Compute move for each vertex
     Moves_vector moves = compute_moves(moving_vertices);
+    //std::cout<<"MOVES SIZE: "<<moves.size()<<std::endl;
 
     // Stop if time_limit is reached
 //    if ( is_time_limit_reached() )
@@ -199,13 +200,16 @@ compute_moves(const Vertex_set& moving_vertices)
 //  std::fill(big_moves_.begin(),big_moves_.end(),FT(0));
   
   // Get move for each moving vertex
+  int i=0;
   for ( typename Vertex_set::const_iterator vit = moving_vertices.begin() ;
        vit != moving_vertices.end() ;
        ++vit )
   {
+    //std::cout<<++i<<": \n";
     Vector_2 move = compute_move(*vit);
     if ( CGAL::NULL_VECTOR != move )
     {
+      //std::cout<<"BUENAS NOTICIAS"<<std::endl;
       Point_2 new_position = translate((*vit)->point(),move);
       moves.push_back(std::make_pair(*vit,new_position));
     }
@@ -300,10 +304,11 @@ update_mesh(const Moves_vector& moves,
 
     // How to treat the sizing field?
     //move_point(v,new_position,outdated_faces);
-    //std::cout<<"moving point to its new location"<<std::endl;
+    //std::cout<<"moving point to its new location: "<<new_position<<std::endl;
     cdt_.move(v,new_position);
   }
   moving_vertices.clear();
+  // WHAT TO REALLY DO WITH MOVING_VERTICES?
     // Rebuild Delaunay?
 } 
 
