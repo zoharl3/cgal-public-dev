@@ -249,6 +249,7 @@ public:
   // DUAL
   Polygon_2 dual(const Vertex_handle& v)
 	{
+		m_cvd.clear();// Temporary solution
     if(m_cvd.find(v) == m_cvd.end())
     	if(!this->cell_is_infinite(v))
 		  m_cvd[v] = this->construct_cvd_cell(v);

@@ -32,7 +32,6 @@ public:
                        CDT& cdt) const
   {
     if (cdt.cell_is_infinite(v)){
-      //std::cout<<"INFINITE"<<std::endl;
       return CGAL::NULL_VECTOR;
     }
     //to review
@@ -41,7 +40,6 @@ public:
 
     // If the dual returns no points,\c that vertex doesn't have dual.
     if(poly.size()==0){
-      //std::cout<<"SIZE 0"<<std::endl;
       return CGAL::NULL_VECTOR;
     }
     // Return the vector_2 of the origin\c and the centroid of its voronoi cell.

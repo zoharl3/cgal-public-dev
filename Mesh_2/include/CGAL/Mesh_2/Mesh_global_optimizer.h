@@ -294,7 +294,7 @@ update_mesh(const Moves_vector& moves,
             Vertex_set& moving_vertices)
 {
   //std::set<Face_handle> outdated_faces;
-  std::cout<<"moving point to its new location"<<std::endl;
+  
   for( typename Moves_vector::const_iterator it = moves.begin() ;
         it != moves.end() ;
         ++it)

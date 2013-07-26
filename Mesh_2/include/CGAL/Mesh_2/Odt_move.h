@@ -62,7 +62,7 @@ public:
     if(cdt.is_inside_triangulation_cell(v,new_point))
       return Vector_2(v->point(),new_point);
     else
-      return CGAL:NULL_VECTOR;
+      return CGAL::NULL_VECTOR;
     /*}else{
       return CGAL::NULL_VECTOR;
     }*/
