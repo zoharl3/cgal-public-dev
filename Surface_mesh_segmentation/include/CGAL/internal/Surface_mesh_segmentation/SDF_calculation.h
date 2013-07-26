@@ -2,7 +2,7 @@
 #define CGAL_SURFACE_MESH_SEGMENTATION_SDF_CALCULATION_H
 
 #include <CGAL/AABB_tree.h>
-#include <CGAL/AABB_polyhedron_triangle_primitive.h>
+#include <CGAL/AABB_face_graph_triangle_primitive.h>
 #include <CGAL/internal/Surface_mesh_segmentation/AABB_traversal_traits.h>
 #include <CGAL/internal/Surface_mesh_segmentation/AABB_traits.h>
 #include <CGAL/internal/Surface_mesh_segmentation/Disk_samplers.h>
@@ -64,7 +64,7 @@ private:
     typedef typename Polyhedron::Facet_const_iterator Facet_const_iterator;
     typedef typename Polyhedron::Facet_const_handle   Facet_const_handle; 
     
-    typedef AABB_const_polyhedron_triangle_primitive<GeomTraits, Polyhedron> Primitive;
+    typedef AABB_face_graph_triangle_primitive<const Polyhedron> Primitive;
     typedef AABB_traits_SDF<GeomTraits, Primitive, fast_bbox_intersection> AABB_traits_internal;
     typedef typename CGAL::AABB_tree<AABB_traits_internal>                 Tree;
 
@@ -386,7 +386,7 @@ private:
         //SL: the difference with all_intersections is that in the traversal traits, we do do_intersect before calling intersection.
         typedef  std::back_insert_iterator< std::list<Object_and_primitive_id> > Output_iterator;
         Listing_intersection_traits_ray_or_segment_triangle<typename Tree::AABB_traits,Query,Output_iterator> 
-            traversal_traits(std::back_inserter(intersections));
+            traversal_traits(std::back_inserter(intersections), tree.traits());
 		    tree.traversal(query,traversal_traits);
 
         Vector min_i_ray(NULL_VECTOR);
