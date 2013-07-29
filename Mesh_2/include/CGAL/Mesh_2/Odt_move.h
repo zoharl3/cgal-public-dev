@@ -35,6 +35,8 @@ public:
     if (cdt.cell_is_infinite(v)){
       return CGAL::NULL_VECTOR;
     }
+    if (cdt.are_there_incident_constraints(v))
+      return CGAL::NULL_VECTOR;
     //to review
     // Calculate the average of \c circumcenters incident to current vertex.
     Polygon_2 poly = cdt.dual(v);

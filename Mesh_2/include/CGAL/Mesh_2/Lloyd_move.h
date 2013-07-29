@@ -34,6 +34,10 @@ public:
     if (cdt.cell_is_infinite(v)){
       return CGAL::NULL_VECTOR;
     }
+    int num_incident_constraints = 0;
+    // CHECK IF THERE ARE ONLY TWO CONSTRAINTS WITH THAT VERTEX AND
+    // IF YES, THEN CHECK IF THOSE CONSTRAINTS ARE PARALLELS.
+
     //to review
     //Vector_2 move = CGAL::NULL_VECTOR;
     Polygon_2 poly = cdt.dual(v);
