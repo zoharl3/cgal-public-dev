@@ -53,13 +53,14 @@ public:
 
 private:
   Point _p;
+  bool _input_constraint;
 
 public:
-  Triangulation_vertex_base_2 () : Vb() {}
-  Triangulation_vertex_base_2(const Point & p) : Vb(), _p(p) {}
+  Triangulation_vertex_base_2 () : Vb(), _input_constraint(0) {}
+  Triangulation_vertex_base_2(const Point & p) : Vb(), _p(p), _input_constraint(0) {}
   Triangulation_vertex_base_2(const Point & p, Face_handle f)
-    : Vb(f), _p(p) {}
-  Triangulation_vertex_base_2(Face_handle f) : Vb(f) {} 
+    : Vb(f), _p(p), _input_constraint(0) {}
+  Triangulation_vertex_base_2(Face_handle f) : Vb(f), _input_constraint(0) {} 
 
   void set_point(const Point & p) { _p = p; }
   const Point&  point() const { return _p; }
@@ -74,6 +75,9 @@ public:
   // to add their own purpose checking
   bool is_valid(bool /* verbose */ = false, int /* level */ = 0) const
     {return true;}
+
+  void set_input_constraint(const bool input_constraint) { _input_constraint = input_constraint; }
+  bool input_constraint() const { return _input_constraint; }
 
 #ifndef CGAL_NO_DEPRECATED_CODE
   size_type degree(); //should be const

@@ -462,6 +462,8 @@ insert_constraint(Vertex_handle  vaa, Vertex_handle vbb)
 {
   CGAL_triangulation_precondition( vaa != vbb);
   Vertex_handle vi;
+  vaa->set_input_constraint(true);
+  vbb->set_input_constraint(true);
 
   Face_handle fr;
   int i;
