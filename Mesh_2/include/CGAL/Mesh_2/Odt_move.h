@@ -35,7 +35,7 @@ public:
     if (cdt.cell_is_infinite(v)){
       return CGAL::NULL_VECTOR;
     }
-    if (cdt.are_there_incident_constraints(v))
+    if(v->input_constraint())
       return CGAL::NULL_VECTOR;
     //to review
     // Calculate the average of \c circumcenters incident to current vertex.
@@ -61,10 +61,8 @@ public:
     Point_2 new_point = Point_2(new_x/pset.size(),new_y/pset.size());
     /*if(CGAL::bounded_side_2(poly.vertices_begin(),poly.vertices_end(),new_point,Gt())
       == CGAL::ON_BOUNDED_SIDE){*/
-    if(cdt.is_inside_triangulation_cell(v,new_point))
-      return Vector_2(v->point(),new_point);
-    else
-      return CGAL::NULL_VECTOR;
+    
+    return Vector_2(v->point(),new_point);
     /*}else{
       return CGAL::NULL_VECTOR;
     }*/
