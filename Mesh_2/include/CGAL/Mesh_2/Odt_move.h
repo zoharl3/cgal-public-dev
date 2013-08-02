@@ -18,11 +18,15 @@ template <typename CDT>
 class Odt_move
 {
   typedef typename CDT::Geom_traits             Gt;
+  typedef typename Gt::Segment_2                Segment_2;
   typedef typename CDT::Vertex_handle           Vertex_handle;
   typedef typename CDT::Geom_traits::Vector_2   Vector_2;
   typedef typename CDT::Polygon_2               Polygon_2;
   typedef typename CDT::Point                   Point_2;
   typedef std::set<Point_2>                     Point_set;
+  typedef typename CDT::Edge_circulator         Edge_circulator;
+  typedef typename CDT::Edge                    Edge;
+  typedef typename CDT::Face_handle             Face_handle;
   
 public:
   /**
@@ -59,13 +63,52 @@ public:
     }
 
     Point_2 new_point = Point_2(new_x/pset.size(),new_y/pset.size());
-    /*if(CGAL::bounded_side_2(poly.vertices_begin(),poly.vertices_end(),new_point,Gt())
-      == CGAL::ON_BOUNDED_SIDE){*/
-    
-    return Vector_2(v->point(),new_point);
-    /*}else{
-      return CGAL::NULL_VECTOR;
-    }*/
+
+    Edge parallel_constraint;
+
+    Edge_circulator ec=cdt.incident_edges(v), done(ec);
+    unsigned int num_constraints = 0;
+    do{
+      if(cdt.is_constrained(*ec)){
+        parallel_constraint = *ec;
+        num_constraints++;
+      }
+      if(num_constraints>2){// if more than two constraints, it SHOULDN'T MOVE
+        return CGAL::NULL_VECTOR;
+      }
+      ec++;
+    }while(ec != done);
+
+    Segment_2 new_segment = Segment_2(new_point,v->point());
+    switch(num_constraints){
+      case 0: 
+        if(cdt.is_inside_triangulation_cell(v,new_point)){
+          typename CDT::Locate_type loc;
+          int li;
+          Face_handle fh = cdt.locate(new_point, loc, li);
+          if( loc == CDT::VERTEX ){
+            // Delete vertex from here, or just return NULL?
+            return Vector_2(v->point(),new_point);  
+          }else{
+            if(!fh->blind())
+              return Vector_2(v->point(),new_point);
+            else
+              return CGAL::NULL_VECTOR;
+          }
+        }
+        else
+          return CGAL::NULL_VECTOR;
+
+      case 1: return CGAL::NULL_VECTOR;
+      case 2: 
+        if( CGAL::parallel(cdt.segment(parallel_constraint),new_segment)){
+          Face_handle fh = cdt.locate(new_point);
+          return Vector_2(v->point(),new_point);
+        }
+        else
+          return CGAL::NULL_VECTOR;
+      default: return CGAL::NULL_VECTOR;
+    }
   }
   
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE

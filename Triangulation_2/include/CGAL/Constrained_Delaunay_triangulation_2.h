@@ -302,16 +302,18 @@ public:
 	{
 		Vertex_circulator vc = this->incident_vertices(generator);
 		Vertex_circulator begin = vc;
-		std::vector<Point> poly;
+		Polygon_2 poly;
 		CGAL_For_all(vc, begin){
 			if(this->is_infinite(vc))
 				return false;
 			poly.push_back(vc->point());
 		}
-		if(CGAL::bounded_side_2(poly.begin(),poly.end(),target, Gt())
-			== CGAL::ON_BOUNDED_SIDE)
-	      return true;
-		return false;
+		switch(CGAL::bounded_side_2(poly.vertices_begin(),poly.vertices_end(),target, Gt()))
+		{
+			case CGAL::ON_BOUNDED_SIDE : return true;
+			case CGAL::ON_BOUNDARY : return true;
+			case CGAL::ON_UNBOUNDED_SIDE : return false;
+		}
 	}
 
 	// blind = false IFF each face sees its circumcenter

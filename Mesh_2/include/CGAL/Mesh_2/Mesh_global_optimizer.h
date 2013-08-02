@@ -168,6 +168,7 @@ operator()(int nb_iterations)
   int i = -1;
   while ( ++i < nb_iterations)// && ! is_time_limit_reached() )
   {
+    //std::cout<<"iteration: "<<i<<std::endl;
     // Compute move for each vertex
     Moves_vector moves = compute_moves(moving_vertices);
     //std::cout<<"MOVES SIZE: "<<moves.size()<<std::endl;
@@ -211,6 +212,10 @@ compute_moves(const Vertex_set& moving_vertices)
     {
       //std::cout<<"BUENAS NOTICIAS"<<std::endl;
       Point_2 new_position = translate((*vit)->point(),move);
+
+      //std::cout<<"MGO-> vertex on: "<<(*vit)->point()<<std::endl;
+      //std::cout<<"MGO-> new_point: "<<new_position<<std::endl;
+      //Point_2 new_position = Point_2(5,5);
       moves.push_back(std::make_pair(*vit,new_position));
     }
     
@@ -270,7 +275,7 @@ compute_move(const Vertex_handle& v)
 template <typename CDT, typename MoveFunction>
 void
 Mesh_global_optimizer<CDT, MoveFunction>::
-update_big_moves(const FT& new_sq_move)
+update_big_3(const FT& new_sq_move)
 {  
   namespace bl = boost::lambda;
   
@@ -304,10 +309,12 @@ update_mesh(const Moves_vector& moves,
 
     // How to treat the sizing field?
     //move_point(v,new_position,outdated_faces);
-    //std::cout<<"moving point to its new location: "<<new_position<<std::endl;
-    cdt_.move(v,new_position);
+    //std::cout<<"moving point "<< v->point()<<" to its new location: "<<new_position<<std::endl;
+    //cdt_.move(v,new_position);
+    cdt_.remove(v);
+    cdt_.insert(new_position);
   }
-  moving_vertices.clear();
+  //moving_vertices.clear();
   // WHAT TO REALLY DO WITH MOVING_VERTICES?
     // Rebuild Delaunay?
 } 
