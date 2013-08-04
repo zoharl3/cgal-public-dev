@@ -311,6 +311,8 @@ update_mesh(const Moves_vector& moves,
     //move_point(v,new_position,outdated_faces);
     //std::cout<<"moving point "<< v->point()<<" to its new location: "<<new_position<<std::endl;
     //cdt_.move(v,new_position);
+
+    // NOT USING MOVE, BUT REMOVE AND INSERT
     cdt_.remove(v);
     cdt_.insert(new_position);
   }
