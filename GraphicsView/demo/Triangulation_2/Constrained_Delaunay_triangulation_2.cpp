@@ -457,7 +457,7 @@ MainWindow::on_actionRefineLloyd_triggered()
   QRectF rect = CGAL::Qt::viewportsBbox(&scene);
   CGAL::Qt::Converter<K> convert;
   Iso_rectangle_2 isor = convert(rect);
-  //CGAL::Random_points_in_iso_rectangle_2<Point_2> pg((isor.min)(), (isor.max)());
+  
   bool ok = false;
   const int number_of_iterations = 
     QInputDialog::getInteger(this, 
@@ -472,14 +472,24 @@ MainWindow::on_actionRefineLloyd_triggered()
   if(!ok) {
     return;
   }
-  QApplication::setOverrideCursor(Qt::WaitCursor);
+  
   Mesher mesher(cdt);
   mesher.set_criteria(Criteria(0.125, 0.5));
   mesher.refine_mesh();
 
-  mesher.lloyd(number_of_iterations);
-  QApplication::restoreOverrideCursor();
-  emit(changed());
+  for(int i=0; i<number_of_iterations; i++){
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    
+    // sleep
+    QTime dieTime = QTime::currentTime().addMSecs(200);
+    while( QTime::currentTime() < dieTime )
+      QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+
+    mesher.lloyd(1);
+
+    QApplication::restoreOverrideCursor();
+    emit(changed());
+  }
 }
 
 void 
@@ -488,7 +498,7 @@ MainWindow::on_actionRefineOdt_triggered()
   QRectF rect = CGAL::Qt::viewportsBbox(&scene);
   CGAL::Qt::Converter<K> convert;
   Iso_rectangle_2 isor = convert(rect);
-  //CGAL::Random_points_in_iso_rectangle_2<Point_2> pg((isor.min)(), (isor.max)());
+
   bool ok = false;
   const int number_of_iterations = 
     QInputDialog::getInteger(this, 
@@ -503,15 +513,24 @@ MainWindow::on_actionRefineOdt_triggered()
   if(!ok) {
     return;
   }
-
-  QApplication::setOverrideCursor(Qt::WaitCursor);
+  
   Mesher mesher(cdt);
   mesher.set_criteria(Criteria(0.125, 0.5));
   mesher.refine_mesh();
 
-  mesher.odt(number_of_iterations);
-  QApplication::restoreOverrideCursor();
-  emit(changed());
+  for(int i=0; i<number_of_iterations; i++){
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
+    // sleep
+    QTime dieTime = QTime::currentTime().addMSecs(200);
+    while( QTime::currentTime() < dieTime )
+      QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+
+    mesher.odt(1);
+
+    QApplication::restoreOverrideCursor();
+    emit(changed());
+  }
 }
 
 
