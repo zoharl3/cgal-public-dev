@@ -1,4 +1,5 @@
 //#define CGAL_USE_BOOST_BIMAP
+#define CGAL_MESH_2_OPTIMIZER_VERBOSE
 
 #include <fstream>
 #include <vector>
@@ -40,25 +41,25 @@
 // for viewportsBbox(QGraphicsScene*)
 #include <CGAL/Qt/utility.h>
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef K::Point_2 Point_2;
-typedef K::Segment_2 Segment_2;
-typedef K::Iso_rectangle_2 Iso_rectangle_2;
-typedef CGAL::Triangulation_vertex_base_2<K>  Vertex_base;
-typedef CGAL::Constrained_triangulation_face_base_2<K> Face_base;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel     K;
+typedef K::Point_2                                              Point_2;
+typedef K::Segment_2                                            Segment_2;
+typedef K::Iso_rectangle_2                                      Iso_rectangle_2;
+typedef CGAL::Triangulation_vertex_base_2<K>                    Vertex_base;
+typedef CGAL::Constrained_triangulation_face_base_2<K>          Face_base;
 
 template <class Gt,
           class Fb >
 class Enriched_face_base_2 : public Fb {
 public:
-  typedef Gt Geom_traits;
-  typedef typename Fb::Vertex_handle Vertex_handle;
-  typedef typename Fb::Face_handle Face_handle;
+  typedef Gt                              Geom_traits;
+  typedef typename Fb::Vertex_handle      Vertex_handle;
+  typedef typename Fb::Face_handle        Face_handle;
 
   template < typename TDS2 >
   struct Rebind_TDS {
-    typedef typename Fb::template Rebind_TDS<TDS2>::Other Fb2;
-    typedef Enriched_face_base_2<Gt,Fb2> Other;
+    typedef typename Fb::template Rebind_TDS<TDS2>::Other       Fb2;
+    typedef Enriched_face_base_2<Gt,Fb2>                        Other;
   };
 
 protected:
@@ -96,19 +97,20 @@ public:
   int& counter() { return status; };
 }; // end class Enriched_face_base_2
 
-typedef Enriched_face_base_2<K, Face_base> Fb;
-typedef CGAL::Triangulation_data_structure_2<Vertex_base, Fb>  TDS;
-typedef CGAL::Exact_predicates_tag              Itag;
-typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag> CDT;
-typedef CGAL::Delaunay_mesh_size_criteria_2<CDT> Criteria;
+typedef Enriched_face_base_2<K, Face_base>                        Fb;
+typedef CGAL::Triangulation_data_structure_2<Vertex_base, Fb>     TDS;
+typedef CGAL::Exact_predicates_tag                                Itag;
+typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag>  CDT;
+typedef CGAL::Delaunay_mesh_size_criteria_2<CDT>                  Criteria;
+typedef CGAL::Delaunay_mesher_2<CDT, Criteria>                    Mesher;
 
-typedef CGAL::Lipschitz_sizing_field_2<K> Lipschitz_sizing_field;
+typedef CGAL::Lipschitz_sizing_field_2<K>                         Lipschitz_sizing_field;
 typedef CGAL::Lipschitz_sizing_field_criteria_2<CDT, Lipschitz_sizing_field> Lipschitz_criteria;
-typedef CGAL::Delaunay_mesher_2<CDT, Lipschitz_criteria> Lipschitz_mesher;
+typedef CGAL::Delaunay_mesher_2<CDT, Lipschitz_criteria>          Lipschitz_mesher;
 
-typedef CDT::Vertex_handle Vertex_handle;
-typedef CDT::Face_handle Face_handle;
-typedef CDT::All_faces_iterator All_faces_iterator;
+typedef CDT::Vertex_handle                                        Vertex_handle;
+typedef CDT::Face_handle                                          Face_handle;
+typedef CDT::All_faces_iterator                                   All_faces_iterator;
 
 
 void
@@ -181,6 +183,7 @@ class MainWindow :
   
 private:  
   CDT cdt; 
+//  Mesher mesher;
   QGraphicsScene scene;
   std::list<Point_2> seeds;
 
@@ -236,6 +239,10 @@ public slots:
   void on_actionRecenter_triggered();
 
   void on_actionLoadConstraints_triggered();
+
+  void on_actionRefineLloyd_triggered();
+
+  void on_actionRefineOdt_triggered();
 
   void on_actionShowVoronoi_toggled(bool checked);
 
@@ -343,6 +350,8 @@ MainWindow::MainWindow()
   this->addRecentFiles(this->menuFile, this->actionQuit);
   connect(this, SIGNAL(openRecentFile(QString)),
 	  this, SLOT(open(QString)));
+
+//  mesher(cdt);
 }
 
 
@@ -439,6 +448,69 @@ void
 MainWindow::on_actionClear_triggered()
 {
   cdt.clear();
+  emit(changed());
+}
+
+void 
+MainWindow::on_actionRefineLloyd_triggered()
+{
+  QRectF rect = CGAL::Qt::viewportsBbox(&scene);
+  CGAL::Qt::Converter<K> convert;
+  Iso_rectangle_2 isor = convert(rect);
+  //CGAL::Random_points_in_iso_rectangle_2<Point_2> pg((isor.min)(), (isor.max)());
+  bool ok = false;
+  const int number_of_iterations = 
+    QInputDialog::getInteger(this, 
+                             tr("Number of Iterations"),
+                             tr("Enter number of iterations"),
+           100,
+           0,
+           (std::numeric_limits<int>::max)(),
+           1,
+           &ok);
+
+  if(!ok) {
+    return;
+  }
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+  Mesher mesher(cdt);
+  mesher.set_criteria(Criteria(0.125, 0.5));
+  mesher.refine_mesh();
+
+  mesher.lloyd(number_of_iterations);
+  QApplication::restoreOverrideCursor();
+  emit(changed());
+}
+
+void 
+MainWindow::on_actionRefineOdt_triggered()
+{
+  QRectF rect = CGAL::Qt::viewportsBbox(&scene);
+  CGAL::Qt::Converter<K> convert;
+  Iso_rectangle_2 isor = convert(rect);
+  //CGAL::Random_points_in_iso_rectangle_2<Point_2> pg((isor.min)(), (isor.max)());
+  bool ok = false;
+  const int number_of_iterations = 
+    QInputDialog::getInteger(this, 
+                             tr("Number of Iterations"),
+                             tr("Enter number of iterations"),
+           100,
+           0,
+           (std::numeric_limits<int>::max)(),
+           1,
+           &ok);
+
+  if(!ok) {
+    return;
+  }
+
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+  Mesher mesher(cdt);
+  mesher.set_criteria(Criteria(0.125, 0.5));
+  mesher.refine_mesh();
+
+  mesher.odt(number_of_iterations);
+  QApplication::restoreOverrideCursor();
   emit(changed());
 }
 

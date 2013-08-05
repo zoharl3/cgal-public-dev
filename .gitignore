@@ -1229,6 +1229,8 @@ Doxyfile
 *.dir
 gmon.*
 
+# VTK Files (to see with Paraview)
+*.vtk
 
 # TODO:
 #   remove everything about /doc_tex once LaTeX is not longer supported

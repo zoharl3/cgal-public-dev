@@ -99,6 +99,13 @@
     </property>
     <addaction name="actionInsertRandomPoints"/>
    </widget>
+   <widget class="QMenu" name="menuOptimize">
+    <property name="title">
+     <string>&amp;Optimize</string>
+    </property>
+    <addaction name="actionRefineLloyd"/>
+    <addaction name="actionRefineOdt"/>
+   </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>&amp;Tools</string>
@@ -120,6 +127,7 @@
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuTools"/>
+   <addaction name="menuOptimize"/>
   </widget>
   <action name="actionAbout">
    <property name="text">
@@ -318,6 +326,22 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionRefineLloyd">
+   <property name="text">
+    <string>&amp;Refine Mesh using Lloyd Optimization</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="actionRefineOdt">
+   <property name="text">
+    <string>&amp;Refine Mesh using Odt Optimization</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
  </widget>
