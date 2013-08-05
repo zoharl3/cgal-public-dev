@@ -314,6 +314,8 @@ public:
 			case CGAL::ON_BOUNDARY : return true;
 			case CGAL::ON_UNBOUNDED_SIDE : return false;
 		}
+    CGAL_assertion(false);
+    return false;
 	}
 
 	// blind = false IFF each face sees its circumcenter

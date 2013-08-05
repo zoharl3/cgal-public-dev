@@ -44,7 +44,7 @@ public:
     //to review
     // Calculate the average of \c circumcenters incident to current vertex.
     Polygon_2 poly = cdt.dual(v);
-    unsigned int poly_size = poly.size();
+    std::size_t poly_size = poly.size();
     if(poly_size==0)
       return CGAL::NULL_VECTOR;
   

@@ -45,7 +45,7 @@ public:
     }
 
     Polygon_2 poly = cdt.dual(v);
-    unsigned int poly_size = poly.size();
+    std::size_t poly_size = poly.size();
 
     if(poly_size==0){// This shouldn't happen
       return CGAL::NULL_VECTOR;
