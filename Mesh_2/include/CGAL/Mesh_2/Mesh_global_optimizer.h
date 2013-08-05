@@ -72,7 +72,7 @@ public:
    * Constructor
    */
   Mesh_global_optimizer(CDT& cdt,
-                        const MoveFunction);
+                        const MoveFunction = MoveFunction());
   
   /**
    * Launch optimization process
@@ -135,7 +135,7 @@ private:
 template <typename CDT, typename MoveFunction>
 Mesh_global_optimizer<CDT, MoveFunction>::
 Mesh_global_optimizer(CDT& cdt,
-                        const MoveFunction move_function = MoveFunction())
+                        const MoveFunction move_function)
 : cdt_(cdt)
 , move_function_(move_function)
 {
