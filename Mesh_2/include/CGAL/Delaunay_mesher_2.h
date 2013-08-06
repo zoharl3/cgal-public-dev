@@ -142,7 +142,7 @@ public:
     seeds_mark = false;
   }
 
-  void mark_facets(bool domain_specified = false)
+  void mark_facets(bool domain_specified = false) const
   {
     if(!domain_specified) {
       mark_facets(tr, seeds.begin(), seeds.end(), seeds_mark);
@@ -193,7 +193,7 @@ public:
   }
 
   /** Propagates the mark \c mark recursivly. */
-  static void propagate_marks(const Face_handle fh, bool mark)
+  static void propagate_marks(const Face_handle fh, bool mark) 
   {
     // std::queue only works with std::list on VC++6, and not with
     // std::deque, which is the default
@@ -281,16 +281,18 @@ public:
   {
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
     std::cout << "Running Lloyd iterations..."<<std::endl;
-    CGAL::lloyd_optimize_mesh_2<Triangulation>(tr,nb_iterations);
 #endif
+    CGAL::lloyd_optimize_mesh_2<Triangulation>(tr,nb_iterations);
+    mark_facets();
   }
 
   void odt(int nb_iterations = 10) const
   {
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
     std::cout << "Running ODT iterations..."<<std::endl;
-    CGAL::odt_optimize_mesh_2<Triangulation>(tr,nb_iterations);
 #endif
+    CGAL::odt_optimize_mesh_2<Triangulation>(tr,nb_iterations);
+    mark_facets();
   }
 
   /** \name ACCESS FUNCTIONS */
