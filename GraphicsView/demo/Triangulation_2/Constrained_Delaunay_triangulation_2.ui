@@ -330,7 +330,7 @@
   </action>
   <action name="actionRefineLloyd">
    <property name="text">
-    <string>&amp;Refine Mesh using Lloyd Optimization</string>
+    <string>&amp;Lloyd</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Y</string>
@@ -338,7 +338,7 @@
   </action>
   <action name="actionRefineOdt">
    <property name="text">
-    <string>&amp;Refine Mesh using Odt Optimization</string>
+    <string>&amp;ODT</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
