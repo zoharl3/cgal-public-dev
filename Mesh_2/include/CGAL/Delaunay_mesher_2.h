@@ -280,7 +280,7 @@ public:
   void lloyd(int nb_iterations = 10) const
   {
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
-    std::cout << "Running Lloyd iterations..."<<std::endl;
+    std::cout << "Running Lloyd "<< nb_iterations <<" iterations..."<<std::endl;
 #endif
     CGAL::lloyd_optimize_mesh_2<Triangulation>(tr,nb_iterations);
     mark_facets();
@@ -289,7 +289,7 @@ public:
   void odt(int nb_iterations = 10) const
   {
 #ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
-    std::cout << "Running ODT iterations..."<<std::endl;
+    std::cout << "Running ODT "<< nb_iterations <<" iterations..."<<std::endl;
 #endif
     CGAL::odt_optimize_mesh_2<Triangulation>(tr,nb_iterations);
     mark_facets();

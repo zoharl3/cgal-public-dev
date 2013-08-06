@@ -318,7 +318,8 @@ update_mesh(const Moves_vector& moves,
   }
   //moving_vertices.clear();
   // WHAT TO REALLY DO WITH MOVING_VERTICES?
-    // Rebuild Delaunay?
+  
+  //facets insideness are updated by Delaunay_mesher_2
 } 
 
   
