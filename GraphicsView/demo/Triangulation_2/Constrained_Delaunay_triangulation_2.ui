@@ -101,7 +101,7 @@
    </widget>
    <widget class="QMenu" name="menuOptimize">
     <property name="title">
-     <string>&amp;Optimize</string>
+     <string>&amp;Meshing</string>
     </property>
     <addaction name="actionRefineLloyd"/>
     <addaction name="actionRefineOdt"/>
@@ -330,7 +330,7 @@
   </action>
   <action name="actionRefineLloyd">
    <property name="text">
-    <string>&amp;Lloyd</string>
+    <string>&amp;Refine and Lloyd</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Y</string>
@@ -338,7 +338,7 @@
   </action>
   <action name="actionRefineOdt">
    <property name="text">
-    <string>&amp;ODT</string>
+    <string>&amp;Refine and ODT</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
