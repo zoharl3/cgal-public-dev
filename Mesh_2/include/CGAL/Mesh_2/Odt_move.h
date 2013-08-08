@@ -9,12 +9,14 @@
 #include <string>
 #include <set>
 #include <CGAL/Polygon_2_algorithms.h>
+#include <CGAL/Mesh_3/Uniform_sizing_field.h>
 
 namespace CGAL {
 
 namespace Mesh_2 {
 
-template <typename CDT>
+template <typename CDT,
+  typename SizingField = Uniform_sizing_field<typename CDT::Triangulation> >
 class Odt_move
 {
   typedef typename CDT::Geom_traits             Gt;
@@ -29,12 +31,14 @@ class Odt_move
   typedef typename CDT::Face_handle             Face_handle;
   
 public:
+  typedef SizingField Sizing_field;
   /**
    * @brief Return move to apply on \c v according to Odt optimization 
    * function
    */
   Vector_2 operator()(const Vertex_handle& v,
-                      CDT& cdt) const
+                      CDT& cdt,
+                       const Sizing_field& sizing_field = Sizing_field() ) const
   {
     if (cdt.cell_is_infinite(v)){
       return CGAL::NULL_VECTOR;

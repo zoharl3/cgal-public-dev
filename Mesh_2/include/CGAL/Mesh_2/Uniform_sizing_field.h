@@ -16,39 +16,43 @@
 // $Id$
 //
 //
-// Author(s)     : Raul Gallegos, Jane Tournois
+// Author(s)     : Raul Gallegos
 //
 //******************************************************************************
-// File Description : Lloyd move function
+// File Description : 
 //******************************************************************************
 
-#ifndef CGAL_LLOYD_OPTIMIZE_MESH_2_H
-#define CGAL_LLOYD_OPTIMIZE_MESH_2_H
+#ifndef CGAL_MESH_2_UNIFORM_SIZING_FIELD_H
+#define CGAL_MESH_2_UNIFORM_SIZING_FIELD_H
 
+namespace CGAL {
 
-#include <CGAL/Mesh_2/Mesh_global_optimizer.h>
-#include <CGAL/Mesh_2/Lloyd_move.h>
-
-namespace CGAL
-{
-  template <typename CDT> 
-  void
-  lloyd_optimize_mesh_2(CDT& cdt,
-                        int& max_iteration_number)
-{
-  typedef typename Mesh_2::Lloyd_move<CDT>    Move;
-  typedef typename Mesh_2::Mesh_global_optimizer<CDT,Move> Lloyd_optimizer;
+namespace Mesh_2 {
   
-  // Create optimizer
-  Lloyd_optimizer opt(cdt);
-   
-  // 1000 iteration max to avoid infinite loops
-  if ( 0 == max_iteration_number )
-    max_iteration_number = 1000;
+template <typename Tr>
+class Uniform_sizing_field
+{
+  typedef typename Tr::Geom_traits   Gt;
+  typedef typename Tr::Point         Point_2;
+  typedef typename Gt::FT            FT;
   
-  // Launch optimization
-  return opt(static_cast<int>(max_iteration_number));
-}
-}//namespace CGAL
+public:
+  // Vertices of mesh triangulation do not need to be updated 
+  static const bool is_vertex_update_needed = false;
+  
+public:
+  Uniform_sizing_field(const Tr&) {}
+  void fill(const std::map<Point_2,FT>&) {}
+  
+  FT operator()(const Point_2&) const { return FT(1); }
+  template <typename Handle>
+  FT operator()(const Point_2&, const Handle&) const { return FT(1); }
+};
+  
+  
+} // end namespace Mesh_2
 
-#endif
+
+} //namespace CGAL
+
+#endif // CGAL_MESH_2_UNIFORM_SIZING_FIELD_H

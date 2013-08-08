@@ -1,4 +1,23 @@
-
+// Copyright (c) 2009 INRIA Sophia-Antipolis (France).
+// All rights reserved.
+//
+// This file is part of CGAL (www.cgal.org).
+// You can redistribute it and/or modify it under the terms of the GNU
+// General Public License as published by the Free Software Foundation,
+// either version 3 of the License, or (at your option) any later version.
+//
+// Licensees holding a valid commercial license may use this file in
+// accordance with the commercial license agreement provided with the software.
+//
+// This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+// WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+//
+// $URL$
+// $Id$
+//
+//
+// Author(s)     : Raul Gallegos, Jane Tournois
+//
 //******************************************************************************
 // File Description : Lloyd move function
 //******************************************************************************
@@ -10,12 +29,14 @@
 #include <CGAL/centroid.h>
 #include <CGAL/Polygon_2_algorithms.h>
 #include <CGAL/intersections.h>
+#include <CGAL/Mesh_3/Uniform_sizing_field.h>
 
 namespace CGAL {
 
 namespace Mesh_2 {
 
-template <typename CDT>
+template <typename CDT,
+  typename SizingField = Uniform_sizing_field<typename CDT::Triangulation> >
 class Lloyd_move
 {
   typedef typename CDT::Geom_traits           Gt;
@@ -29,12 +50,14 @@ class Lloyd_move
   typedef typename CDT::Face_handle           Face_handle;
 
 public:
+  typedef SizingField Sizing_field;
   /**
    * @brief Return move to apply on \c v according to Lloyd optimization 
    * function
    */
   Vector_2 operator()(const Vertex_handle& v,
-                       CDT& cdt) const
+                       CDT& cdt,
+                       const Sizing_field& sizing_field = Sizing_field() ) const
   {
     
     if (cdt.cell_is_infinite(v)){
