@@ -28,6 +28,7 @@
 
 #include <CGAL/Mesh_2/Mesh_global_optimizer.h>
 #include <CGAL/Mesh_2/Lloyd_move.h>
+#include <CGAL/Mesh_2/Mesh_sizing_field.h>
 
 namespace CGAL
 {
@@ -36,8 +37,9 @@ namespace CGAL
   lloyd_optimize_mesh_2(CDT& cdt,
                         int& max_iteration_number)
 {
-  typedef typename Mesh_2::Lloyd_move<CDT>    Move;
-  typedef typename Mesh_2::Mesh_global_optimizer<CDT,Move> Lloyd_optimizer;
+  typedef Mesh_2::Mesh_sizing_field<CDT>                    Sizing;
+  typedef typename Mesh_2::Lloyd_move<CDT,Sizing>           Move;
+  typedef typename Mesh_2::Mesh_global_optimizer<CDT,Move>  Lloyd_optimizer;
   
   // Create optimizer
   Lloyd_optimizer opt(cdt);

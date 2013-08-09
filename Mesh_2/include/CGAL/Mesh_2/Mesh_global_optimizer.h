@@ -65,7 +65,7 @@ class Mesh_global_optimizer
 
   typedef std::vector<Move>                                Moves_vector;
   
-//  typedef typename MoveFunction::Sizing_field Sizing_field;
+  typedef typename MoveFunction::Sizing_field              Sizing_field;
       
 public:
   /**
@@ -120,7 +120,7 @@ private:
 //  FT sq_freeze_ratio_;
 //  FT convergence_ratio_;
   MoveFunction move_function_;
-//  Sizing_field sizing_field_;
+  Sizing_field sizing_field_;
 //  double time_limit_;
 //  CGAL::Timer running_time_;
   
@@ -138,6 +138,7 @@ Mesh_global_optimizer(CDT& cdt,
                         const MoveFunction move_function)
 : cdt_(cdt)
 , move_function_(move_function)
+, sizing_field_(cdt)
 {
 }
 
@@ -243,7 +244,7 @@ compute_move(const Vertex_handle& v)
   
   // Get move from move function
   //Vector_2 move = move_function_(v, c2t2_, sizing_field_);
-  Vector_2 move = move_function_(v, this->cdt_);
+  Vector_2 move = move_function_(v, this->cdt_,sizing_field_);
   
   // Project surface vertex
   /*if ( c2t2_.in_dimension(v) == 2 )

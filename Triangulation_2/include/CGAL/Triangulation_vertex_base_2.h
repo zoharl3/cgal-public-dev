@@ -35,6 +35,7 @@ class Triangulation_vertex_base_2
   typedef typename Vb::Triangulation_data_structure    Tds;
 public:
   typedef GT                                    Geom_traits;
+  typedef typename GT::FT                       FT;
   typedef typename GT::Point_2                  Point;
   typedef Tds                                   Triangulation_data_structure;
   typedef typename Tds::Face_handle             Face_handle;
@@ -53,14 +54,33 @@ public:
 
 private:
   Point _p;
+
+  // Used for checking if a vertex is part on a input_constraint.
+  // This is used on CDT
   bool _input_constraint;
 
+  // Used for storing info needed by Optimizers.
+  FT meshing_info_;
+
 public:
-  Triangulation_vertex_base_2 () : Vb(), _input_constraint(0) {}
-  Triangulation_vertex_base_2(const Point & p) : Vb(), _p(p), _input_constraint(0) {}
+  Triangulation_vertex_base_2 ()  : Vb()
+                                  , _input_constraint(0)
+                                  , meshing_info_(0) {}
+
+  Triangulation_vertex_base_2(const Point & p)  : Vb()
+                                                , _p(p)
+                                                , _input_constraint(0)
+                                                , meshing_info_(0) {}
+
   Triangulation_vertex_base_2(const Point & p, Face_handle f)
-    : Vb(f), _p(p), _input_constraint(0) {}
-  Triangulation_vertex_base_2(Face_handle f) : Vb(f), _input_constraint(0) {} 
+    : Vb(f)
+    , _p(p)
+    , _input_constraint(0)
+    , meshing_info_(0) {}
+
+  Triangulation_vertex_base_2(Face_handle f)  : Vb(f)
+                                              , _input_constraint(0)
+                                              , meshing_info_(0) {} 
 
   void set_point(const Point & p) { _p = p; }
   const Point&  point() const { return _p; }
@@ -78,6 +98,10 @@ public:
 
   void set_input_constraint(const bool input_constraint) { _input_constraint = input_constraint; }
   bool input_constraint() const { return _input_constraint; }
+
+  // Accessors to meshing_info private data
+  const FT& meshing_info() const { return meshing_info_; }
+  void set_meshing_info(const FT& value) { meshing_info_ = value; }
 
 #ifndef CGAL_NO_DEPRECATED_CODE
   size_type degree(); //should be const

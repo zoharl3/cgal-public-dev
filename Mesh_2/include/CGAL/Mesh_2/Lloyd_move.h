@@ -29,7 +29,7 @@
 #include <CGAL/centroid.h>
 #include <CGAL/Polygon_2_algorithms.h>
 #include <CGAL/intersections.h>
-#include <CGAL/Mesh_3/Uniform_sizing_field.h>
+#include <CGAL/Mesh_2/Uniform_sizing_field.h>
 
 namespace CGAL {
 
