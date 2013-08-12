@@ -256,6 +256,13 @@ public:
     return m_cvd[v].get_polygon();
 	}
 
+  Point dual (const Face_handle& f) const
+	{
+		CGAL_triangulation_precondition(this->_tds.is_face(f));
+		CGAL_triangulation_precondition (this->dimension()==2);
+		return this->circumcenter(f);
+	}
+
   int my_random(int min, int max){
   		return (int) (min + rand() % (max - min) );
   	}

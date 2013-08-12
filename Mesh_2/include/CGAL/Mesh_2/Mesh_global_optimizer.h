@@ -52,14 +52,15 @@ class Mesh_global_optimizer
   typedef typename Tr::Geom_traits                         Gt;
   
   typedef typename Tr::Point                               Point_2;
-//  typedef typename Tr::Face_handle      Face_handle;
+  typedef typename Tr::Face_handle                         Face_handle;
   typedef typename Tr::Vertex_handle                       Vertex_handle;
 //  typedef typename Tr::Edge             Edge;
 //  typedef typename Tr::Vertex           Vertex;
   
-//  typedef typename Gt::FT                                  FT;
+  typedef typename Gt::FT                                  FT;
   typedef typename Gt::Vector_2                            Vector_2;
-  
+
+  //typedef typename std::vector<Face_handle>                Face_vector;
   typedef typename std::set<Vertex_handle>                 Vertex_set;
   typedef typename std::pair<Vertex_handle,Point_2>        Move;
 
@@ -106,10 +107,26 @@ private:
   void update_mesh(const Moves_vector& moves,
                    Vertex_set& moving_vertices);
 
-  /*bool is_time_limit_reached() const
-  {
-    return ( (this->time_limit() > 0) && (running_time_.time() > this->time_limit()) );
-  }*/
+  /**
+   * Fill sizing field using sizes (avg circumradius) contained in tr_
+   */
+  void fill_sizing_field();
+
+  /**
+   * Returns the average circumradius length of cells incident to \c v
+   */
+  FT average_circumradius_length(const Vertex_handle& v) const;
+
+  /**
+   * Returns the minimum cicumradius length of cells incident to \c v
+   */
+  FT min_circumradius_sq_length(const Vertex_handle& v) const;
+
+  /**
+   * Returns the squared circumradius length of cell \c cell
+   */
+  FT sq_circumradius_length(const Face_handle& cell,
+                            const Vertex_handle& v) const;
 
 
 private:
@@ -140,6 +157,7 @@ Mesh_global_optimizer(CDT& cdt,
 , move_function_(move_function)
 , sizing_field_(cdt)
 {
+  fill_sizing_field();
 }
 
 template <typename CDT, typename MoveFunction>
@@ -244,7 +262,7 @@ compute_move(const Vertex_handle& v)
   
   // Get move from move function
   //Vector_2 move = move_function_(v, c2t2_, sizing_field_);
-  Vector_2 move = move_function_(v, this->cdt_,sizing_field_);
+  Vector_2 move = move_function_(v, cdt_, sizing_field_);
   
   // Project surface vertex
   /*if ( c2t2_.in_dimension(v) == 2 )
@@ -255,10 +273,10 @@ compute_move(const Vertex_handle& v)
     //move = vector(v->point(), helper_.project_on_surface(new_position,v));
   }*/
   
-/*  FT local_sq_size = min_circumradius_sq_length(v);
+  FT local_sq_size = min_circumradius_sq_length(v);
   if ( FT(0) == local_sq_size )
     return CGAL::NULL_VECTOR;
-  */
+
   //FT local_move_sq_length = sq_length(move) / local_sq_size;
   
   // Move point only if displacement is big enough w.r.t local size
@@ -308,21 +326,118 @@ update_mesh(const Moves_vector& moves,
     const Vertex_handle& v = it->first;
     const Point_2& new_position = it->second;
 
+    // Get size at new position
+    if ( Sizing_field::is_vertex_update_needed )
+    {
+      FT size = sizing_field_(new_position,v);
+    
+      // Move point
+      // NOT USING MOVE, BUT REMOVE AND INSERT
+      cdt_.remove(v);
+      Vertex_handle new_v = cdt_.insert(new_position);
+      
+      // Restore size in meshing_info data
+      new_v->set_meshing_info(size);
+    }
+    else
+    {
+      // Move point
+      // NOT USING MOVE, BUT REMOVE AND INSERT
+      cdt_.remove(v);
+      cdt_.insert(new_position);
+    }
+
     // How to treat the sizing field?
     //move_point(v,new_position,outdated_faces);
     //std::cout<<"moving point "<< v->point()<<" to its new location: "<<new_position<<std::endl;
     //cdt_.move(v,new_position);
 
-    // NOT USING MOVE, BUT REMOVE AND INSERT
-    cdt_.remove(v);
-    cdt_.insert(new_position);
+    
   }
   //moving_vertices.clear();
   // WHAT TO REALLY DO WITH MOVING_VERTICES?
   
   //facets insideness are updated by Delaunay_mesher_2
-} 
+}
 
+template <typename CDT, typename MoveFunction>
+void
+Mesh_global_optimizer<CDT, MoveFunction>::
+fill_sizing_field()
+{
+  std::map<Point_2,FT> value_map;
+  
+  // Fill map with local size
+  for(typename Tr::Finite_vertices_iterator vit = cdt_.finite_vertices_begin();
+      vit != cdt_.finite_vertices_end();
+      ++vit)
+  {
+    value_map.insert(std::make_pair(vit->point(),
+                                    average_circumradius_length(vit)));
+  }
+  
+  // fill sizing field
+  sizing_field_.fill(value_map);
+}
+
+template <typename CDT, typename MoveFunction>
+typename Mesh_global_optimizer<CDT, MoveFunction>::FT
+Mesh_global_optimizer<CDT, MoveFunction>::
+average_circumradius_length(const Vertex_handle& v) const
+{
+  FT sum_len (0);
+  unsigned int nb = 0;
+
+  typename CDT::Face_circulator face = cdt_.incident_faces(v);
+  typename CDT::Face_circulator begin = face;
+  CGAL_For_all(face, begin){
+    if( !cdt_.is_infinite(face) )
+    {
+      sum_len += CGAL::sqrt(sq_circumradius_length(face,v));
+      ++nb;
+    }
+  }
+
+  CGAL_assertion(nb!=0);
+  CGAL_assertion(sum_len!=0);
+  return sum_len/nb;
+}
+
+template <typename CDT, typename MoveFunction>
+typename Mesh_global_optimizer<CDT, MoveFunction>::FT
+Mesh_global_optimizer<CDT, MoveFunction>::
+min_circumradius_sq_length(const Vertex_handle& v) const
+{
+  
+
+  typename CDT::Face_circulator face = cdt_.incident_faces(v);
+  typename CDT::Face_circulator begin = face;
+
+  // Initialize min
+  FT min_sq_len = sq_circumradius_length(face,v);
+
+  // Find the minimum value
+  CGAL_For_all(face, begin){
+    if( !cdt_.is_infinite(face) )
+    {
+      min_sq_len = (std::min)(min_sq_len,sq_circumradius_length(face,v));
+    }
+  }
+  
+  return min_sq_len;
+}
+
+template <typename CDT, typename MoveFunction>
+typename Mesh_global_optimizer<CDT, MoveFunction>::FT
+Mesh_global_optimizer<CDT, MoveFunction>::
+sq_circumradius_length(const Face_handle& face, const Vertex_handle& v) const
+{
+  typename Gt::Compute_squared_distance_2 sq_distance =
+    Gt().compute_squared_distance_2_object();
+  
+  const Point_2 circumcenter = cdt_.dual(face);
+  return ( sq_distance(v->point(), circumcenter) );
+}
   
 } // end namespace Mesh_2
 

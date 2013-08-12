@@ -63,8 +63,8 @@ public:
   /**
    * Returns size at point \c p.
    */
-  //FT operator()(const Point_2& p) const
-  //{ return this->operator()(p,last_cell_); }
+  FT operator()(const Point_2& p) const
+  { return this->operator()(p,last_face_); }
   
   /**
    * Returns size at point \c p, using \c v to accelerate \c p location
@@ -76,7 +76,7 @@ public:
   /**
    * Returns size at point \c p.
    */
-  //FT operator()(const Point_2& p, const Cell_handle& c) const;
+  FT operator()(const Point_2& p, const Face_handle& c) const;
   
   /**
    * Returns size at point \c p. Assumes that p is the centroid of c.
@@ -85,10 +85,10 @@ public:
   
 private:
   /**
-   * Returns size at point \c p, by interpolation into tetrahedron.
+   * Returns size at point \c p, by interpolation into triangle.
    */
-  //FT interpolate_on_cell_vertices(const Point_2& p,
-    //                              const Cell_handle& cell) const;
+  FT interpolate(const Point_2& p,
+                                  const Face_handle& face) const;
   
   /**
    * Returns size at point \c p, by interpolation into facet (\c cell is assumed
@@ -101,7 +101,7 @@ private:
   /// The triangulation
   Tr& tr_;
   /// A cell that is used to accelerate location queries
-  //mutable Cell_handle last_cell_;
+  mutable Face_handle last_face_;
 };
   
   
@@ -140,22 +140,18 @@ fill(const std::map<Point_2, FT>& value_map)
     }
   }
 }  
-/*
+
 template <typename Tr, bool B>
 typename Mesh_sizing_field<Tr,B>::FT
 Mesh_sizing_field<Tr,B>::
-operator()(const Point_2& p, const Cell_handle& c) const  
+operator()(const Point_2& p, const Face_handle& f) const  
 {  
-  const Cell_handle cell = tr_.locate(p,c);
-  last_cell_ = cell;
-  
-  if ( !tr_.is_infinite(cell) )
-    return interpolate_on_cell_vertices(p,cell);
-  else
-    return interpolate_on_facet_vertices(p,cell);
+  const Face_handle face = tr_.locate(p,f);
+  last_face_ = face;
+  return interpolate(p,face);
 }
 
-
+/*
 template <typename Tr, bool B>
 typename Mesh_sizing_field<Tr,B>::FT
 Mesh_sizing_field<Tr,B>::
@@ -171,42 +167,39 @@ operator()(const Point_2&, const std::pair<Cell_handle,bool>& c) const
   const FT& vd = cell->vertex(3)->meshing_info();
   
   return ( (va+vb+vc+vd)/4 );
-}
+}*/
 
   
 template <typename Tr, bool B>
 typename Mesh_sizing_field<Tr,B>::FT
 Mesh_sizing_field<Tr,B>::
-interpolate_on_cell_vertices(const Point_2& p, const Cell_handle& cell) const
+interpolate(const Point_2& p, const Face_handle& face) const
 {
-  typename Gt::Compute_volume_3 volume =
-    Gt().compute_volume_3_object();
+  typename Gt::Compute_area_2 area =
+    Gt().compute_area_2_object();
   
-  // Interpolate value using tet vertices values
-  const FT& va = cell->vertex(0)->meshing_info();
-  const FT& vb = cell->vertex(1)->meshing_info();
-  const FT& vc = cell->vertex(2)->meshing_info();
-  const FT& vd = cell->vertex(3)->meshing_info();
+  // Interpolate value using triangle vertices values
+  const FT& va = face->vertex(0)->meshing_info();
+  const FT& vb = face->vertex(1)->meshing_info();
+  const FT& vc = face->vertex(2)->meshing_info();
   
-  const Point_2& a = cell->vertex(0)->point();
-  const Point_2& b = cell->vertex(1)->point();
-  const Point_2& c = cell->vertex(2)->point();
-  const Point_2& d = cell->vertex(3)->point();
+  const Point_2& a = face->vertex(0)->point();
+  const Point_2& b = face->vertex(1)->point();
+  const Point_2& c = face->vertex(2)->point();
   
-  const FT abcp = CGAL::abs(volume(a,b,c,p));
-  const FT abdp = CGAL::abs(volume(a,d,b,p));
-  const FT acdp = CGAL::abs(volume(a,c,d,p));
-  const FT bcdp = CGAL::abs(volume(b,d,c,p));
+  const FT abp = CGAL::abs(area(a,b,p));
+  const FT acp = CGAL::abs(area(a,c,p));
+  const FT bcp = CGAL::abs(area(b,c,p));
   
-  // If volume is 0, then compute the average value
-  if ( is_zero(abcp+abdp+acdp+bcdp) )
-    return (va+vb+vc+vd)/4.;
+  // If area is 0, then compute the average value
+  if ( is_zero(abp+acp+bcp) )
+    return (va+vb+vc)/3.;
   
-  return ( (abcp*vd + abdp*vc + acdp*vb + bcdp*va) / (abcp+abdp+acdp+bcdp) );
+  return ( (abp*va + acp*vb + bcp*vc) / (abp+acp+bcp) );
 }
   
   
-  
+/*  
 template <typename Tr, bool B>
 typename Mesh_sizing_field<Tr,B>::FT
 Mesh_sizing_field<Tr,B>::

@@ -135,8 +135,8 @@ public:
    
  
   // DUAL
-  Point dual (Face_handle f) const;
-  Object dual(const Edge &e) const ;
+  Point dual (const Face_handle& f) const;
+  Object dual(const Edge& e) const ;
   Object dual(const Edge_circulator& ec) const;
   Object dual(const Finite_edges_iterator& ei) const;
   Polygon_2 dual(const Vertex_handle& v);
@@ -785,7 +785,7 @@ template<class Gt, class Tds>
 inline
 typename Delaunay_triangulation_2<Gt,Tds>::Point
 Delaunay_triangulation_2<Gt,Tds>::
-dual (Face_handle f) const
+dual (const Face_handle& f) const
 {
   CGAL_triangulation_precondition(this->_tds.is_face(f));
   CGAL_triangulation_precondition (this->dimension()==2);
