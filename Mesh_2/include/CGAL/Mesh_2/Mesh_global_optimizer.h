@@ -98,7 +98,7 @@ private:
   /**
    * update big_moves_ vector with new_sq_move value
    */
-//  void update_big_moves(const FT& new_sq_move);
+  void update_big_moves(const FT& new_sq_move);
 
   /**
    * Updates mesh using moves of \c moves vector. Updates moving_vertices with
@@ -134,15 +134,15 @@ private:
   // Private data
   // -----------------------------------
   CDT& cdt_;
-//  FT sq_freeze_ratio_;
+  //FT sq_freeze_ratio_;
 //  FT convergence_ratio_;
   MoveFunction move_function_;
   Sizing_field sizing_field_;
 //  double time_limit_;
 //  CGAL::Timer running_time_;
   
-//  typedef std::list<FT> FT_list;
-//  FT_list big_moves_;
+  typedef std::list<FT> FT_list;
+  FT_list big_moves_;
   
 /*#ifdef CGAL_MESH_2_OPTIMIZER_VERBOSE
   mutable FT sum_moves_;
@@ -151,9 +151,11 @@ private:
 };
 template <typename CDT, typename MoveFunction>
 Mesh_global_optimizer<CDT, MoveFunction>::
-Mesh_global_optimizer(CDT& cdt,
+Mesh_global_optimizer(  CDT& cdt,
+//                        const FT& freeze_ratio,
                         const MoveFunction move_function)
 : cdt_(cdt)
+//, sq_freeze_ratio_(freeze_ratio*freeze_ratio)
 , move_function_(move_function)
 , sizing_field_(cdt)
 {
@@ -176,13 +178,12 @@ operator()(int nb_iterations)
   //collect_all_vertices(moving_vertices);
 
 //  std::size_t initial_vertices_nb = moving_vertices.size();
-
-  // Initialize big moves (stores the largest moves)
-/*  big_moves_.clear();
+//   Initialize big moves (stores the largest moves)
+  big_moves_.clear();
   std::size_t big_moves_size_ = 
     (std::max)(std::size_t(1), std::size_t(moving_vertices.size()/500));
   big_moves_.resize(big_moves_size_,FT(0));
-*/
+
   // Iterate
   int i = -1;
   while ( ++i < nb_iterations)// && ! is_time_limit_reached() )
@@ -217,7 +218,7 @@ compute_moves(const Vertex_set& moving_vertices)
   moves.reserve(moving_vertices.size());
   
   // reset worst_move list
-//  std::fill(big_moves_.begin(),big_moves_.end(),FT(0));
+  std::fill(big_moves_.begin(),big_moves_.end(),FT(0));
   
   // Get move for each moving vertex
   int i=0;
@@ -225,16 +226,11 @@ compute_moves(const Vertex_set& moving_vertices)
        vit != moving_vertices.end() ;
        ++vit )
   {
-    //std::cout<<++i<<": \n";
+    
     Vector_2 move = compute_move(*vit);
     if ( CGAL::NULL_VECTOR != move )
     {
-      //std::cout<<"BUENAS NOTICIAS"<<std::endl;
       Point_2 new_position = translate((*vit)->point(),move);
-
-      //std::cout<<"MGO-> vertex on: "<<(*vit)->point()<<std::endl;
-      //std::cout<<"MGO-> new_point: "<<new_position<<std::endl;
-      //Point_2 new_position = Point_2(5,5);
       moves.push_back(std::make_pair(*vit,new_position));
     }
     
@@ -251,8 +247,8 @@ typename Mesh_global_optimizer<CDT, MoveFunction>::Vector_2
 Mesh_global_optimizer<CDT, MoveFunction>::
 compute_move(const Vertex_handle& v)
 {    
-  /*typename Gt::Compute_squared_length_2 sq_length =
-    Gt().compute_squared_length_2_object();*/
+  typename Gt::Compute_squared_length_2 sq_length =
+    Gt().compute_squared_length_2_object();
   
   //typename Gt::Construct_vector_2 vector =
     //Gt().construct_vector_2_object();
@@ -277,7 +273,7 @@ compute_move(const Vertex_handle& v)
   if ( FT(0) == local_sq_size )
     return CGAL::NULL_VECTOR;
 
-  //FT local_move_sq_length = sq_length(move) / local_sq_size;
+  FT local_move_sq_length = sq_length(move) / local_sq_size;
   
   // Move point only if displacement is big enough w.r.t local size
   /*if ( local_move_sq_length < sq_freeze_ratio_ )
@@ -286,15 +282,15 @@ compute_move(const Vertex_handle& v)
   }*/
   
   // Update big moves
-  //update_big_moves(local_move_sq_length);
+  update_big_moves(local_move_sq_length);
   
   return move;
 }
-/*
+
 template <typename CDT, typename MoveFunction>
 void
 Mesh_global_optimizer<CDT, MoveFunction>::
-update_big_3(const FT& new_sq_move)
+update_big_moves(const FT& new_sq_move)
 {  
   namespace bl = boost::lambda;
   
@@ -309,8 +305,9 @@ update_big_3(const FT& new_sq_move)
     
     big_moves_.insert(pos, new_sq_move);
   }
-}*/
+}
 
+//TODO: @update_mesh doesn't need @moving_vertices
 template <typename CDT, typename MoveFunction>
 void
 Mesh_global_optimizer<CDT, MoveFunction>::
@@ -331,8 +328,7 @@ update_mesh(const Moves_vector& moves,
     {
       FT size = sizing_field_(new_position,v);
     
-      // Move point
-      // NOT USING MOVE, BUT REMOVE AND INSERT
+      // Move point ----> NOT USING MOVE, BUT REMOVE AND INSERT
       cdt_.remove(v);
       Vertex_handle new_v = cdt_.insert(new_position);
       
@@ -341,10 +337,13 @@ update_mesh(const Moves_vector& moves,
     }
     else
     {
-      // Move point
-      // NOT USING MOVE, BUT REMOVE AND INSERT
+      // Move point ----> NOT USING MOVE, BUT REMOVE AND INSERT
+
+      // Should the new vertex stay with the its previous size???
+      FT size = v->meshing_info();
       cdt_.remove(v);
-      cdt_.insert(new_position);
+      Vertex_handle new_v = cdt_.insert(new_position);
+      new_v->set_meshing_info(size);
     }
 
     // How to treat the sizing field?
@@ -354,7 +353,7 @@ update_mesh(const Moves_vector& moves,
 
     
   }
-  //moving_vertices.clear();
+  moving_vertices.clear();
   // WHAT TO REALLY DO WITH MOVING_VERTICES?
   
   //facets insideness are updated by Delaunay_mesher_2
