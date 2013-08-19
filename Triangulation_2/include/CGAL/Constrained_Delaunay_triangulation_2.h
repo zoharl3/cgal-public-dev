@@ -321,8 +321,8 @@ public:
 			case CGAL::ON_BOUNDARY : return true;
 			case CGAL::ON_UNBOUNDED_SIDE : return false;
 		}
-    CGAL_assertion(false);
-    return false;
+    	CGAL_assertion(false);
+    	return false;
 	}
 
 	// blind = false IFF each face sees its circumcenter
@@ -477,6 +477,7 @@ public:
 				polygon.push_back(this->circumcenter(face));
 				if(next->blind())  //next doesn't
 				{
+					std::cout<<"the face isn't blind but next one is"<<std::endl;
 					CGAL_assertion(do_intersect(line, this->segment(next->blinding_constraint())));
 					assign(intersection, CGAL::intersection(line, Line(this->segment(next->blinding_constraint()))));
 					polygon.push_back(intersection);
@@ -484,6 +485,7 @@ public:
 			}
 			else //face doesn't see
 			{
+				std::cout<<"the face is blind"<<std::endl;
 				if(!next->blind()) //next sees
 				{
 					CGAL_assertion(do_intersect(line, this->segment(face->blinding_constraint())));

@@ -101,7 +101,7 @@ public:
           int li;
           Face_handle fh = cdt.locate(new_point, loc, li);
           if( loc == CDT::VERTEX ){
-            // Delete vertex from here, or just return NULL?
+            // Delete vertex on same position, or just return NULL?
             return Vector_2(v->point(),new_point);  
           }else{
             if(!fh->blind())
@@ -116,7 +116,7 @@ public:
       case 1: return CGAL::NULL_VECTOR;
       case 2: 
         if( CGAL::parallel(cdt.segment(parallel_constraint),new_segment)){
-          Face_handle fh = cdt.locate(new_point);
+          //Face_handle fh = cdt.locate(new_point);
           return Vector_2(v->point(),new_point);
         }
         else

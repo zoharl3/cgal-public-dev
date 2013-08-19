@@ -1005,7 +1005,17 @@ inline  bool
 Constrained_triangulation_2<Gt,Tds,Itag>::
 is_constrained(Edge e) const
 {
-  return (e.first)->is_constrained(e.second);
+  // Border Edges should also be treated as constraints
+
+  // if the Edge was seen from the infinite face
+  if( is_infinite(e.first) )
+    return true;
+  // if the Edge was seen from and inside face
+  else if( is_infinite(this->mirror_edge(e).first) )
+    return true;
+  else
+    // Normal constraint
+    return (e.first)->is_constrained(e.second);
 }
     
 template < class Gt, class Tds, class Itag >

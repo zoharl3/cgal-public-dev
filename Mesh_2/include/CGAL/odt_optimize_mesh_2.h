@@ -38,7 +38,7 @@ namespace CGAL
                       int& max_iteration_number)
 {
   typedef Mesh_2::Mesh_sizing_field<CDT>                    Sizing;
-  typedef typename Mesh_2::Odt_move<CDT>                    Move;
+  typedef typename Mesh_2::Odt_move<CDT,Sizing>             Move;
   typedef typename Mesh_2::Mesh_global_optimizer<CDT,Move>  Odt_optimizer;
   
   // Create optimizer

@@ -71,7 +71,8 @@ public:
    * in triangulation
    */
   FT operator()(const Point_2& p, const Vertex_handle& v) const
-  { return v->meshing_info(); }
+  //{ return this->operator(p,v->); }
+  { return v->meshing_info();}
   
   /**
    * Returns size at point \c p.
@@ -110,7 +111,7 @@ template <typename Tr, bool B>
 Mesh_sizing_field<Tr,B>::
 Mesh_sizing_field(Tr& tr)
   : tr_(tr)
-  //, last_cell_()
+  , last_face_()
 {
 }  
   
@@ -169,7 +170,7 @@ operator()(const Point_2&, const std::pair<Cell_handle,bool>& c) const
   return ( (va+vb+vc+vd)/4 );
 }*/
 
-  
+//TODO: check this method functionality.  
 template <typename Tr, bool B>
 typename Mesh_sizing_field<Tr,B>::FT
 Mesh_sizing_field<Tr,B>::
@@ -195,7 +196,7 @@ interpolate(const Point_2& p, const Face_handle& face) const
   if ( is_zero(abp+acp+bcp) )
     return (va+vb+vc)/3.;
   
-  return ( (abp*va + acp*vb + bcp*vc) / (abp+acp+bcp) );
+  return ( (abp*vc + acp*vb + bcp*va) / (abp+acp+bcp) );
 }
   
   
