@@ -249,7 +249,8 @@ public:
   // DUAL
   Polygon_2 dual(const Vertex_handle& v)
 	{
-		m_cvd.clear();// Temporary solution
+		//m_cvd.clear();// Temporary solution
+		construct_cvd();
     if(m_cvd.find(v) == m_cvd.end())
     	if(!this->cell_is_infinite(v))
 		  m_cvd[v] = this->construct_cvd_cell(v);
@@ -292,7 +293,7 @@ public:
 		}
 	}
 
-  //returns true IFF generators's cell is finite
+  //returns true IFF generators's cell is infinite
 	bool cell_is_infinite(const Vertex_handle& generator) const
 	{
 		Face_circulator face = this->incident_faces(generator);
@@ -477,7 +478,7 @@ public:
 				polygon.push_back(this->circumcenter(face));
 				if(next->blind())  //next doesn't
 				{
-					std::cout<<"the face isn't blind but next one is"<<std::endl;
+					//std::cout<<"the face isn't blind but next one is"<<std::endl;
 					CGAL_assertion(do_intersect(line, this->segment(next->blinding_constraint())));
 					assign(intersection, CGAL::intersection(line, Line(this->segment(next->blinding_constraint()))));
 					polygon.push_back(intersection);
@@ -485,7 +486,7 @@ public:
 			}
 			else //face doesn't see
 			{
-				std::cout<<"the face is blind"<<std::endl;
+				//std::cout<<"the face is blind"<<std::endl;
 				if(!next->blind()) //next sees
 				{
 					CGAL_assertion(do_intersect(line, this->segment(face->blinding_constraint())));

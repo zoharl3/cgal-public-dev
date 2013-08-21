@@ -139,7 +139,7 @@ public:
   Object dual(const Edge& e) const ;
   Object dual(const Edge_circulator& ec) const;
   Object dual(const Finite_edges_iterator& ei) const;
-  Polygon_2 dual(const Vertex_handle& v);
+  Polygon_2 dual(const Vertex_handle& v) const;
 
   bool is_inside_triangulation_cell(const Vertex_handle& generator, 
                                     const Point & target) const;
@@ -852,7 +852,7 @@ dual(const Finite_edges_iterator& ei) const
 template<class Gt, class Tds>
 typename Delaunay_triangulation_2<Gt,Tds>::Polygon_2
 Delaunay_triangulation_2<Gt,Tds>::
-dual (const Vertex_handle& v)
+dual (const Vertex_handle& v) const
 {
 	CGAL_triangulation_precondition( v != Vertex_handle());
 	CGAL_triangulation_precondition( !this->is_infinite(v));
