@@ -304,6 +304,12 @@ Idem
 */ 
 Object dual(const Edge_iterator& ei) const; 
 
+/*!
+return a CGAL::Polygon_2 with the points forming the respective Voronoi
+Cell around the vertex `v`.
+*/
+Polygon_2 dual(const Vertex_handle& v) const;
+
 /*! 
 output the dual Voronoi diagram to stream `ps`. 
 */ 

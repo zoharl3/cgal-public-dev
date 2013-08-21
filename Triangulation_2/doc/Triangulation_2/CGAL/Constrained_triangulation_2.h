@@ -194,7 +194,9 @@ const Traits& t=Traits());
 /// @{
 
 /*! 
-Returns `true` if edge `e` is a constrained edge. 
+Returns `true` if edge `e` is a constrained edge.
+Border Edges (the ones next to the infinite vertex) are also
+considered as `Constraints`.
 */ 
 bool is_constrained(Edge e) const; 
 
