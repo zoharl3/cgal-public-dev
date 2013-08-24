@@ -321,6 +321,30 @@ Delaunay.)
 */ 
 void propagating_flip(List_edges & edges); 
 
+/*! 
+Returns the center of the circle circumscribed to face `f`. 
+\pre `f` is not infinite. 
+*/ 
+Point dual(const Face_handle &f) const; 
+
+/*!
+return a CGAL::Polygon_2 with the points forming the respective Voronoi
+Cell around the vertex `v` (This method respects constraints).
+*/
+Polygon_2 dual(const Vertex_handle& v) const;
+
+/*!
+Returns true if vertex `generator` is next to the infinite vertex.
+*/
+bool cell_is_infinite(const Vertex_handle& generator) const;
+
+/*!
+Returns true if Point `target` is inside Polygon formed by incident
+vertices of vertex `generator`.
+*/
+bool is_inside_triangulation_cell(const Vertex_handle& generator, 
+		const Point & target) const
+
 /// @}
 
 }; /* end Constrained_Delaunay_triangulation_2 */
