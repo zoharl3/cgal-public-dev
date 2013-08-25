@@ -2,6 +2,11 @@
 
 /// \defgroup PkgMesh2Concepts Concepts
 /// \ingroup PkgMesh2
+
+/// \defgroup PkgMesh2Functions Mesh Generation Functions
+/// \ingroup PkgMesh2
+/// Functions allow to optimize an existing mesh.
+
 /*!
 \addtogroup PkgMesh2
 \cgalPkgDescriptionBegin{2D Conforming Triangulations and Meshes,PkgMesh2Summary}
