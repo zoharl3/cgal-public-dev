@@ -375,7 +375,7 @@ void calculate_and_log_normalize_dihedral_angles(double smoothing_lambda,
         double angle = calculate_dihedral_angle_of_edge(edge_it);
      
         angle = (std::max)(angle, epsilon);
-        angle = -log(angle);        
+        angle = -log(angle);
         angle *= smoothing_lambda;
 
         edge_weights.push_back(angle);
@@ -433,7 +433,7 @@ int assign_segments(int number_of_clusters, SDFProperyMap sdf_values, SegmentPro
     for(std::size_t index = 0; index < segments_with_average_sdf_values.size(); ++index)
     {
         int segment_id = segments_with_average_sdf_values[index].first - number_of_clusters;
-        segment_id_to_sorted_id_map[segment_id] = index;
+        segment_id_to_sorted_id_map[segment_id] = static_cast<int>(index);
     }
     // make one-pass on facets. First make segment-id zero based by subtracting number_of_clusters   
     //                        . Then place its sorted index to pmap

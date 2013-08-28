@@ -220,7 +220,7 @@ private:
                 if(distance < min_distance)
                 {
                     min_distance = distance;
-                    closest_center = i;
+                    closest_center = static_cast<int>(i);
                 }
             }
             member_count[closest_center]++;
