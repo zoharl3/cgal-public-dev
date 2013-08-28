@@ -123,7 +123,6 @@ public:
   typedef typename Ctr::Edge          Edge;
   typedef typename Ctr::Finite_edges_iterator Finite_edges_iterator;
   typedef typename Ctr::Finite_faces_iterator Finite_faces_iterator;
-  typedef typename Ctr::All_faces_iterator 	  All_faces_iterator;
   typedef typename Ctr::Face_circulator       Face_circulator;
   typedef typename Ctr::size_type             size_type;
   typedef typename Ctr::Locate_type           Locate_type;
@@ -164,12 +163,12 @@ public:
   typedef typename Ctr::Segment  						Segment;
   typedef typename Geom_traits::FT 						FT;
   typedef typename Ctr::Triangle 						Triangle;
-  typedef internal::Cvd_cell<CDt> 						Cvd_cell;
-  typedef typename std::map<Vertex_handle, Cvd_cell> 	Cvd;
+  //typedef internal::Cvd_cell<CDt> 						Cvd_cell;
+  //typedef typename std::map<Vertex_handle, Cvd_cell> 	Cvd;
 
 protected:
 	FT m_bounding_box[4]; // xmin,xmax,ymin,ymax
-	Cvd m_cvd;
+//	Cvd m_cvd;
 private:
 		FT m_color_table[300]; //3 numbers for each color (100 colors)
 
@@ -178,7 +177,7 @@ public:
     : Ctr(gt) {
 	  	  m_bounding_box[0] = m_bounding_box[2] = 0.0;
 	  	  m_bounding_box[1] = m_bounding_box[3] = 1.0;
-	  	  this->construct_cvd();
+	  	  //this->construct_cvd();
   }
 
   Constrained_Delaunay_triangulation_2(const CDt& cdt)
@@ -250,11 +249,21 @@ public:
   Polygon_2 dual(const Vertex_handle& v)
 	{
 		//m_cvd.clear();// Temporary solution
-		construct_cvd();
-    if(m_cvd.find(v) == m_cvd.end())
-    	if(!this->cell_is_infinite(v))
-		  m_cvd[v] = this->construct_cvd_cell(v);
-    return m_cvd[v].get_polygon();
+		//construct_cvd();
+    	/*if(m_cvd.find(v) == m_cvd.end())
+	    	if(!this->cell_is_infinite(v))
+			  m_cvd[v] = this->construct_cvd_cell(v);
+    	return m_cvd[v].get_polygon();
+    	*/
+    	std::cout<<"Trying dual method"<<std::endl;
+    	if(!this->is_infinite(v)){
+    		std::cout<<"The vertex on "<<v->point()<<" isn't infinite"<<std::endl;
+    		if(!this->cell_is_infinite(v)){
+    			std::cout<<"The vertex is inside a proper cell......"<<std::endl;
+    			return construct_cvd_cell(v);
+    		}
+				
+    	}
 	}
 
   Point dual (const Face_handle& f) const
@@ -274,11 +283,12 @@ public:
 			m_color_table[i] = my_random(200,255);
 	}
 
-  Cvd get_cvd(){
+/*  Cvd get_cvd(){
 	  return m_cvd;
   }
+*/
 
-  void construct_cvd()
+/*  void construct_cvd()
 	{
 		m_cvd.clear();
 
@@ -292,21 +302,26 @@ public:
 				m_cvd[v] = this->construct_cvd_cell(v);
 		}
 	}
-
+*/
   //returns true IFF generators's cell is infinite
 	bool cell_is_infinite(const Vertex_handle& generator) const
 	{
-		Face_circulator face = this->incident_faces(generator);
-		Face_circulator begin = face;
-		CGAL_For_all(face, begin){
-			if(this->is_infinite(face))
+		std::cout<<"Checking if cell is infinite for vertex on -> "<<generator->point()<<std::endl;
+		Vertex_circulator vc = this->incident_vertices(generator);
+		Vertex_circulator begin = vc;
+		do{
+			std::cout<<"CGAL_FOR_ALL -> "<<vc->point()<<std::endl;
+			if(this->is_infinite(vc))
 				return true;
-		}
+		}while(vc++!=begin);
+		//CGAL_For_all(vc, begin){
+			
+		//}
 		return false;
 	}
 
 	bool is_inside_triangulation_cell(const Vertex_handle& generator, 
-		const Point & target) const
+						const Point & target) const
 	{
 		Vertex_circulator vc = this->incident_vertices(generator);
 		Vertex_circulator begin = vc;
@@ -329,9 +344,9 @@ public:
 	// blind = false IFF each face sees its circumcenter
 	void tag_all_faces_blind(const bool blind)
 	{
-		All_faces_iterator f = NULL;
-		for(f = this->all_faces_begin();
-				f != this->all_faces_end();
+		Finite_faces_iterator f;
+		for(f = this->finite_faces_begin();
+				f != this->finite_faces_end();
 				f++)
 			f->blind() = blind;
 	}
@@ -372,7 +387,7 @@ public:
 	// tags with their sights, with respect to the Edge constraint,
 	// seed and its neighbor faces, on the same side of Edge than seed.
 	void tag_neighbors_blind(Face_handle& seed,
-													 const Edge constraint)
+						const Edge constraint)
 	{
 		CGAL_assertion(this->is_constrained(constraint));
 		if(!this->is_infinite(seed)
@@ -395,7 +410,7 @@ public:
 
 	// puts in the stack the unvisited (un-tagged) neighbor faces of f
 	void push_unvisited_neighbors(Face_handle& f,
-																std::stack<Face_handle>& faces)
+						std::stack<Face_handle>& faces)
 	{
 		for(int i=0; i<3; i++)
 		{
@@ -410,7 +425,7 @@ public:
 
 	// test face for blind with respect to the edge constraint
 	void tag_face_blind(Face_handle& f,
-											const Edge constraint)
+						const Edge constraint)
 	{
 		Point c = this->circumcenter(f);
 
@@ -428,7 +443,7 @@ public:
 	// predicate: returns true if the triangle tr and its circumcenter
 	// are on the opposite side of the segment seg
 	bool segment_hides_circumcenter(const Segment seg,
-																	const Triangle tr)
+						const Triangle tr)
 	{
 		Point A = seg.source();
 		Point B = seg.target();
@@ -456,10 +471,11 @@ public:
 
 	// assemble a cell of the bounded Voronoi diagram
 	// incident to vertex v
-	Cvd_cell construct_cvd_cell(Vertex_handle v)
+	Polygon_2 construct_cvd_cell(Vertex_handle v)
 	{
+		std::cout<<"CONSTRUCTING CVD CELL"<<std::endl;
 		Polygon_2 polygon;
-
+		std::cout<<"CHECKING ASSERTION"<<std::endl;
 		CGAL_assertion(!is_infinite(v));
 		Face_circulator face = this->incident_faces(v);
 		Face_circulator begin = face;
@@ -468,6 +484,7 @@ public:
 		Point intersection;
 		Line line;
 
+		std::cout<<"Starting THE ITERATION"<<std::endl;
 		CGAL_For_all(face, begin)
 		{
 			next++;
@@ -478,7 +495,7 @@ public:
 				polygon.push_back(this->circumcenter(face));
 				if(next->blind())  //next doesn't
 				{
-					//std::cout<<"the face isn't blind but next one is"<<std::endl;
+					std::cout<<"the face isn't blind but next one is"<<std::endl;
 					CGAL_assertion(do_intersect(line, this->segment(next->blinding_constraint())));
 					assign(intersection, CGAL::intersection(line, Line(this->segment(next->blinding_constraint()))));
 					polygon.push_back(intersection);
@@ -486,7 +503,7 @@ public:
 			}
 			else //face doesn't see
 			{
-				//std::cout<<"the face is blind"<<std::endl;
+				std::cout<<"the face is blind"<<std::endl;
 				if(!next->blind()) //next sees
 				{
 					CGAL_assertion(do_intersect(line, this->segment(face->blinding_constraint())));
@@ -512,7 +529,7 @@ public:
 			}
 		}//end CGAL_For_all
 
-		return Cvd_cell(polygon, v);
+		return polygon;
 	}
 /*
 	void gl_draw_constructed_cvd()
@@ -1151,6 +1168,8 @@ insert(const Point & a, Face_handle start)
 {
   Vertex_handle va= Ctr::insert(a, start);
   flip_around(va); 
+//  tag_faces_blind(); // added to work when mesh changes
+  std::cout<<"vertex inserted on -> "<<va->point()<<std::endl;
   return va;
 }
 
@@ -1162,8 +1181,11 @@ insert(const Point& a, Locate_type lt, Face_handle loc, int li)
 // constrained edges are updated
 // Delaunay property is restored
 {
+
   Vertex_handle va= Ctr::insert(a,lt,loc,li);
   flip_around(va); 
+//  tag_faces_blind(); // added to work when mesh changes
+  std::cout<<"vertex inserted on -> "<<va->point()<<std::endl;
   return va;
 }
 
@@ -1205,6 +1227,7 @@ remove(Vertex_handle v)
   CGAL_triangulation_precondition( ! are_there_incident_constraints(v));
   if  (dimension() <= 1)    Ctr::remove(v);
   else  remove_2D(v);
+  //tag_faces_blind(); // added to work when mesh changes
   return;
 }
 

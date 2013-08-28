@@ -1005,6 +1005,7 @@ inline  bool
 Constrained_triangulation_2<Gt,Tds,Itag>::
 is_constrained(Edge e) const
 {
+  if(number_of_vertices() <= 3) return true;
   // Border Edges should also be treated as constraints
 
   // if the Edge was seen from the infinite face

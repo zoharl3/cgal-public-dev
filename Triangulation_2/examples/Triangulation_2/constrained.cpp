@@ -13,11 +13,14 @@ typedef CGAL::Exact_predicates_tag                               Itag;
 typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag> CDT;
 typedef CDT::Point          Point;
 typedef CDT::Edge           Edge;
+typedef CDT::Vertex_handle  Vertex_handle;
+typedef CDT::Finite_vertices_iterator Finite_vertices_iterator;
+typedef CDT::Polygon_2  Polygon;
 
 int
 main( )
 {
-  CDT cdt;
+/*  CDT cdt;
   std::cout << "Inserting a grid of 5x5 constraints " << std::endl;
   for (int i = 1; i < 6; ++i)
     cdt.insert_constraint( Point(0,i), Point(6,i));
@@ -32,24 +35,23 @@ main( )
     if (cdt.is_constrained(*eit)) ++count;
   std::cout << "The number of resulting constrained edges is  ";
   std::cout <<  count << std::endl;
-
-/*  CDT cdt;
-  cdt.insert(Point(0,0));
+*/
+  CDT cdt;
+  //cdt.insert(Point(0,0));
   cdt.insert(Point(0,5));
   cdt.insert(Point(5,0));
-  cdt.insert(Point(5,5));
-
-  for(CDT::Finite_faces_iterator ffi = cdt.finite_faces_begin();
-        ffi != cdt.finite_faces_end(); ffi++){
-    Edge edge0 = cdt.mirror_edge(Edge(ffi,0));
-    //std::cout << "is infinite " << cdt.is_infinite((edge0.first)->vertex(edge0.second)) << std::endl;
-    std::cout << "is constrained " << cdt.is_constrained(Edge(ffi,0)) << std::endl;
-    Edge edge1 = cdt.mirror_edge(Edge(ffi,1));
-    //std::cout << "is infinite " << cdt.is_infinite((edge1.first)->vertex(edge1.second)) << std::endl;
-    std::cout << "is constrained " << cdt.is_constrained(Edge(ffi,1)) << std::endl;
-    Edge edge2 = cdt.mirror_edge(Edge(ffi,2));
-    //std::cout << "is infinite " << cdt.is_infinite((edge2.first)->vertex(edge2.second)) << std::endl;
-    std::cout << "is constrained " << cdt.is_constrained(Edge(ffi,2)) << std::endl;
-  }*/
+  cdt.insert(Point(-5,0));
+  cdt.insert(Point(0,-5));
+  Vertex_handle vh = cdt.insert(Point(0,0));
+  Vertex_handle vh2 = cdt.insert(Point(5,5));
+  //cdt.remove(vh);
+  for(Finite_vertices_iterator vit = cdt.finite_vertices_begin();
+    vit != cdt.finite_vertices_end();
+    vit++){
+    Polygon poly = cdt.dual(vit);
+    std::cout<<poly<<std::endl;  
+  }
+  //std::cout<<"0 = "<<cdt.cell_is_infinite(vh)<<std::endl;
+  std::cout<<"0 = "<<cdt.cell_is_infinite(vh2)<<std::endl;
   return 0;
 }

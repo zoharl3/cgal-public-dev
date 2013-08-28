@@ -25,7 +25,7 @@ typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag> CDT;
 typedef CDT::Point          Point;
 
 typedef CDT::Finite_faces_iterator    Finite_faces_iterator;
-typedef CDT::Cvd                        Cvd;
+//typedef CDT::Cvd                        Cvd;
 typedef CDT::Polygon_2                    Polygon_2;
 
 void Triangulation_to_vtk(CDT cdt,std::string name)
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
   Triangulation_to_vtk(cdt,"./vtk_files/cdt.vtk");
 
 
-  cdt.construct_cvd();
+  //cdt.construct_cvd();
   int i=1;
 
   std::cout<<"Printing centroids of Polygons"<<std::endl;

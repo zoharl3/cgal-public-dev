@@ -23,7 +23,7 @@ typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag> CDT;
 typedef CDT::Point          Point;
 
 typedef CDT::Finite_faces_iterator    Finite_faces_iterator;
-typedef CDT::Cvd                        Cvd;
+//typedef CDT::Cvd                        Cvd;
 typedef CDT::Polygon_2                    Polygon_2;
 
 void Triangulation_to_vtk(CDT cdt,std::string name)
