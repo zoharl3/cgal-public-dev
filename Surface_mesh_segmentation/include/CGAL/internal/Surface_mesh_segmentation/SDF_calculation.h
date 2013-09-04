@@ -114,7 +114,7 @@ public:
         centroid_functor(traits.construct_centroid_3_object()),
         use_diagonal(use_diagonal)
     {
-      tree.insert(mesh.facets_begin(), mesh.facets_end());
+      tree.insert(mesh.facets_begin(), mesh.facets_end(), mesh);
       tree.build();
 
       if(build_kd_tree) { tree.accelerate_distance_queries(); }
