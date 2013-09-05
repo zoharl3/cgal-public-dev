@@ -255,15 +255,12 @@ public:
 			  m_cvd[v] = this->construct_cvd_cell(v);
     	return m_cvd[v].get_polygon();
     	*/
-    	std::cout<<"Trying dual method"<<std::endl;
     	if(!this->is_infinite(v)){
-    		std::cout<<"The vertex on "<<v->point()<<" isn't infinite"<<std::endl;
     		if(!this->cell_is_infinite(v)){
-    			std::cout<<"The vertex is inside a proper cell......"<<std::endl;
     			return construct_cvd_cell(v);
     		}
-				
     	}
+    	return Polygon_2();
 	}
 
   Point dual (const Face_handle& f) const
@@ -306,17 +303,12 @@ public:
   //returns true IFF generators's cell is infinite
 	bool cell_is_infinite(const Vertex_handle& generator) const
 	{
-		std::cout<<"Checking if cell is infinite for vertex on -> "<<generator->point()<<std::endl;
 		Vertex_circulator vc = this->incident_vertices(generator);
 		Vertex_circulator begin = vc;
-		do{
-			std::cout<<"CGAL_FOR_ALL -> "<<vc->point()<<std::endl;
+		CGAL_For_all(vc, begin){
 			if(this->is_infinite(vc))
 				return true;
-		}while(vc++!=begin);
-		//CGAL_For_all(vc, begin){
-			
-		//}
+		}
 		return false;
 	}
 
@@ -473,9 +465,7 @@ public:
 	// incident to vertex v
 	Polygon_2 construct_cvd_cell(Vertex_handle v)
 	{
-		std::cout<<"CONSTRUCTING CVD CELL"<<std::endl;
 		Polygon_2 polygon;
-		std::cout<<"CHECKING ASSERTION"<<std::endl;
 		CGAL_assertion(!is_infinite(v));
 		Face_circulator face = this->incident_faces(v);
 		Face_circulator begin = face;
@@ -484,7 +474,6 @@ public:
 		Point intersection;
 		Line line;
 
-		std::cout<<"Starting THE ITERATION"<<std::endl;
 		CGAL_For_all(face, begin)
 		{
 			next++;
@@ -495,7 +484,6 @@ public:
 				polygon.push_back(this->circumcenter(face));
 				if(next->blind())  //next doesn't
 				{
-					std::cout<<"the face isn't blind but next one is"<<std::endl;
 					CGAL_assertion(do_intersect(line, this->segment(next->blinding_constraint())));
 					assign(intersection, CGAL::intersection(line, Line(this->segment(next->blinding_constraint()))));
 					polygon.push_back(intersection);
@@ -503,7 +491,6 @@ public:
 			}
 			else //face doesn't see
 			{
-				std::cout<<"the face is blind"<<std::endl;
 				if(!next->blind()) //next sees
 				{
 					CGAL_assertion(do_intersect(line, this->segment(face->blinding_constraint())));
@@ -1168,8 +1155,7 @@ insert(const Point & a, Face_handle start)
 {
   Vertex_handle va= Ctr::insert(a, start);
   flip_around(va); 
-//  tag_faces_blind(); // added to work when mesh changes
-  std::cout<<"vertex inserted on -> "<<va->point()<<std::endl;
+  tag_faces_blind(); // added to work when mesh changes
   return va;
 }
 
@@ -1184,8 +1170,7 @@ insert(const Point& a, Locate_type lt, Face_handle loc, int li)
 
   Vertex_handle va= Ctr::insert(a,lt,loc,li);
   flip_around(va); 
-//  tag_faces_blind(); // added to work when mesh changes
-  std::cout<<"vertex inserted on -> "<<va->point()<<std::endl;
+  tag_faces_blind(); // added to work when mesh changes
   return va;
 }
 
@@ -1227,7 +1212,7 @@ remove(Vertex_handle v)
   CGAL_triangulation_precondition( ! are_there_incident_constraints(v));
   if  (dimension() <= 1)    Ctr::remove(v);
   else  remove_2D(v);
-  //tag_faces_blind(); // added to work when mesh changes
+  tag_faces_blind(); // added to work when mesh changes
   return;
 }
 

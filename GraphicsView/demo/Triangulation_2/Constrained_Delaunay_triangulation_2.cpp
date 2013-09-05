@@ -110,13 +110,13 @@ typedef CGAL::Delaunay_mesher_2<CDT, Lipschitz_criteria>          Lipschitz_mesh
 
 typedef CDT::Vertex_handle                                        Vertex_handle;
 typedef CDT::Face_handle                                          Face_handle;
-typedef CDT::Finite_faces_iterator                                Finite_faces_iterator;
+typedef CDT::All_faces_iterator                                All_faces_iterator;
 
 
 void
 initializeID(const CDT& ct)
 {
-  for(Finite_faces_iterator it = ct.finite_faces_begin(); it != ct.finite_faces_end(); ++it){
+  for(All_faces_iterator it = ct.all_faces_begin(); it != ct.all_faces_end(); ++it){
     it->set_counter(-1);
   }
 }
