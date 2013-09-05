@@ -24,7 +24,7 @@ namespace CGAL {
 /// @cond CGAL_DOCUMENT_INTERNAL
 namespace internal{
 
-// Postprocess functions for sdf values
+// Post-process functions for sdf values
 template<class Polyhedron>
 class Postprocess_sdf_values {
 
@@ -164,7 +164,7 @@ public:
  *   -  Expectation_maximization for soft clustering
  *   -  An implementation of alpha-expansion graph cut for hard clustering
  *
- * Other than being a connector, it is also responsable for preprocess and postprocess on intermadiate data, which are:
+ * Other than being a connector, it is also responsible for pre-process and postprocess on intermediate data, which are:
  *   - log-normalizing probabilities received from soft clustering
  *   - log-normalizing and calculating dihedral-angle based weights for edges
  *   - smoothing and log-normalizing sdf values received from sdf calculation (Filters.h)
@@ -237,6 +237,7 @@ calculate_sdf_values(double cone_angle, int number_of_rays, SDFPropertyMap sdf_p
 template <class FacetSegmentMap, class SDFPropertyMap>
 int partition(int number_of_centers, double smoothing_lambda, SDFPropertyMap sdf_pmap, FacetSegmentMap segment_pmap, bool clusters_to_segments)
 {
+    CGAL_precondition(number_of_centers > 0);
     smoothing_lambda = (std::max)(0.0, smoothing_lambda); // min zero
     smoothing_lambda *= CGAL_SMOOTHING_LAMBDA_MULTIPLIER; // scale it into meaningful range for graph-cut
 
@@ -323,7 +324,7 @@ void log_normalize_sdf_values(SDFPropertyMap sdf_values, std::vector<double>& no
 }
 
 /**
- * Receives probability-matrix with probabilities betwen [0-1], and returns log-normalized probabilities
+ * Receives probability-matrix with probabilities between [0-1], and returns log-normalized probabilities
  * which are suitable to use in graph-cut.
  * @param[in, out] probabilities probability matrix in [center][facet] order
  */
