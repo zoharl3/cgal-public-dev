@@ -354,8 +354,8 @@ private:
         const Point& p1 = facet->halfedge()->vertex()->point();
         const Point& p2 = facet->halfedge()->next()->vertex()->point();
         const Point& p3 = facet->halfedge()->prev()->vertex()->point();
-        const Point& center  = centroid_functor(p1, p2, p3);
-        const Vector& normal = unit_normal_functor(p2, p1, p3);
+        const Point center  = centroid_functor(p1, p2, p3);
+        const Vector normal = unit_normal_functor(p2, p1, p3);
         
         CGAL::internal::SkipPrimitiveFunctor<typename Polyhedron::Facet_const_handle> skip(facet);
         CGAL::internal::FirstIntersectionVisitor<typename Polyhedron::Facet_const_handle> visitor;
