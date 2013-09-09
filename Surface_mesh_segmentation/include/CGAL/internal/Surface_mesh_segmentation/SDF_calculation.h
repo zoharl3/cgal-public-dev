@@ -351,7 +351,7 @@ private:
         const Point& p1 = facet->halfedge()->vertex()->point();
         const Point& p2 = facet->halfedge()->next()->vertex()->point();
         const Point& p3 = facet->halfedge()->prev()->vertex()->point();
-        const Point center  = centroid_functor(p1, p2, p3);
+        const Point& center  = centroid_functor(p1, p2, p3);
         Vector normal = normal_functor(p2, p1, p3);
         normal=scale_functor(normal,FT(1.0/std::sqrt(to_double(normal.squared_length()))));
         
