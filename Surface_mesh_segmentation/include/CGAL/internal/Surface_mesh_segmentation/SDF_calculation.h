@@ -270,7 +270,7 @@ public:
         const FT normal_multiplier( cos(cone_angle / 2.0) );
         const FT disk_multiplier  ( sin(cone_angle / 2.0) );
 
-        const Vector scaled_normal = scale_functor(normal, normal_multiplier);
+        const Vector& scaled_normal = scale_functor(normal, normal_multiplier);
 
         for(Disk_samples_list::const_iterator sample_it = disk_samples.begin(); 
             sample_it != disk_samples.end(); ++sample_it)
@@ -286,9 +286,9 @@ public:
 
             if(use_diagonal) {              
                 FT max_distance( max_diagonal / std::sqrt(to_double(ray_direction.squared_length())));
-                const Vector scaled_direction = scale_functor(ray_direction, max_distance);
-                const Vector target_vector = sum_functor( Vector(Point(ORIGIN), center), scaled_direction);
-                const Point  target_point = translated_point_functor(Point(ORIGIN), target_vector);
+                const Vector& scaled_direction = scale_functor(ray_direction, max_distance);
+                const Vector& target_vector = sum_functor( Vector(Point(ORIGIN), center), scaled_direction);
+                const Point&  target_point = translated_point_functor(Point(ORIGIN), target_vector);
                 Segment segment(center, target_point); 
 
                 if(traits.is_degenerate_3_object()(segment)) {
