@@ -72,26 +72,18 @@ public:
     Polygon_2 poly = cdt.dual(v);
     std::size_t poly_size = poly.size();
 
-    // This shouldn't happen.
-    if(poly_size==0)
-      return CGAL::NULL_VECTOR;
+    CGAL_assertion(poly_size!=0);
 
-    Point_set pset;
     double new_x=0.0;
     double new_y=0.0;
 
-    // Dual function could return duplicated points.
-    for(typename Polygon_2::iterator pit=poly.vertices_begin(); pit!=poly.vertices_end(); pit++){
-      pset.insert(*pit);
-    }
-
     // Getting average point from the dual
-    for(typename Point_set::iterator psit=pset.begin(); psit!=pset.end(); psit++){
+    for(typename Polygon_2::Vertex_iterator psit=poly.vertices_begin(); psit!=poly.vertices_end(); psit++){
       new_x += psit->x();
       new_y += psit->y();
     }
 
-    Point_2 new_point = Point_2(new_x/pset.size(),new_y/pset.size());
+    Point_2 new_point = Point_2(new_x/poly_size,new_y/poly_size);
 
     //Check if there are more than 2 incident constrained edges.
     Edge parallel_constraint;
@@ -110,6 +102,12 @@ public:
     }while(ec != done);
 
     Segment_2 new_segment = Segment_2(new_point,v->point());
+
+    typename Gt::Construct_vector_2 vector = 
+      Gt().construct_vector_2_object();
+
+    const Point_2& p = v->point();
+
     switch(num_constraints){
       // There aren't incident constraints.
       case 0: 
@@ -117,6 +115,7 @@ public:
           typename CDT::Locate_type loc;
           int li;
           Face_handle fh = cdt.locate(new_point, loc, li);
+
           if( loc == CDT::VERTEX ){
             // Delete vertex on same position, or just return NULL?
             return Vector_2(v->point(),new_point);  

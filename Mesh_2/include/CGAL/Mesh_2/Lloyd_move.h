@@ -60,9 +60,12 @@ public:
                        const Sizing_field& sizing_field = Sizing_field() ) const
   {
     
+    // The infinite vertex
     if (cdt.cell_is_infinite(v)){
       return CGAL::NULL_VECTOR;
     }
+
+    // If the vertex is an input_constraint
     if(v->input_constraint()){
       return CGAL::NULL_VECTOR;
     }
@@ -70,9 +73,7 @@ public:
     Polygon_2 poly = cdt.dual(v);
     std::size_t poly_size = poly.size();
 
-    if(poly_size==0){// This shouldn't happen
-      return CGAL::NULL_VECTOR;
-    }
+    CGAL_assertion(poly_size!=0);
 
     Point_2 new_point = CGAL::centroid(poly.vertices_begin(),
       poly.vertices_end(),

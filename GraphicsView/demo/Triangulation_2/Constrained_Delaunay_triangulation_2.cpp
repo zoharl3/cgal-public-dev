@@ -1,5 +1,5 @@
 //#define CGAL_USE_BOOST_BIMAP
-#define CGAL_MESH_2_OPTIMIZER_VERBOSE
+//#define CGAL_MESH_2_OPTIMIZER_VERBOSE
 
 #include <fstream>
 #include <vector>
@@ -475,11 +475,11 @@ MainWindow::on_actionRefineLloyd_triggered()
   
   Mesher mesher(cdt);
   mesher.set_criteria(Criteria(0.125, 0.5));
-  mesher.refine_mesh();
+  //mesher.refine_mesh();
 
   for(int i=0; i<number_of_iterations; i++){
     QApplication::setOverrideCursor(Qt::WaitCursor);
-    
+    std::cout<<"iteration: "<<i<<std::endl;
     // sleep
     QTime dieTime = QTime::currentTime().addMSecs(200);
     while( QTime::currentTime() < dieTime )
@@ -516,11 +516,11 @@ MainWindow::on_actionRefineOdt_triggered()
   
   Mesher mesher(cdt);
   mesher.set_criteria(Criteria(0.125, 0.5));
-  mesher.refine_mesh();
+  //mesher.refine_mesh();
 
   for(int i=0; i<number_of_iterations; i++){
     QApplication::setOverrideCursor(Qt::WaitCursor);
-
+    std::cout<<"iteration: "<<i<<std::endl;
     // sleep
     QTime dieTime = QTime::currentTime().addMSecs(200);
     while( QTime::currentTime() < dieTime )
