@@ -32,7 +32,9 @@
  #include <boost/graph/kolmogorov_max_flow.hpp>
 #endif
 #else
+namespace MaxFlow{
 #include <CGAL/internal/auxiliary/graph.h>
+}
 #endif
 
 #include <vector>
@@ -504,7 +506,7 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
     double vertex_creation_time, edge_creation_time, cut_time;
     vertex_creation_time = edge_creation_time = cut_time = 0.0;
 
-    std::vector<Graph::node_id> inserted_vertices;
+    std::vector<MaxFlow::Graph::node_id> inserted_vertices;
     inserted_vertices.resize(labels.size());
     bool success;
     do {
@@ -513,13 +515,13 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
         for(std::vector<std::vector<double> >::const_iterator it = probability_matrix.begin(); 
             it != probability_matrix.end(); ++it, ++alpha)
         {
-            Graph graph; 
+            MaxFlow::Graph graph;
             Timer timer; timer.start();
             // For E-Data 
             // add every facet as a vertex to graph, put edges to source-sink vertices
             for(std::size_t vertex_i = 0; vertex_i <  labels.size(); ++vertex_i)
             {
-                Graph::node_id new_vertex = graph.add_node();                
+                MaxFlow::Graph::node_id new_vertex = graph.add_node();
                 inserted_vertices[vertex_i] = new_vertex;
                 
                 double source_weight = probability_matrix[alpha][vertex_i];
@@ -536,8 +538,8 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
             for(std::vector<std::pair<int, int> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
                 ++edge_it, ++weight_it)
             {
-                Graph::node_id v1 = inserted_vertices[edge_it->first];
-                Graph::node_id v2 = inserted_vertices[edge_it->second];
+                MaxFlow::Graph::node_id v1 = inserted_vertices[edge_it->first];
+                MaxFlow::Graph::node_id v2 = inserted_vertices[edge_it->second];
                 int label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
                 if(label_1 == label_2)
                 {     
@@ -546,7 +548,7 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                 }
                 else
                 {
-                    Graph::node_id inbetween = graph.add_node();                        
+                    MaxFlow::Graph::node_id inbetween = graph.add_node();
                     
                     double w1 = (label_1 == alpha) ? 0 : *weight_it;
                     double w2 = (label_2 == alpha) ? 0 : *weight_it;
@@ -567,7 +569,7 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
             //update labeling
             for(std::size_t vertex_i = 0; vertex_i < labels.size(); ++vertex_i)
             {
-                if(labels[vertex_i] != alpha && graph.what_segment(inserted_vertices[vertex_i]) == Graph::SINK)
+                if(labels[vertex_i] != alpha && graph.what_segment(inserted_vertices[vertex_i]) == MaxFlow::Graph::SINK)
                 {
                    labels[vertex_i] = alpha; 
                 }
