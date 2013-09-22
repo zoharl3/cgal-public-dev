@@ -105,10 +105,8 @@ public:
             // Delete vertex on same position, or just return NULL?
             return Vector_2(v->point(),new_point);  
           }else{
-            if(!fh->blind())
-              return Vector_2(v->point(),new_point);
-            else
-              return CGAL::NULL_VECTOR;
+            // Normal case
+            return Vector_2(v->point(),new_point);
           }
         }
         else

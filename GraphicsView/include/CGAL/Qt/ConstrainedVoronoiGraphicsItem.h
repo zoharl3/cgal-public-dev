@@ -25,6 +25,7 @@ template <typename DT>
 class ConstrainedVoronoiGraphicsItem : public GraphicsItem
 {
   typedef CGAL::Polygon_2<typename DT::Geom_traits, std::vector<typename DT::Point> >    Polygon_2;
+  typedef typename DT::Point Point_2;
 public:
   ConstrainedVoronoiGraphicsItem(DT  * dt_);
 
@@ -83,10 +84,25 @@ ConstrainedVoronoiGraphicsItem<DT>::paint(QPainter *painter, const QStyleOptionG
       vit != dt->finite_vertices_end();
       vit++){
     Polygon_2 poly = this->dt->dual(vit);
+
+    QPen point_pen(::Qt::yellow);
+    point_pen.setWidth(4);
+    painter->setPen(point_pen);
+
+
+
+    Point_2 new_point = CGAL::centroid(poly.vertices_begin(),
+      poly.vertices_end(),
+      CGAL::Dimension_tag<0>());
+
+    painter->drawPoint(new_point.x(),new_point.y());
+
+    painter->setPen(edges_pen);
     for(unsigned int i=0; i<poly.size() ; i++){
       typename DT::Segment s = typename DT::Segment(poly[i],poly[(i+1)%poly.size()]);
       pos<<s;
     }
+    //pos<<new_point;
   }
 }
 
