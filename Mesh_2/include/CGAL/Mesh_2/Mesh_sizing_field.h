@@ -72,7 +72,7 @@ public:
    */
   FT operator()(const Point_2& p, const Vertex_handle& v) const
   //{ return this->operator(p,v->); }
-  { return v->meshing_info();}
+  { return this->operator()(p, v->face());}
   
   /**
    * Returns size at point \c p.
@@ -88,7 +88,13 @@ private:
   /**
    * Returns size at point \c p, by interpolation into triangle.
    */
-  FT interpolate(const Point_2& p,
+  FT interpolate_normal(const Point_2& p,
+                                  const Face_handle& face) const;
+
+  /**
+   * Returns size at point \c p, by interpolation into triangle with the infinite vertex.
+   */
+  FT interpolate_infinite(const Point_2& p,
                                   const Face_handle& face) const;
   
   /**
@@ -149,7 +155,11 @@ operator()(const Point_2& p, const Face_handle& f) const
 {  
   const Face_handle face = tr_.locate(p,f);
   last_face_ = face;
-  return interpolate(p,face);
+  
+  if( !tr_.is_infinite(face) )
+    return interpolate_normal(p,face);
+  else
+    return interpolate_infinite(p,face);
 }
 
 /*
@@ -174,7 +184,7 @@ operator()(const Point_2&, const std::pair<Cell_handle,bool>& c) const
 template <typename Tr, bool B>
 typename Mesh_sizing_field<Tr,B>::FT
 Mesh_sizing_field<Tr,B>::
-interpolate(const Point_2& p, const Face_handle& face) const
+interpolate_normal(const Point_2& p, const Face_handle& face) const
 {
   typename Gt::Compute_area_2 area =
     Gt().compute_area_2_object();
@@ -197,6 +207,47 @@ interpolate(const Point_2& p, const Face_handle& face) const
     return (va+vb+vc)/3.;
   
   return ( (abp*vc + acp*vb + bcp*va) / (abp+acp+bcp) );
+}
+
+//TODO: check this method functionality.  
+template <typename Tr, bool B>
+typename Mesh_sizing_field<Tr,B>::FT
+Mesh_sizing_field<Tr,B>::
+interpolate_infinite(const Point_2& p, const Face_handle& face) const
+{
+  /*typename Gt::Compute_area_2 area =
+    Gt().compute_area_2_object();
+
+  // Find infinite vertex and put it in k0
+  int k0 = 0;
+  int k1 = 1;
+  int k2 = 2;
+
+  if ( tr_.is_infinite(face->vertex(1)) )
+    std::swap(k0,k1);
+  if ( tr_.is_infinite(face->vertex(2)) )
+    std::swap(k0,k2);
+  
+  // Interpolate value using triangle vertices values
+  const FT& va = face->vertex(k1)->meshing_info();
+  const FT& vb = face->vertex(k2)->meshing_info();
+  
+  const Point_2& a = face->vertex(k1)->point();
+  const Point_2& b = face->vertex(k2)->point();
+  
+  const FT abp = CGAL::abs(area(a,b,p));
+  const FT acp = CGAL::abs(area(a,c,p));
+  const FT bcp = CGAL::abs(area(b,c,p));
+  
+  // If area is 0, then compute the average value
+  if ( is_zero(abp+acp+bcp) )
+    return (va+vb+vc)/3.;
+  
+  return ( (abp*vc + acp*vb + bcp*va) / (abp+acp+bcp) );
+  */
+  std::cout<<"SHOULD THIS HAPPEN?"<<std::endl;
+  FT ft(0);
+  return ft;
 }
   
   

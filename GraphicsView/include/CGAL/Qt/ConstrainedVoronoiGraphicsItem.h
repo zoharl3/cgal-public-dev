@@ -96,6 +96,7 @@ ConstrainedVoronoiGraphicsItem<DT>::paint(QPainter *painter, const QStyleOptionG
       CGAL::Dimension_tag<0>());
 
     painter->drawPoint(new_point.x(),new_point.y());
+    //std::cout<<"the new position will be: "<<new_point<<std::endl;
 
     painter->setPen(edges_pen);
     for(unsigned int i=0; i<poly.size() ; i++){

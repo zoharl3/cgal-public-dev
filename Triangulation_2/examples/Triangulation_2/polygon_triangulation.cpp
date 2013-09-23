@@ -122,5 +122,8 @@ int main( )
   
   std::cout << "There are " << count << " facets in the domain." << std::endl;
 
+  std::cout<<" Polygon 1: "<<polygon1<<std::endl;
+  std::cout<<" Polygon 2: "<<polygon2<<std::endl;
+
   return 0;
 }

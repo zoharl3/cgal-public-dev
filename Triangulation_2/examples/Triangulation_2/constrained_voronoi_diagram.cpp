@@ -128,8 +128,8 @@ int main(int argc, char **argv)
   {
     if (!cdt.cell_is_infinite(vit)){
       Polygon_2 poly = cdt.dual(vit);
-      
-      std::cout<<CGAL::centroid(poly.vertices_begin(),poly.vertices_end(),CGAL::Dimension_tag<0>())<<std::endl;
+      std::cout<<"The Polygon from dual is: "<<poly<<std::endl;
+      std::cout<<"The centroid is: "<<CGAL::centroid(poly.vertices_begin(),poly.vertices_end(),CGAL::Dimension_tag<0>())<<std::endl;
       std::string name = "./vtk_files/voronoi_cell";
       name.append(SSTR(i));
       name.append(".vtk");
