@@ -16,7 +16,9 @@
 // $Id$
 // 
 //
-// Author(s)     : Mariette Yvinec, Jean Daniel Boissonnat
+// Author(s)     : Mariette Yvinec
+//				 : Jean Daniel Boissonnat
+//				 : Raul Gallegos, Jane Tournois (vertex's dual method)
  
 #ifndef CGAL_CONSTRAINED_DELAUNAY_TRIANGULATION_2_H
 #define CGAL_CONSTRAINED_DELAUNAY_TRIANGULATION_2_H
