@@ -88,7 +88,7 @@ private:
     std::vector<std::vector<double> > responsibility_matrix;
     
     double threshold;
-    int    maximum_iteration;    
+    std::size_t    maximum_iteration;    
     
     Initialization_types init_type;
     
@@ -113,9 +113,9 @@ public:
     Expectation_maximization(std::size_t number_of_centers, 
         const std::vector<double>& data, 
         Initialization_types init_type = PLUS_INITIALIZATION,
-        int number_of_runs = CGAL_DEFAULT_NUMBER_OF_RUN,         
+        std::size_t number_of_runs = CGAL_DEFAULT_NUMBER_OF_RUN,         
         double threshold = CGAL_DEFAULT_THRESHOLD,
-        int maximum_iteration = CGAL_DEFAULT_MAXIMUM_ITERATION )
+        std::size_t maximum_iteration = CGAL_DEFAULT_MAXIMUM_ITERATION )
         :        
         final_likelihood(-(std::numeric_limits<double>::max)()), points(data),
         responsibility_matrix(std::vector<std::vector<double> >(number_of_centers, std::vector<double>(points.size()))),
@@ -149,14 +149,14 @@ public:
      * Fills data_center by the id of the center which has maximum responsibility. 
      * @param[out] data_centers
      */
-    void fill_with_center_ids(std::vector<int>& data_centers)
+    void fill_with_center_ids(std::vector<std::size_t>& data_centers)
     {
         data_centers.reserve(points.size());        
         for(std::vector<double>::iterator point_it = points.begin();
              point_it != points.end(); ++point_it)
         {
             double max_likelihood = 0.0;
-            int max_center = -1, center_counter = 0;
+            std::size_t max_center = -1, center_counter = 0;
             for(std::vector<Gaussian_center>::iterator center_it = centers.begin(); 
                 center_it != centers.end(); ++center_it, ++center_counter)
             {
@@ -208,10 +208,10 @@ private:
         }
 
         // calculate deviation
-        std::vector<int> member_count(centers.size(), 0);
+        std::vector<std::size_t> member_count(centers.size(), 0);
         for(std::vector<double>::iterator it = points.begin(); it!= points.end(); ++it)
         {
-            int closest_center = 0;
+            std::size_t closest_center = 0;
             double min_distance = std::abs(centers[0].mean - *it);
             for(std::size_t i = 1; i < centers.size(); ++i)
             {
@@ -219,7 +219,7 @@ private:
                 if(distance < min_distance)
                 {
                     min_distance = distance;
-                    closest_center = static_cast<int>(i);
+                    closest_center = i;
                 }
             }
             member_count[closest_center]++;
@@ -357,7 +357,7 @@ private:
     double calculate_clustering()
     {
          double likelihood = -(std::numeric_limits<double>::max)(), prev_likelihood;
-         int iteration_count = 0;
+         std::size_t iteration_count = 0;
          double is_converged = false;
          while(!is_converged && iteration_count++ < maximum_iteration) 
          {            
@@ -377,7 +377,7 @@ private:
      * @param number_of_run
      * @see calculate_clustering()
      */
-    void calculate_clustering_with_multiple_run(std::size_t number_of_centers, int number_of_run)
+    void calculate_clustering_with_multiple_run(std::size_t number_of_centers, std::size_t number_of_run)
     {
         std::vector<Gaussian_center> max_centers;
         

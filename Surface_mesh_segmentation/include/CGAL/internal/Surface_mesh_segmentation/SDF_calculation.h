@@ -171,7 +171,7 @@ public:
                 InputIterator facet_begin, 
                 InputIterator facet_end,
                 double cone_angle, 
-                int number_of_rays, 
+                std::size_t number_of_rays, 
                 FacetValueMap sdf_values, 
                 DiskSampling disk_sampler) const
     {
@@ -195,7 +195,7 @@ public:
                 InputIterator facet_begin, 
                 InputIterator facet_end, 
                 double cone_angle, 
-                int number_of_rays, 
+                std::size_t number_of_rays, 
                 FacetValueMap sdf_values) const
     {
         calculate_sdf_values(facet_begin, facet_end, cone_angle, number_of_rays, sdf_values, Default_sampler());      
@@ -215,7 +215,7 @@ public:
                 SkipPrimitiveFunctor skip,
                 FirstIntersectionVisitor visitor,
                 double cone_angle,
-                int number_of_rays,
+                std::size_t number_of_rays,
                 bool accept_if_acute) const
     {
         return calculate_sdf_value_of_point(center, normal, skip, visitor, cone_angle, number_of_rays, accept_if_acute,
@@ -232,7 +232,7 @@ public:
                 SkipPrimitiveFunctor skip,
                 FirstIntersectionVisitor visitor,
                 double cone_angle,
-                int number_of_rays,
+                std::size_t number_of_rays,
                 bool accept_if_acute,
                 DiskSampling disk_sampler) const
     {        
@@ -444,12 +444,12 @@ private:
     {  
         // pair first -> distance, second -> weight  
         
-        const int accepted_ray_count = static_cast<int>(ray_distances.size());
+        const std::size_t accepted_ray_count = ray_distances.size();
         if(accepted_ray_count == 0)      { return 0.0; }
         else if(accepted_ray_count == 1) { return ray_distances[0].first; }                     
         
         /* Calculate median sdf */
-        const int half_ray_count = accepted_ray_count / 2;
+        const std::size_t half_ray_count = accepted_ray_count / 2;
         std::nth_element(ray_distances.begin(), ray_distances.begin() + half_ray_count, ray_distances.end());
         double median_sdf = ray_distances[half_ray_count].first;
         if(accepted_ray_count % 2 == 0)

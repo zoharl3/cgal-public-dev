@@ -43,7 +43,7 @@ public:
      */
     template<class ValuePropertyMap>
     void operator()(const Polyhedron& mesh,
-                    int window_size,
+                    std::size_t window_size,
                     ValuePropertyMap values,
                     boost::optional<double> spatial_parameter = boost::optional<double>(),
                     boost::optional<double> range_parameter = boost::optional<double>() 
@@ -61,7 +61,7 @@ public:
         
         for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
         {               
-            std::map<Facet_const_handle, int> neighbors;
+            std::map<Facet_const_handle, std::size_t> neighbors;
             NeighborSelector()(facet_it, window_size, neighbors); // gather neighbors in the window
             double current_sdf_value = values[facet_it];
 
@@ -70,7 +70,7 @@ public:
             {
                 // calculate deviation for range weighting.                
                 double deviation = 0.0;
-                for(typename std::map<Facet_const_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+                for(typename std::map<Facet_const_handle, std::size_t>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
                 {
                     deviation += std::pow(values[it->first] - current_sdf_value, 2);
                 }            
@@ -89,7 +89,7 @@ public:
 
             // smooth
             double total_sdf_value = 0.0, total_weight = 0.0;
-            for(typename std::map<Facet_const_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+            for(typename std::map<Facet_const_handle, std::size_t>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 double spatial_weight = gaussian_function(it->second, spatial_parameter_actual);
                 double range_weight = gaussian_function(values[it->first] - current_sdf_value, range_parameter_actual);
@@ -132,7 +132,7 @@ public:
      */
     template<class ValuePropertyMap>
     void operator()(const Polyhedron& mesh,
-                    int window_size,
+                    std::size_t window_size,
                     ValuePropertyMap values) const
     {     
         typedef typename Polyhedron::Facet_const_handle Facet_const_handle; 
@@ -142,12 +142,12 @@ public:
         smoothed_values.reserve(mesh.size_of_facets());    
         for(Facet_const_iterator facet_it = mesh.facets_begin(); facet_it != mesh.facets_end(); ++facet_it)
         {            
-            std::map<Facet_const_handle, int> neighbors;
+            std::map<Facet_const_handle, std::size_t> neighbors;
             NeighborSelector()(facet_it, window_size, neighbors); // gather neighbors in the window
             
             std::vector<double> neighbor_values;
             neighbor_values.reserve(neighbors.size());
-            for(typename std::map<Facet_const_handle, int>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
+            for(typename std::map<Facet_const_handle, std::size_t>::iterator it = neighbors.begin(); it != neighbors.end(); ++it)
             {
                 neighbor_values.push_back(values[it->first]);
             }
@@ -180,13 +180,13 @@ struct No_filtering
      */
     template<class Polyhedron,class ValuePropertyMap>
     void operator()(const Polyhedron& /* mesh */,
-                    int /* window_size */,
+                    std::size_t /* window_size */,
                     ValuePropertyMap /* values */) const
     {}
 };
 
 /** @brief A filter that applies the filter passed as template parameter several times. */
-template <class Filter, int nb_iterations = 5>
+template <class Filter, std::size_t nb_iterations = 5>
 struct Iterative_filter : public Filter
 {
     /**
@@ -194,10 +194,10 @@ struct Iterative_filter : public Filter
      */
     template<class Polyhedron,class ValuePropertyMap>
     void operator()(const Polyhedron&  mesh ,
-                    int  window_size ,
+                    std::size_t  window_size ,
                     ValuePropertyMap  values ) const
     {
-      for (int i=0; i<nb_iterations; ++i)
+      for (std::size_t i=0; i<nb_iterations; ++i)
         Filter::operator()(mesh, window_size, values);
     }
 };
@@ -217,10 +217,10 @@ public:
      * @param[out] neighbors visited facets and their distances to root facet
      */ 
     void operator()(Facet_const_handle facet, 
-                    int max_level, 
-                    std::map<Facet_const_handle, int>& neighbors) const
+                    std::size_t max_level, 
+                    std::map<Facet_const_handle, std::size_t>& neighbors) const
     {
-        typedef std::pair<Facet_const_handle, int> Facet_level_pair;       
+        typedef std::pair<Facet_const_handle, std::size_t> Facet_level_pair;       
         
         std::queue<Facet_level_pair> facet_queue;
         facet_queue.push(Facet_level_pair(facet, 0));
@@ -266,10 +266,10 @@ public:
      * @param[out] neighbors visited facets and their distances to root facet
      */
     void operator()(Facet_const_handle facet, 
-                    int max_level, 
-                    std::map<Facet_const_handle, int>& neighbors) const
+                    std::size_t max_level, 
+                    std::map<Facet_const_handle, std::size_t>& neighbors) const
     {
-        typedef std::pair<Facet_const_handle, int> Facet_level_pair;
+        typedef std::pair<Facet_const_handle, std::size_t> Facet_level_pair;
         
         std::queue<Facet_level_pair> facet_queue;
         facet_queue.push(Facet_level_pair(facet, 0));

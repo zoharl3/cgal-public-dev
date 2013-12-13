@@ -159,10 +159,10 @@ public:
  * and as output it returns final labeling of vertices (i.e. assigned cluster-id to each facet)
  * @return result of energy function
  */
-double operator()(const std::vector<std::pair<int, int> >& edges,
+double operator()(const std::vector<std::pair<std::size_t, std::size_t> >& edges,
                   const std::vector<double>& edge_weights,
                   const std::vector<std::vector<double> >& probability_matrix,
-                  std::vector<int>& labels) const
+                  std::vector<std::size_t>& labels) const
 {
     const double tolerance = 1e-10;
  
@@ -180,7 +180,7 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
     bool success;
     do {
         success = false;
-        int alpha = 0;
+        std::size_t alpha = 0;
 
         for(std::vector<std::vector<double> >::const_iterator it = probability_matrix.begin(); 
             it != probability_matrix.end(); ++it, ++alpha)
@@ -210,11 +210,11 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
             // For E-Smooth
             // add edge between every vertex, 
             std::vector<double>::const_iterator weight_it = edge_weights.begin();
-            for(std::vector<std::pair<int, int> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
+            for(std::vector<std::pair<std::size_t, std::size_t> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
                 ++edge_it, ++weight_it)
             {
                 Vertex_descriptor v1 = inserted_vertices[edge_it->first], v2 = inserted_vertices[edge_it->second];
-                int label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
+                std::size_t label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
                 if(label_1 == label_2)
                 {     
                     if(label_1 != alpha) 
@@ -304,8 +304,8 @@ private:
     typedef Traits::edge_iterator     Edge_iterator;
     
     void
-    add_edge_and_reverse(int v1 , int v2, double w1, double w2, 
-    std::vector<std::pair<int, int> >& edge_map, std::vector<EdgeP>& edge_weights) const
+    add_edge_and_reverse(std::size_t v1 , std::size_t v2, double w1, double w2, 
+    std::vector<std::pair<std::size_t, std::size_t> >& edge_map, std::vector<EdgeP>& edge_weights) const
     {
       edge_map.push_back(std::make_pair(v1, v2));
       EdgeP p1;
@@ -328,10 +328,10 @@ public:
  * and as output it returns final labeling of vertices (i.e. assigned cluster-id to each facet)
  * @return result of energy function
  */
-double operator()(const std::vector<std::pair<int, int> >& edges,
+double operator()(const std::vector<std::pair<std::size_t, std::size_t> >& edges,
                   const std::vector<double>& edge_weights,
                   const std::vector<std::vector<double> >& probability_matrix,
-                  std::vector<int>& labels) const
+                  std::vector<std::size_t>& labels) const
 {
     const double tolerance = 1e-10;
  
@@ -346,18 +346,18 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
     bool success;
     do {
         success = false;
-        int alpha = 0;
+        std::size_t alpha = 0;
 
         for(std::vector<std::vector<double> >::const_iterator it = probability_matrix.begin(); 
             it != probability_matrix.end(); ++it, ++alpha)
         {
-            std::vector<std::pair<int, int> > edge_map;
+            std::vector<std::pair<std::size_t, std::size_t> > edge_map;
             std::vector<EdgeP>                edge_map_weights;
             edge_map.reserve(labels.size() * 8); // there is no way to know exact edge count, it is a heuristic value
             edge_map_weights.reserve(labels.size() * 8);
 
-            int cluster_source = 0;
-            int cluster_sink = 1;
+            std::size_t cluster_source = 0;
+            std::size_t cluster_sink = 1;
             
             Timer timer; timer.start();
             // For E-Data 
@@ -370,19 +370,19 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                 double sink_weight = (labels[vertex_i] == alpha) ? (std::numeric_limits<double>::max)() 
                                                                  : probability_matrix[labels[vertex_i]][vertex_i];
                 
-                add_edge_and_reverse(cluster_source, static_cast<int>(vertex_i) + 2, source_weight, 0.0, edge_map, edge_map_weights);
-                add_edge_and_reverse(static_cast<int>(vertex_i) + 2, cluster_sink, sink_weight, 0.0, edge_map, edge_map_weights);
+                add_edge_and_reverse(cluster_source, vertex_i + 2, source_weight, 0.0, edge_map, edge_map_weights);
+                add_edge_and_reverse(vertex_i + 2, cluster_sink, sink_weight, 0.0, edge_map, edge_map_weights);
             }
             vertex_creation_time += timer.time(); timer.reset();
             // For E-Smooth
             // add edge between every vertex,
-            int num_vert = static_cast<int>(labels.size()) + 2;
+            std::size_t num_vert = labels.size() + 2;
             std::vector<double>::const_iterator weight_it = edge_weights.begin();
-            for(std::vector<std::pair<int, int> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
+            for(std::vector<std::pair<std::size_t, std::size_t> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
                 ++edge_it, ++weight_it)
             {
-                int v1 = edge_it->first + 2, v2 = edge_it->second + 2;
-                int label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
+                std::size_t v1 = edge_it->first + 2, v2 = edge_it->second + 2;
+                std::size_t label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
                 if(label_1 == label_2)
                 {     
                     if(label_1 != alpha) 
@@ -390,7 +390,7 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
                 }
                 else
                 {
-                  int inbetween = num_vert++;                        
+                  std::size_t inbetween = num_vert++;                        
 
                   double w1 = (label_1 == alpha) ? 0 : *weight_it;
                   double w2 = (label_2 == alpha) ? 0 : *weight_it;
@@ -497,10 +497,10 @@ public:
  * and as output it returns final labeling of vertices
  * @return result of energy function
  */
-double operator()(const std::vector<std::pair<int, int> >& edges,
+double operator()(const std::vector<std::pair<std::size_t, std::size_t> >& edges,
                   const std::vector<double>& edge_weights,
                   const std::vector<std::vector<double> >& probability_matrix,
-                  std::vector<int>& labels) const
+                  std::vector<std::size_t>& labels) const
 {       
     const double tolerance = 1e-10;
 
@@ -515,7 +515,7 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
     bool success;
     do {
         success = false;
-        int alpha = 0;
+        std::size_t alpha = 0;
         for(std::vector<std::vector<double> >::const_iterator it = probability_matrix.begin(); 
             it != probability_matrix.end(); ++it, ++alpha)
         {
@@ -539,12 +539,12 @@ double operator()(const std::vector<std::pair<int, int> >& edges,
             // For E-Smooth
             // add edge between every vertex, 
             std::vector<double>::const_iterator weight_it = edge_weights.begin();
-            for(std::vector<std::pair<int, int> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
+            for(std::vector<std::pair<std::size_t, std::size_t> >::const_iterator edge_it = edges.begin(); edge_it != edges.end();
                 ++edge_it, ++weight_it)
             {
                 MaxFlow::Graph::node_id v1 = inserted_vertices[edge_it->first];
                 MaxFlow::Graph::node_id v2 = inserted_vertices[edge_it->second];
-                int label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
+                std::size_t label_1 = labels[edge_it->first], label_2 = labels[edge_it->second];
                 if(label_1 == label_2)
                 {     
                     if(label_1 != alpha) 
