@@ -454,9 +454,9 @@ MainWindow::on_actionClear_triggered()
 void 
 MainWindow::on_actionRefineLloyd_triggered()
 {
-  QRectF rect = CGAL::Qt::viewportsBbox(&scene);
-  CGAL::Qt::Converter<K> convert;
-  Iso_rectangle_2 isor = convert(rect);
+  //QRectF rect = CGAL::Qt::viewportsBbox(&scene);
+  //CGAL::Qt::Converter<K> convert;
+  //Iso_rectangle_2 isor = convert(rect);
   
   bool ok = false;
   const int number_of_iterations = 
@@ -495,9 +495,9 @@ MainWindow::on_actionRefineLloyd_triggered()
 void 
 MainWindow::on_actionRefineOdt_triggered()
 {
-  QRectF rect = CGAL::Qt::viewportsBbox(&scene);
-  CGAL::Qt::Converter<K> convert;
-  Iso_rectangle_2 isor = convert(rect);
+  //QRectF rect = CGAL::Qt::viewportsBbox(&scene);
+  //CGAL::Qt::Converter<K> convert;
+  //Iso_rectangle_2 isor = convert(rect);
 
   bool ok = false;
   const int number_of_iterations = 

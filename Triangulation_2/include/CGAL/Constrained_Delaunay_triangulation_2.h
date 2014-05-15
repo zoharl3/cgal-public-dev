@@ -379,7 +379,7 @@ public:
 		CGAL_assertion(this->is_constrained(constraint));
 		if(!this->is_infinite(seed)
 			 && !seed->blind()
-			 && triangle(seed).area() != 0) //to avoid flat triangles outside the domain
+			 && this->triangle(seed).area() != 0) //to avoid flat triangles outside the domain
 		{
 			std::stack<Face_handle> faces;
 			faces.push(seed);

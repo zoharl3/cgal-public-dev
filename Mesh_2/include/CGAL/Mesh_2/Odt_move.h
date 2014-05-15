@@ -106,7 +106,7 @@ public:
     typename Gt::Construct_vector_2 vector = 
       Gt().construct_vector_2_object();
 
-    const Point_2& p = v->point();
+    // const Point_2& p = v->point();
 
     switch(num_constraints){
       // There aren't incident constraints.

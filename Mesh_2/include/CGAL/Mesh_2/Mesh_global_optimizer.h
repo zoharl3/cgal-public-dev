@@ -221,7 +221,7 @@ compute_moves(const Vertex_set& moving_vertices)
   std::fill(big_moves_.begin(),big_moves_.end(),FT(0));
   
   // Get move for each moving vertex
-  int i=0;
+  // int i=0;
   for ( typename Vertex_set::const_iterator vit = moving_vertices.begin() ;
        vit != moving_vertices.end() ;
        ++vit )

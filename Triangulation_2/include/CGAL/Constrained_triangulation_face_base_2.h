@@ -115,7 +115,7 @@ public:
   void cw_permute();
   
   // inside/outside/undetermined
-  const int location() const;
+  int location() const;
   int& location();
 
   // sees its circumcenter or not?
@@ -184,7 +184,7 @@ cw_permute()
 
 // inside/outside/undetermined
 template <class Gt, class Fb>
-inline const int
+inline int
 Constrained_triangulation_face_base_2<Gt,Fb>::
 location() const { return m_location; }
 
