@@ -35,9 +35,10 @@ The ROI features the green vertices (the unconstrained vertices) and the red ver
 the coordinates of the unconstrained vertices being updated by the deformation algorithm.
 \cgalFigureEnd
 
-In this package, two algorithms are implemented:
-- The <em>As-Rigid-As-Possible</em> (<em>ARAP</em>) method described in \cgalCite{Sorkine2007AsRigidAs};
-- The <em>Spokes and Rims</em> method \cgalCite{Chao2010SimpleGeomModel}.
+In this package, three algorithms are implemented:
+- The <em>As-Rigid-As-Possible</em> (<em>ARAP</em>) method \cgalCite{Sorkine2007AsRigidAs};
+- The <em>Spokes and Rims</em> method \cgalCite{Chao2010SimpleGeomModel};
+- The <em>Smoothed %Rotation Enhanced As-Rigid-As-Possible</em> method \cgalCite{levismooth}
 
 Given an edge weighting scheme, both methods iteratively minimize an energy function and produce a different surface mesh at each step until convergence is reached.
 
@@ -45,6 +46,8 @@ Given an edge weighting scheme, both methods iteratively minimize an energy func
 convergence while the <em>ARAP</em> method requires the edge weights to be positive. However,
 the results obtained using the <em>Spokes and Rims</em> method are more dependent on the discretization
 of the deformed surface (See \cgalFigureRef{Arap_spokes_comparison}).
+
+\todo Zohar, please add something here about SRE-ARAP
 
 More details on these algorithms are provided in section \ref Surface_Modeling_Overview.
 
@@ -132,8 +135,10 @@ which will also require a new preprocessing step).
 This behavior is illustrated in \ref SModelingVideo_1 "Video 1".
 
 \subsection Surface_modeling_arap_or_spokes_and_rims As-Rigid-As-Possible and Spokes-and-Rims Deformation Techniques
-Two deformation techniques are provided by this package. This section summarizes from the user point of view what is
+Three deformation techniques are provided by this package. This section summarizes from the user point of view what is
 explained in details in the section \ref Surface_Modeling_Overview.
+
+\todo Zohar, is this also valid for SRE_ARAP?
 
 The As-Rigid-As-Possible deformation technique requires the use of a positive weighting scheme to guarantee
 the correct minimization of the energy. When using the default cotangent weighting scheme, this means that
@@ -489,6 +494,9 @@ Thus even with negative weights, the minimization of the energy with the iterati
 However, this method is more dependent on the discretization of the deformed surface (See \cgalFigureRef{Arap_spokes_comparison}).
 
 The implementation in this package uses the cotangent weights by default (negative values included) as proposed in \cgalCite{Chao2010SimpleGeomModel}.
+
+\subsection Surface_Modeling_Overview_SRE_ARAP Smoothed Rotation Enhanced As-Rigid-As Possible Deformation
+\todo Zohar, could you add a few words here?
 
 \section Surface_Modeling_History Design and Implementation History
 An initial version of this package has been implemented during the 2011 Google Summer of Code by Yin Xu under the guidance of Olga Sorkine and Andreas Fabri.
