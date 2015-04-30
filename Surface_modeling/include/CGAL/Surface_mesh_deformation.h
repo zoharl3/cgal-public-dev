@@ -49,8 +49,9 @@ namespace CGAL {
 ///@brief Deformation algorithm type
 enum Deformation_algorithm_tag
 {
-  ORIGINAL_ARAP,  /**< use original as-rigid-as possible algorithm */
-  SPOKES_AND_RIMS /**< use spokes and rims version of as-rigid-as possible algorithm */
+  ORIGINAL_ARAP,   /**< use original as-rigid-as possible algorithm */
+  SPOKES_AND_RIMS, /**< use spokes and rims version of as-rigid-as possible algorithm */
+  SRE_ARAP         /**< use smooth rotation enhanced As-rigid-as-possible */
 };
 
 /// @cond CGAL_DOCUMENT_INTERNAL
@@ -62,11 +63,57 @@ struct Types_selectors;
 template<class HalfedgeGraph>
 struct Types_selectors<HalfedgeGraph, CGAL::SPOKES_AND_RIMS> {
   typedef internal::Single_cotangent_weight<HalfedgeGraph> Weight_calculator;
+
+  struct ARAP_visitor{
+    void init(){}
+
+    void rotation_matrix_pre(
+      typename boost::graph_traits<HalfedgeGraph>::vertex_descriptor,
+      HalfedgeGraph&){}
+
+    template <class Square_matrix_3>
+    void update_covariance_matrix(
+      Square_matrix_3&,
+      const Square_matrix_3&){}
+  };
 };
 
 template<class HalfedgeGraph>
 struct Types_selectors<HalfedgeGraph, CGAL::ORIGINAL_ARAP> {
   typedef internal::Cotangent_weight<HalfedgeGraph> Weight_calculator;
+
+  typedef typename Types_selectors<HalfedgeGraph, CGAL::SPOKES_AND_RIMS>
+    ::ARAP_visitor ARAP_visitor;
+};
+
+template<class HalfedgeGraph>
+struct Types_selectors<HalfedgeGraph, CGAL::SRE_ARAP> {
+  typedef internal::Cotangent_weight<HalfedgeGraph> Weight_calculator;
+
+  class ARAP_visitor{
+    double  m_nb_edges_incident;
+  public:
+    double alpha;
+    void init(){ alpha = 2; }
+
+    void rotation_matrix_pre(
+      typename boost::graph_traits<HalfedgeGraph>::vertex_descriptor vi,
+      HalfedgeGraph& hg)
+    {
+      typename boost::graph_traits<HalfedgeGraph>::in_edge_iterator e, e_end;
+      cpp11::tie(e,e_end) = in_edges(vi, hg);
+      m_nb_edges_incident=std::distance(e,e_end);
+    }
+
+    template <class Square_matrix_3>
+    void update_covariance_matrix(
+      Square_matrix_3& cov,
+      const Square_matrix_3& rot_mtr)
+    {
+      // add neighbor rotation
+      cov += alpha * rot_mtr.transpose() / m_nb_edges_incident;
+    }
+  };
 };
 }//namespace Surface_modeling
 /// @endcond
@@ -82,8 +129,8 @@ struct Types_selectors<HalfedgeGraph, CGAL::ORIGINAL_ARAP> {
  ///         The default is `boost::property_map<HG, boost::%halfedge_index_t>::%type`.
  /// @tparam TAG tag for selecting the deformation algorithm
  /// @tparam WC a model of SurfaceModelingWeights, with `WC::Halfedge_graph` being `HG`.
- ///         If `TAG` is `ORIGINAL_ARAP`, the weights must be positive to guarantee a correct energy minimization.
- ///         The default is the cotangent weighting scheme. In case `TAG` is `ORIGINAL_ARAP`, negative weights are clamped to zero.
+ ///         If `TAG` is `ORIGINAL_ARAP` or `SRE_ARAP`, the weights must be positive to guarantee a correct energy minimization.
+ ///         The default is the cotangent weighting scheme. In case `TAG` is `ORIGINAL_ARAP` or `SRE_ARAP`, negative weights are clamped to zero.
  /// @tparam ST a model of SparseLinearAlgebraTraitsWithFactor_d. If \ref thirdpartyEigen "Eigen" 3.2 (or greater) is available
  /// and `CGAL_EIGEN3_ENABLED` is defined, then an overload of `Eigen_solver_traits` is provided as default parameter.\n
   /// \code
@@ -243,12 +290,10 @@ private:
 
   Vertex_point_map vertex_point_map;
 
-#ifdef CGAL_DEFORM_MESH_USE_EXPERIMENTAL_SR_ARAP
 public:
-// SR-ARAP [Zohar13]
-  double m_sr_arap_alpha;
+  typename Surface_modeling::Types_selectors<HG, TAG>::ARAP_visitor arap_visitor;
 private:
-#endif
+
 #ifdef CGAL_DEFORM_MESH_USE_EXPERIMENTAL_SCALE
   std::vector<double> scales;
 #endif
@@ -374,9 +419,7 @@ private:
       hedge_weight.push_back(
         this->weight_calculator(*eb, m_halfedge_graph, vertex_point_map));
     }
-#ifdef CGAL_DEFORM_MESH_USE_EXPERIMENTAL_SR_ARAP
-    m_sr_arap_alpha=2;
-#endif
+    arap_visitor.init();
   }
 
 public:
@@ -1132,10 +1175,8 @@ private:
 
       in_edge_iterator e, e_end;
 
-#ifdef CGAL_DEFORM_MESH_USE_EXPERIMENTAL_SR_ARAP
-      cpp11::tie(e,e_end) = in_edges(vi, m_halfedge_graph);
-      double ne_i=std::distance(e,e_end);
-#endif
+      arap_visitor.rotation_matrix_pre(vi, m_halfedge_graph);
+
       for (cpp11::tie(e,e_end) = in_edges(vi, m_halfedge_graph); e != e_end; e++)
       {
         halfedge_descriptor he=halfedge(*e, m_halfedge_graph);
@@ -1147,11 +1188,8 @@ private:
         double wij = hedge_weight[id(he)];
 
         cr_traits.add_scalar_t_vector_t_vector_transpose(cov, wij, pij, qij); // cov += wij * (pij * qij)
-#ifdef CGAL_DEFORM_MESH_USE_EXPERIMENTAL_SR_ARAP
-        // add neighbor rotation
-        cov += m_sr_arap_alpha * rot_mtr[vj_id].transpose() / ne_i;
-#endif
 
+        arap_visitor.update_covariance_matrix(cov, rot_mtr[vj_id]);
       }
 
       cr_traits.compute_close_rotation(cov, rot_mtr[vi_id]);
