@@ -54,20 +54,21 @@ enum Deformation_algorithm_tag
 };
 
 /// @cond CGAL_DOCUMENT_INTERNAL
-namespace internal {
+namespace Surface_modeling {
+
 template<class HalfedgeGraph, Deformation_algorithm_tag deformation_algorithm_tag>
-struct Weight_calculator_selector;
+struct Types_selectors;
 
 template<class HalfedgeGraph>
-struct Weight_calculator_selector<HalfedgeGraph, CGAL::SPOKES_AND_RIMS> {
-  typedef Single_cotangent_weight<HalfedgeGraph> Weight_calculator;
+struct Types_selectors<HalfedgeGraph, CGAL::SPOKES_AND_RIMS> {
+  typedef internal::Single_cotangent_weight<HalfedgeGraph> Weight_calculator;
 };
 
 template<class HalfedgeGraph>
-struct Weight_calculator_selector<HalfedgeGraph, CGAL::ORIGINAL_ARAP> {
-  typedef Cotangent_weight<HalfedgeGraph> Weight_calculator;
+struct Types_selectors<HalfedgeGraph, CGAL::ORIGINAL_ARAP> {
+  typedef internal::Cotangent_weight<HalfedgeGraph> Weight_calculator;
 };
-}//namespace internal
+}//namespace Surface_modeling
 /// @endcond
 
  ///
@@ -137,7 +138,7 @@ public:
 #ifndef DOXYGEN_RUNNING
   typedef typename Default::Get<
     WC,
-    typename internal::Weight_calculator_selector<HG, TAG>::Weight_calculator
+    typename Surface_modeling::Types_selectors<HG, TAG>::Weight_calculator
   >::type Weight_calculator;
 #else
   ///
