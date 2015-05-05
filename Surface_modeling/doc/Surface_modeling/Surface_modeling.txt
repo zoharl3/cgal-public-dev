@@ -47,7 +47,7 @@ convergence while the <em>ARAP</em> method requires the edge weights to be posit
 the results obtained using the <em>Spokes and Rims</em> method are more dependent on the discretization
 of the deformed surface (See \cgalFigureRef{Arap_spokes_comparison}).
 
-\todo Zohar, please add something here about SRE-ARAP
+\todo Zohar, please add something here about SRE-ARAP.
 
 More details on these algorithms are provided in section \ref Surface_Modeling_Overview.
 
