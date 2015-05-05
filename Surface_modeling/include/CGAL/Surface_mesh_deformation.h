@@ -1189,7 +1189,8 @@ private:
 
         cr_traits.add_scalar_t_vector_t_vector_transpose(cov, wij, pij, qij); // cov += wij * (pij * qij)
 
-        arap_visitor.update_covariance_matrix(cov, rot_mtr[vj_id]);
+        if (vj_id<rot_mtr.size())
+          arap_visitor.update_covariance_matrix(cov, rot_mtr[vj_id]);
       }
 
       cr_traits.compute_close_rotation(cov, rot_mtr[vi_id]);
