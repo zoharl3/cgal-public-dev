@@ -65,7 +65,7 @@ struct Types_selectors<HalfedgeGraph, CGAL::SPOKES_AND_RIMS> {
   typedef internal::Single_cotangent_weight<HalfedgeGraph> Weight_calculator;
 
   struct ARAP_visitor{
-    void init(){}
+    void init(typename HalfedgeGraph halfedge_graph){}
 
     void rotation_matrix_pre(
       typename boost::graph_traits<HalfedgeGraph>::vertex_descriptor,
@@ -92,9 +92,26 @@ struct Types_selectors<HalfedgeGraph, CGAL::SRE_ARAP> {
 
   class ARAP_visitor{
     double  m_nb_edges_incident;
+	double m_area;
+
   public:
     double alpha;
-    void init(){ alpha = 2; }
+
+	void init(typename HalfedgeGraph halfedge_graph)
+	{
+		alpha = .02;
+		// calculate area
+		m_area = 0;
+		for ( typename HalfedgeGraph::Facet_iterator fit = halfedge_graph.facets_begin(),
+			end = halfedge_graph.facets_end();
+			fit != end; ++fit )
+		{
+			typename HalfedgeGraph::Halfedge_handle h = fit->halfedge();
+			m_area += sqrt(CGAL::squared_area(h->vertex()->point(),
+				h->next()->vertex()->point(),
+				h->opposite()->vertex()->point()));
+		}
+	}
 
     void rotation_matrix_pre(
       typename boost::graph_traits<HalfedgeGraph>::vertex_descriptor vi,
@@ -105,14 +122,14 @@ struct Types_selectors<HalfedgeGraph, CGAL::SRE_ARAP> {
       m_nb_edges_incident=std::distance(e,e_end);
     }
 
-    template <class Square_matrix_3>
-    void update_covariance_matrix(
-      Square_matrix_3& cov,
-      const Square_matrix_3& rot_mtr)
-    {
-      // add neighbor rotation
-      cov += alpha * rot_mtr.transpose() / m_nb_edges_incident;
-    }
+	template <class Square_matrix_3>
+	void update_covariance_matrix(
+		Square_matrix_3& cov,
+		const Square_matrix_3& rot_mtr)
+	{
+		// add neighbor rotation
+		cov += alpha * m_area * rot_mtr.transpose() / m_nb_edges_incident;
+	}
   };
 };
 }//namespace Surface_modeling
@@ -419,7 +436,7 @@ private:
       hedge_weight.push_back(
         this->weight_calculator(*eb, m_halfedge_graph, vertex_point_map));
     }
-    arap_visitor.init();
+    arap_visitor.init(m_halfedge_graph);
   }
 
 public:
