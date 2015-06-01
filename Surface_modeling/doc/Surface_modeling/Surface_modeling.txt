@@ -59,7 +59,7 @@ the As-Rigid-As-Possible (center) and the Spokes and Rims (right) methods from t
 latter method provides unconditional convergence does not produce a symmetric result.
 \cgalFigureEnd
 
-\cgalFigureBegin{Arap_spokes_comparison, sr_arap_spokes.png}
+\cgalFigureBegin{Arap_spokes_comparison, sr_arap_comparison.png}
 A comparison between the As-Rigid-As-Possible and the Smoothed Rotation Enhanced As-Rigid-As-Possible.
 \cgalFigureEnd
 
@@ -141,9 +141,7 @@ This behavior is illustrated in \ref SModelingVideo_1 "Video 1".
 Three deformation techniques are provided by this package. This section summarizes from the user point of view what is
 explained in details in the section \ref Surface_Modeling_Overview.
 
-\todo Zohar, is this also valid for SRE_ARAP? >> Yes (also prefers positive weights)
-
-The As-Rigid-As-Possible deformation technique requires the use of a positive weighting scheme to guarantee
+The As-Rigid-As-Possible deformation techniques require the use of a positive weighting scheme to guarantee
 the correct minimization of the energy. When using the default cotangent weighting scheme, this means that
 the input surface mesh must be <em>clean</em>. That is, that for all edges in the surface mesh
 the sum of the angles opposite to the edge in the incident triangles is less that \f$ \pi \f$.
@@ -207,7 +205,7 @@ Another example is given in the manual page of the concept `::SurfaceModelingWei
 \cgalExample{Surface_modeling/custom_weight_for_edges_example.cpp}
 
 \subsubsection SModelingExample_5 Using the Smoothed Rotation Enhanced As-Rigid-As-Possible
-In this example, a survey \cgalCite{Botsch2008OnLinearVariational} model is loaded, alpha that determines the influence of the bending term is set, and the deformation method is set to SRE_ARAP.
+In this example, a survey \cgalCite{Botsch2008OnLinearVariational} model is loaded, alpha that determines the influence of the bending term is set, and the deformation method is set to `SRE_ARAP`.
 
 \cgalExample{Surface_modeling/deform_mesh_for_botsch08_format_sre_arap.cpp}
 
@@ -504,14 +502,14 @@ However, this method is more dependent on the discretization of the deformed sur
 The implementation in this package uses the cotangent weights by default (negative values included) as proposed in \cgalCite{Chao2010SimpleGeomModel}.
 
 \subsection Surface_Modeling_Overview_SRE_ARAP Smoothed Rotation Enhanced As-Rigid-As Possible (SR_ARAP) Deformation
-Using 1-ring elements, SR_ARAP adds a bending element to Eq. \ref{eq:arap_energy}:
+Using 1-ring elements, SR-ARAP adds a bending element to Eq. \f$\eqref{eq:arap_energy}\f$:
 
 \f[
 \begin{equation}
 \sum_{\mathbf{v}_i \in M}
 \sum_{\mathbf{v}_j \in N(\mathbf{v}_i)} w_{ij}
 \left\| (\mathbf{v}'_i - \mathbf{v}'_j) - \mathbf{R}_i(\mathbf{v}_i - \mathbf{v}_j) \right\|^2 + \alpha A \left\| \mathbf{R}_i - \mathbf{R}_j \right\|^2_F ,
-  \label{eq:arap_energy}
+  \label{eq:sre_arap_energy}
 \end{equation}
 \f]
 
@@ -519,7 +517,7 @@ where
 - \f$\alpha=0.02\f$ is a weighting coefficient.
 - \f$A\f$ is the surface area for scaling invariance. 
 
-Only the local step is influenced by the added term, and the optimal rotation now takes into account the neighbors' rotations.
+Only the local step is influenced by the added term, and the optimal rotation now takes into account the rotation of neighbors.
 
 \section Surface_Modeling_History Design and Implementation History
 An initial version of this package has been implemented during the 2011 Google Summer of Code by Yin Xu under the guidance of Olga Sorkine and Andreas Fabri.
