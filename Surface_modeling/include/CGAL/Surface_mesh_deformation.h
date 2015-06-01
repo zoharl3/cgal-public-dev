@@ -76,6 +76,8 @@ struct Types_selectors<HalfedgeGraph, CGAL::SPOKES_AND_RIMS> {
     void update_covariance_matrix(
       Square_matrix_3&,
       const Square_matrix_3&){}
+
+    void set_sre_arap_alpha(double){}
   };
 };
 
@@ -92,16 +94,16 @@ struct Types_selectors<HalfedgeGraph, CGAL::SRE_ARAP> {
   typedef internal::Cotangent_weight<HalfedgeGraph> Weight_calculator;
 
   class ARAP_visitor{
-    double  m_nb_edges_incident;
-	double m_area;
+    double m_nb_edges_incident;
+    double m_area;
+    double m_alpha;
 
   public:
-    double alpha;
+    ARAP_visitor(): m_alpha(0.02) {}
 
     template<class VertexPointMap>
     void init(HalfedgeGraph halfedge_graph, const VertexPointMap& vpmap)
     {
-      alpha = .02;
       // calculate area
       m_area = 0;
       typedef typename boost::graph_traits<HalfedgeGraph>::face_descriptor face_descriptor;
@@ -125,14 +127,16 @@ struct Types_selectors<HalfedgeGraph, CGAL::SRE_ARAP> {
       m_nb_edges_incident=std::distance(e,e_end);
     }
 
-	template <class Square_matrix_3>
-	void update_covariance_matrix(
-		Square_matrix_3& cov,
-		const Square_matrix_3& rot_mtr)
-	{
-		// add neighbor rotation
-		cov += alpha * m_area * rot_mtr.transpose() / m_nb_edges_incident;
-	}
+    template <class Square_matrix_3>
+    void update_covariance_matrix(
+      Square_matrix_3& cov,
+      const Square_matrix_3& rot_mtr)
+    {
+      // add neighbor rotation
+      cov += m_alpha * m_area * rot_mtr.transpose() / m_nb_edges_incident;
+    }
+
+    void set_sre_arap_alpha(double a){ m_alpha=a; }
   };
 };
 }//namespace Surface_modeling
@@ -919,6 +923,16 @@ public:
    */
   const Halfedge_graph& halfedge_graph() const
   { return m_halfedge_graph; }
+
+  /**
+   * Set the XXX term for the SRE-ARAP deformation technique.
+   * The default value is 0.02
+   * \todo Zohar please update.
+   */
+  void set_sre_arap_alpha(double a)
+  {
+    arap_visitor.set_alpha(a);
+  }
 
 /// @} Utilities
 

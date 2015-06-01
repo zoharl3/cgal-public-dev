@@ -40,11 +40,9 @@ int main(int argc,char** argv)
   // Create a deformation object
   Surface_mesh_deformation deform_mesh(mesh);
 
-  // Changing the visitor to change alpha
-  CGAL::Surface_modeling::Types_selectors<Polyhedron, CGAL::SRE_ARAP>::ARAP_visitor visitor;
-  visitor.init(mesh);
-  visitor.alpha = .02;
-  deform_mesh.arap_visitor = visitor;
+  // Changing alpha value
+  deform_mesh.set_sre_alpha(0.02);
+
 
   // Definition of the region of interest (use the whole mesh)
   vertex_iterator vb,ve;
