@@ -65,7 +65,8 @@ struct Types_selectors<HalfedgeGraph, CGAL::SPOKES_AND_RIMS> {
   typedef internal::Single_cotangent_weight<HalfedgeGraph> Weight_calculator;
 
   struct ARAP_visitor{
-    void init(typename HalfedgeGraph halfedge_graph){}
+    template <class VertexPointMap>
+    void init(HalfedgeGraph, VertexPointMap){}
 
     void rotation_matrix_pre(
       typename boost::graph_traits<HalfedgeGraph>::vertex_descriptor,
@@ -97,21 +98,23 @@ struct Types_selectors<HalfedgeGraph, CGAL::SRE_ARAP> {
   public:
     double alpha;
 
-	void init(typename HalfedgeGraph halfedge_graph)
-	{
-		alpha = .02;
-		// calculate area
-		m_area = 0;
-		for ( typename HalfedgeGraph::Facet_iterator fit = halfedge_graph.facets_begin(),
-			end = halfedge_graph.facets_end();
-			fit != end; ++fit )
-		{
-			typename HalfedgeGraph::Halfedge_handle h = fit->halfedge();
-			m_area += sqrt(CGAL::squared_area(h->vertex()->point(),
-				h->next()->vertex()->point(),
-				h->opposite()->vertex()->point()));
-		}
-	}
+    template<class VertexPointMap>
+    void init(HalfedgeGraph halfedge_graph, const VertexPointMap& vpmap)
+    {
+      alpha = .02;
+      // calculate area
+      m_area = 0;
+      typedef typename boost::graph_traits<HalfedgeGraph>::face_descriptor face_descriptor;
+      BOOST_FOREACH(face_descriptor f, faces(halfedge_graph))
+      {
+        typename boost::graph_traits<HalfedgeGraph>::halfedge_descriptor
+          h = halfedge(f, halfedge_graph);
+        m_area += std::sqrt(CGAL::squared_area(
+                        get(vpmap, source(h, halfedge_graph) ),
+                        get(vpmap, target(h, halfedge_graph) ),
+                        get(vpmap, target(next(h, halfedge_graph), halfedge_graph) ) ));
+      }
+    }
 
     void rotation_matrix_pre(
       typename boost::graph_traits<HalfedgeGraph>::vertex_descriptor vi,
@@ -436,7 +439,7 @@ private:
       hedge_weight.push_back(
         this->weight_calculator(*eb, m_halfedge_graph, vertex_point_map));
     }
-    arap_visitor.init(m_halfedge_graph);
+    arap_visitor.init(m_halfedge_graph, vertex_point_map);
   }
 
 public:
