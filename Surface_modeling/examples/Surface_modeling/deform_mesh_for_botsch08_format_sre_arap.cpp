@@ -41,7 +41,7 @@ int main(int argc,char** argv)
   Surface_mesh_deformation deform_mesh(mesh);
 
   // Changing alpha value
-  deform_mesh.set_sre_alpha(0.02);
+  deform_mesh.set_sre_arap_alpha(0.02);
 
 
   // Definition of the region of interest (use the whole mesh)

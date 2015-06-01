@@ -925,13 +925,12 @@ public:
   { return m_halfedge_graph; }
 
   /**
-   * Set the XXX term for the SRE-ARAP deformation technique.
+   * Sets the alpha coefficient that determines the weight of the bending term (rotation smoothness) for the SRE-ARAP deformation technique.
    * The default value is 0.02
-   * \todo Zohar please update.
    */
   void set_sre_arap_alpha(double a)
   {
-    arap_visitor.set_alpha(a);
+    arap_visitor.set_sre_arap_alpha(a);
   }
 
 /// @} Utilities
