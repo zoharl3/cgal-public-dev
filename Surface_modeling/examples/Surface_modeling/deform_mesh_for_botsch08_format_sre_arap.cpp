@@ -6,7 +6,6 @@
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 #include <CGAL/boost/graph/properties_Polyhedron_3.h>
 #include <boost/foreach.hpp>
-// #define CGAL_DEFORM_MESH_USE_EXPERIMENTAL_SR_ARAP
 #include <CGAL/Surface_mesh_deformation.h>
 
 #include <fstream>
@@ -18,7 +17,6 @@ typedef CGAL::Polyhedron_3<Kernel, CGAL::Polyhedron_items_with_id_3> Polyhedron;
 typedef boost::graph_traits<Polyhedron>::vertex_descriptor    vertex_descriptor;
 typedef boost::graph_traits<Polyhedron>::vertex_iterator        vertex_iterator;
 
-//typedef CGAL::Surface_mesh_deformation<Polyhedron,CGAL::Default, CGAL::Default, CGAL::ORIGINAL_ARAP> Surface_mesh_deformation;
 typedef CGAL::Surface_mesh_deformation<Polyhedron,CGAL::Default, CGAL::Default, CGAL::SRE_ARAP> Surface_mesh_deformation;
 
 int main(int argc,char** argv)
@@ -42,10 +40,10 @@ int main(int argc,char** argv)
   // Create a deformation object
   Surface_mesh_deformation deform_mesh(mesh);
 
-  // change visitor
+  // Changing the visitor to change alpha
   CGAL::Surface_modeling::Types_selectors<Polyhedron, CGAL::SRE_ARAP>::ARAP_visitor visitor;
   visitor.init(mesh);
-  visitor.alpha = .0;
+  visitor.alpha = .02;
   deform_mesh.arap_visitor = visitor;
 
   // Definition of the region of interest (use the whole mesh)

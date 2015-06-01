@@ -47,18 +47,21 @@ convergence while the <em>ARAP</em> method requires the edge weights to be posit
 the results obtained using the <em>Spokes and Rims</em> method are more dependent on the discretization
 of the deformed surface (See \cgalFigureRef{Arap_spokes_comparison}).
 
-\todo Zohar, please add something here about SRE-ARAP.
+The <em>Smoothed %Rotation Enhanced As-Rigid-As-Possible</em> method adds a bending term to the ARAP energy that penalizes rotation difference between neighboring elements. In the current implementation a 1-ring type element is used while in general it is possible to use a triangle type element.
 
 More details on these algorithms are provided in section \ref Surface_Modeling_Overview.
 
 \cgalFigureBegin{Arap_spokes_comparison, arap_spokes_comparison.png}
-Comparison between the As-Rigid-As-Possible and the Spokes and Rims deformation methods.
+A comparison between the As-Rigid-As-Possible and the Spokes and Rims deformation methods.
 On the surface mesh of a square with spikes depicted on the left, the ROI consists of the green vertices. The control vertices are the red ones.
 We translate the control vertices along the normal to the plane and observe the result produced by
 the As-Rigid-As-Possible (center) and the Spokes and Rims (right) methods from the same view point. The
 latter method provides unconditional convergence does not produce a symmetric result.
 \cgalFigureEnd
 
+\cgalFigureBegin{Arap_spokes_comparison, sr_arap_spokes.png}
+A comparison between the As-Rigid-As-Possible and the Smoothed Rotation Enhanced As-Rigid-As-Possible.
+\cgalFigureEnd
 
 \section Surface_Modeling_API User Interface Description
 
@@ -138,7 +141,7 @@ This behavior is illustrated in \ref SModelingVideo_1 "Video 1".
 Three deformation techniques are provided by this package. This section summarizes from the user point of view what is
 explained in details in the section \ref Surface_Modeling_Overview.
 
-\todo Zohar, is this also valid for SRE_ARAP?
+\todo Zohar, is this also valid for SRE_ARAP? >> Yes (also prefers positive weights)
 
 The As-Rigid-As-Possible deformation technique requires the use of a positive weighting scheme to guarantee
 the correct minimization of the energy. When using the default cotangent weighting scheme, this means that
@@ -202,6 +205,11 @@ In this example, the weight of each edge is pre-computed and an internal map is 
 Another example is given in the manual page of the concept `::SurfaceModelingWeights`.
 
 \cgalExample{Surface_modeling/custom_weight_for_edges_example.cpp}
+
+\subsubsection SModelingExample_5 Using the Smoothed Rotation Enhanced As-Rigid-As-Possible
+In this example, a survey \cgalCite{Botsch2008OnLinearVariational} model is loaded, alpha that determines the influence of the bending term is set, and the deformation method is set to SRE_ARAP.
+
+\cgalExample{Surface_modeling/deform_mesh_for_botsch08_format_sre_arap.cpp}
 
 \section Surface_Modeling_Demo How to Use the Demo
 
@@ -495,8 +503,23 @@ However, this method is more dependent on the discretization of the deformed sur
 
 The implementation in this package uses the cotangent weights by default (negative values included) as proposed in \cgalCite{Chao2010SimpleGeomModel}.
 
-\subsection Surface_Modeling_Overview_SRE_ARAP Smoothed Rotation Enhanced As-Rigid-As Possible Deformation
-\todo Zohar, could you add a few words here?
+\subsection Surface_Modeling_Overview_SRE_ARAP Smoothed Rotation Enhanced As-Rigid-As Possible (SR_ARAP) Deformation
+Using 1-ring elements, SR_ARAP adds a bending element to Eq. \ref{eq:arap_energy}:
+
+\f[
+\begin{equation}
+\sum_{\mathbf{v}_i \in M}
+\sum_{\mathbf{v}_j \in N(\mathbf{v}_i)} w_{ij}
+\left\| (\mathbf{v}'_i - \mathbf{v}'_j) - \mathbf{R}_i(\mathbf{v}_i - \mathbf{v}_j) \right\|^2 + \alpha A \left\| \mathbf{R}_i - \mathbf{R}_j \right\|^2_F ,
+  \label{eq:arap_energy}
+\end{equation}
+\f]
+
+where 
+- \f$\alpha=0.02\f$ is a weighting coefficient.
+- \f$A\f$ is the surface area for scaling invariance. 
+
+Only the local step is influenced by the added term, and the optimal rotation now takes into account the neighbors' rotations.
 
 \section Surface_Modeling_History Design and Implementation History
 An initial version of this package has been implemented during the 2011 Google Summer of Code by Yin Xu under the guidance of Olga Sorkine and Andreas Fabri.
