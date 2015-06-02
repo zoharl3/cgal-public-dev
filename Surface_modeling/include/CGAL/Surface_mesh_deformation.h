@@ -926,7 +926,8 @@ public:
 
   /**
    * Sets the alpha coefficient that determines the weight of the bending term (rotation smoothness) for the SRE-ARAP deformation technique.
-   * The default value is 0.02
+   * The range of values can be from 0 to infinity. When alpha=0, the method reverts to ARAP. When alpha is increased, neighboring rotations become similar to each other, where alpha=infinity results in a global rigid transformation of the ROI. The value of alpha depends on the surface area and shape. Since alpha is not too sensitive, it can be tweaked in most cases in multiples of 10.
+   * The default value for alpha is 0.02.
    */
   void set_sre_arap_alpha(double a)
   {
